@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { useBinancePrice } from "../hooks/useBinancePrice";
 import { useFundingRate } from "../hooks/useFundingRate";
-import { CandleChart } from "../components/CandleChart";
+import { TradingViewChart } from "../components/TradingViewChart";
 
 type OrderSide = "buy" | "sell";
 type OrderType = "limit" | "market";
@@ -18,7 +18,7 @@ const INTERVALS = [
 ];
 
 export function FuturesPage() {
-  const { price, priceChangePercent, candles, interval, setInterval } = useBinancePrice("BTCUSDT");
+  const { price, priceChangePercent, interval, setInterval } = useBinancePrice("BTCUSDT");
   const { rate, countdown } = useFundingRate("BTCUSDT");
 
   const [side, setSide] = useState<OrderSide>("sell");
@@ -93,35 +93,32 @@ export function FuturesPage() {
         </span>
       </div>
 
-      {/* Chart Area */}
-      <div className="bg-white flex-shrink-0 relative" style={{ height: 168 }}>
-        {/* Interval selector */}
-        <div className="absolute top-1.5 left-2 z-10 flex gap-0.5">
-          {INTERVALS.map((iv) => (
-            <button
-              key={iv.value}
-              onClick={() => setInterval(iv.value)}
-              className={`text-xs px-2 py-0.5 rounded font-medium transition-all ${
-                interval === iv.value
-                  ? "bg-amber-100 text-orange-600 font-bold border border-amber-300"
-                  : "text-gray-500"
-              }`}
-            >
-              {iv.label}
-            </button>
-          ))}
-          <button className="text-xs text-gray-500 flex items-center px-1">
-            More
-            <svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} className="ml-0.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
+      {/* Interval selector */}
+      <div className="bg-white flex items-center px-3 pt-2 pb-0 gap-0.5 flex-shrink-0">
+        {INTERVALS.map((iv) => (
+          <button
+            key={iv.value}
+            onClick={() => setInterval(iv.value)}
+            className={`text-xs px-2.5 py-1 rounded font-medium transition-all ${
+              interval === iv.value
+                ? "bg-amber-100 text-orange-600 font-bold border border-amber-300"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            {iv.label}
           </button>
-        </div>
-        {/* TV logo watermark */}
-        <div className="absolute bottom-5 left-3 z-10 pointer-events-none">
-          <span className="text-sm font-black text-gray-300 tracking-tighter">TV</span>
-        </div>
-        <CandleChart candles={candles} currentPrice={price} />
+        ))}
+        <button className="text-xs text-gray-400 flex items-center px-1 ml-0.5">
+          More
+          <svg width="9" height="9" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} className="ml-0.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      </div>
+
+      {/* TradingView Chart */}
+      <div className="bg-white flex-shrink-0" style={{ height: 180 }}>
+        <TradingViewChart interval={interval} />
       </div>
 
       {/* Controls Row */}
