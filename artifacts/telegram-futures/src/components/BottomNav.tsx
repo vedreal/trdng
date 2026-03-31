@@ -1,4 +1,4 @@
-type NavPage = "home" | "futures" | "ai" | "earn" | "profile";
+type NavPage = "home" | "futures" | "earn" | "profile";
 
 interface BottomNavProps {
   current: NavPage;
@@ -26,16 +26,6 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
       ),
     },
     {
-      id: "ai",
-      label: "AI Trade",
-      icon: (
-        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-          <rect x="3" y="11" width="18" height="10" rx="2" strokeLinecap="round" strokeLinejoin="round" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M8 11V7a4 4 0 018 0v4M7 15h.01M12 15h.01M17 15h.01" />
-        </svg>
-      ),
-    },
-    {
       id: "earn",
       label: "Earn",
       icon: (
@@ -58,7 +48,7 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-40 safe-area-pb">
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-40">
       <div className="flex items-center justify-around py-2 px-2 max-w-lg mx-auto">
         {items.map((item) => {
           const active = current === item.id;
@@ -66,7 +56,7 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
             <button
               key={item.id}
               onClick={() => onChange(item.id)}
-              className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-all ${
+              className={`flex flex-col items-center gap-0.5 px-4 py-1 rounded-xl transition-all ${
                 active ? "text-orange-500" : "text-gray-400"
               }`}
             >

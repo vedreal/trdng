@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useBinancePrice } from "../hooks/useBinancePrice";
+import { useTradingStore, type Position } from "../hooks/useTradingStore";
 import { CandleChart } from "../components/CandleChart";
 
 type OrderSide = "buy" | "sell";
@@ -9,24 +10,104 @@ type TabType = "position" | "orders" | "history";
 const LEVERAGE_OPTIONS = [5, 10, 20, 40, 50, 75, 100, 125];
 
 const INTERVALS = [
-  { label: "5m",  value: "5m" },
-  { label: "1h",  value: "1h" },
-  { label: "4h",  value: "4h" },
-  { label: "1D",  value: "1d" },
+  { label: "5m", value: "5m" },
+  { label: "1h", value: "1h" },
+  { label: "4h", value: "4h" },
+  { label: "1D", value: "1d" },
 ];
+
+function fmt(n: number, dec = 2) {
+  return n.toLocaleString("en-US", { minimumFractionDigits: dec, maximumFractionDigits: dec });
+}
+
+function PositionCard({
+  pos,
+  currentPrice,
+  onClose,
+  getPnl,
+}: {
+  pos: Position;
+  currentPrice: number;
+  onClose: () => void;
+  getPnl: (p: Position, price: number) => number;
+}) {
+  const pnl = getPnl(pos, currentPrice);
+  const pnlPct = (pnl / pos.margin) * 100;
+  const isProfit = pnl >= 0;
+
+  return (
+    <div className="mx-1 mb-3 bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+      {/* Top row */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span
+            className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+              pos.side === "long"
+                ? "bg-green-100 text-green-600"
+                : "bg-red-100 text-red-500"
+            }`}
+          >
+            {pos.side === "long" ? "Long" : "Short"}
+          </span>
+          <span className="text-xs text-gray-500 font-medium">{pos.leverage}x</span>
+          <span className="text-xs text-gray-400">{pos.marginMode}</span>
+        </div>
+        <button
+          onClick={onClose}
+          className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 font-medium px-3 py-1 rounded-full transition-all"
+        >
+          Close
+        </button>
+      </div>
+
+      {/* Stats grid */}
+      <div className="grid grid-cols-3 gap-y-3">
+        <div>
+          <p className="text-[10px] text-gray-400 mb-0.5">Size</p>
+          <p className="text-xs font-semibold text-gray-700">${fmt(pos.size)}</p>
+        </div>
+        <div className="text-center">
+          <p className="text-[10px] text-gray-400 mb-0.5">Entry Price</p>
+          <p className="text-xs font-semibold text-gray-700">${fmt(pos.entryPrice, 1)}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-[10px] text-gray-400 mb-0.5">Mark Price</p>
+          <p className="text-xs font-semibold text-gray-700">${fmt(currentPrice, 1)}</p>
+        </div>
+        <div>
+          <p className="text-[10px] text-gray-400 mb-0.5">Margin</p>
+          <p className="text-xs font-semibold text-gray-700">${fmt(pos.margin)}</p>
+        </div>
+        <div className="text-center">
+          <p className="text-[10px] text-gray-400 mb-0.5">Liq. Price</p>
+          <p className="text-xs font-semibold text-orange-500">${fmt(pos.liquidationPrice, 1)}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-[10px] text-gray-400 mb-0.5">PnL</p>
+          <p className={`text-xs font-bold ${isProfit ? "text-green-500" : "text-red-500"}`}>
+            {isProfit ? "+" : ""}${fmt(pnl)} ({isProfit ? "+" : ""}{pnlPct.toFixed(2)}%)
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function FuturesPage() {
   const { price, priceChangePercent, candles, interval, setInterval } =
     useBinancePrice("BTCUSDT");
+  const { balance, positions, history, openPosition, closePosition, getPnl } =
+    useTradingStore();
 
-  const [side, setSide] = useState<OrderSide>("sell");
+  const [side, setSide] = useState<OrderSide>("buy");
   const [orderType, setOrderType] = useState<OrderType>("limit");
   const [amount, setAmount] = useState("");
   const [leverage, setLeverage] = useState(40);
   const [marginMode, setMarginMode] = useState<"Cross" | "Isolated">("Cross");
-  const [sliderValue, setSliderValue] = useState(45);
+  const [sliderValue, setSliderValue] = useState(0);
   const [activeTab, setActiveTab] = useState<TabType>("position");
   const [showLeverageModal, setShowLeverageModal] = useState(false);
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
 
   const priceDisplay =
     price > 0
@@ -35,34 +116,76 @@ export function FuturesPage() {
   const limitPrice = price > 0 ? Math.round(price).toString() : "...";
 
   const parsedAmount = parseFloat(amount) || 0;
+  const margin = parsedAmount > 0 && leverage > 0 ? parsedAmount / leverage : 0;
 
   const liqPrice =
     parsedAmount > 0 && price > 0
       ? side === "buy"
-        ? (price * (1 - 1 / leverage * 0.9)).toFixed(1)
-        : (price * (1 + 1 / leverage * 0.9)).toFixed(1)
+        ? (price * (1 - (1 / leverage) * 0.9)).toFixed(1)
+        : (price * (1 + (1 / leverage) * 0.9)).toFixed(1)
       : "--";
 
-  const marginRequired =
-    parsedAmount > 0 && price > 0
-      ? (parsedAmount * price / leverage).toFixed(2)
-      : "0.00";
+  const showToast = (msg: string, ok: boolean) => {
+    setToast({ msg, ok });
+    setTimeout(() => setToast(null), 2800);
+  };
 
   const handleAmountChange = useCallback((v: string) => {
-    setAmount(v.replace(/[^0-9.]/g, ""));
-  }, []);
+    const clean = v.replace(/[^0-9.]/g, "");
+    setAmount(clean);
+    if (price > 0 && balance > 0) {
+      const pct = Math.min((parseFloat(clean || "0") / balance) * 100, 100);
+      setSliderValue(isNaN(pct) ? 0 : Math.round(pct));
+    }
+  }, [price, balance]);
+
+  const handleSliderChange = useCallback((pct: number) => {
+    setSliderValue(pct);
+    const notional = (balance * pct) / 100;
+    setAmount(notional > 0 ? notional.toFixed(2) : "");
+  }, [balance]);
+
+  const handleSubmit = () => {
+    if (price <= 0) return showToast("Price not loaded yet", false);
+    const notional = parsedAmount;
+    const result = openPosition(
+      side === "buy" ? "long" : "short",
+      notional,
+      price,
+      leverage,
+      marginMode
+    );
+    if (result.success) {
+      setAmount("");
+      setSliderValue(0);
+      setActiveTab("position");
+      showToast(`${side === "buy" ? "Long" : "Short"} opened at $${Math.round(price).toLocaleString()}`, true);
+    } else {
+      showToast(result.message, false);
+    }
+  };
 
   return (
     <div className="flex flex-col h-full bg-[#f5ede0] overflow-hidden">
 
-      {/* ── Header (no title) ── */}
+      {/* Toast */}
+      {toast && (
+        <div
+          className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl shadow-lg text-sm font-medium text-white transition-all ${
+            toast.ok ? "bg-green-500" : "bg-red-500"
+          }`}
+        >
+          {toast.msg}
+        </div>
+      )}
+
+      {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 flex-shrink-0">
         <button className="p-1">
           <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
-        {/* spacer – no title */}
         <div />
         <div className="flex items-center gap-2">
           <button className="p-1">
@@ -80,7 +203,7 @@ export function FuturesPage() {
         </div>
       </div>
 
-      {/* ── Price row ── */}
+      {/* Price row */}
       <div className="flex items-center px-4 py-2 bg-white border-b border-gray-100 flex-shrink-0">
         <div className="w-7 h-7 rounded-full bg-orange-400 flex items-center justify-center text-white text-xs font-bold mr-2">
           ₿
@@ -97,7 +220,7 @@ export function FuturesPage() {
         </span>
       </div>
 
-      {/* ── Interval selector ── */}
+      {/* Interval selector */}
       <div className="bg-white flex items-center px-4 pt-2 pb-1 gap-1 flex-shrink-0">
         {INTERVALS.map((iv) => (
           <button
@@ -114,12 +237,12 @@ export function FuturesPage() {
         ))}
       </div>
 
-      {/* ── Chart ── */}
+      {/* Chart */}
       <div className="bg-white flex-shrink-0" style={{ height: 170 }}>
         <CandleChart candles={candles} currentPrice={price} />
       </div>
 
-      {/* ── Margin / leverage row ── */}
+      {/* Margin / leverage row */}
       <div className="flex items-center px-4 py-2 flex-shrink-0">
         <button
           onClick={() => setMarginMode(m => m === "Cross" ? "Isolated" : "Cross")}
@@ -135,7 +258,7 @@ export function FuturesPage() {
         </button>
       </div>
 
-      {/* ── Scrollable trade area ── */}
+      {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto">
 
         {/* Trade panel */}
@@ -165,10 +288,10 @@ export function FuturesPage() {
             </button>
           </div>
 
-          {/* Available */}
+          {/* Available balance */}
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm text-gray-500">Available</span>
-            <span className="text-sm font-medium text-gray-700">$0.00</span>
+            <span className="text-sm font-semibold text-gray-700">${fmt(balance)}</span>
           </div>
 
           {/* Amount */}
@@ -178,7 +301,7 @@ export function FuturesPage() {
               type="number"
               value={amount}
               onChange={(e) => handleAmountChange(e.target.value)}
-              className="flex-1 text-right text-sm font-medium text-gray-600 bg-transparent outline-none"
+              className="flex-1 text-right text-sm font-medium text-gray-700 bg-transparent outline-none"
               placeholder="0.00"
               min="0"
               step="0.01"
@@ -220,33 +343,28 @@ export function FuturesPage() {
           {/* Slider */}
           <div className="mb-3 px-1">
             <div className="relative h-6 flex items-center">
-              {/* Track background */}
               <div className="absolute inset-x-0 h-[3px] rounded-full bg-gray-200">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-orange-400 to-orange-300"
                   style={{ width: `${sliderValue}%` }}
                 />
               </div>
-              {/* Thumb */}
               <div
-                className="absolute w-5 h-5 bg-orange-500 rounded-full border-[2.5px] border-white shadow-md -translate-x-1/2"
+                className="absolute w-5 h-5 bg-orange-500 rounded-full border-[2.5px] border-white shadow-md -translate-x-1/2 pointer-events-none"
                 style={{ left: `${sliderValue}%` }}
               />
-              {/* Invisible range input on top */}
               <input
-                type="range"
-                min={0} max={100}
+                type="range" min={0} max={100}
                 value={sliderValue}
-                onChange={(e) => setSliderValue(Number(e.target.value))}
+                onChange={(e) => handleSliderChange(Number(e.target.value))}
                 className="absolute inset-0 w-full opacity-0 cursor-pointer"
               />
             </div>
-            {/* Tick dots */}
             <div className="flex justify-between mt-2 px-0.5">
               {[0, 25, 50, 75, 100].map((v) => (
                 <button
                   key={v}
-                  onClick={() => setSliderValue(v)}
+                  onClick={() => handleSliderChange(v)}
                   className={`w-1.5 h-1.5 rounded-full transition-all ${
                     sliderValue >= v ? "bg-orange-400" : "bg-gray-300"
                   }`}
@@ -255,63 +373,128 @@ export function FuturesPage() {
             </div>
           </div>
 
-          {/* Liq / Margin */}
+          {/* Margin info */}
           <div className="flex justify-between mb-1">
             <span className="text-xs text-gray-500">Liq. Price</span>
             <span className="text-xs text-gray-500">{liqPrice}</span>
           </div>
           <div className="flex justify-between mb-4">
             <span className="text-xs text-gray-500">Margin Required</span>
-            <span className="text-xs text-gray-700">${marginRequired}</span>
+            <span className="text-xs text-gray-700">
+              {margin > 0 ? `$${fmt(margin)}` : "$0.00"}
+            </span>
           </div>
 
           {/* Action button */}
           <button
+            onClick={handleSubmit}
             className={`w-full py-4 rounded-xl text-white font-semibold text-base shadow-sm transition-all active:scale-[0.98] ${
               side === "buy"
                 ? "bg-gradient-to-r from-green-400 to-green-500"
-                : "bg-gradient-to-r from-orange-300 to-red-400 opacity-90"
+                : "bg-gradient-to-r from-orange-300 to-red-400"
             }`}
           >
-            {side === "buy" ? "Buy" : "Sell"}
+            {side === "buy" ? "Buy / Long" : "Sell / Short"}
           </button>
         </div>
 
-        {/* Position / Orders / History */}
+        {/* Tabs */}
         <div className="mx-3 mt-3 mb-3 bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
           <div className="flex">
             {(["position", "orders", "history"] as TabType[]).map((tab, idx) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`flex-1 py-3 text-sm font-medium capitalize transition-all border-b-2 ${
+                className={`flex-1 py-3 text-sm font-medium capitalize transition-all border-b-2 relative ${
                   activeTab === tab
                     ? "text-gray-800 border-orange-500"
                     : "text-gray-400 border-transparent"
                 } ${idx > 0 ? "border-l border-gray-100" : ""}`}
               >
                 {tab === "position" ? "Position" : tab === "orders" ? "Orders" : "History"}
+                {tab === "position" && positions.length > 0 && (
+                  <span className="absolute top-2 right-3 w-4 h-4 bg-orange-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                    {positions.length}
+                  </span>
+                )}
               </button>
             ))}
           </div>
-          <div className="py-8 text-center text-sm text-gray-400 bg-gray-50 rounded-b-2xl">
-            {activeTab === "position" && "No positions"}
-            {activeTab === "orders"   && "No orders"}
-            {activeTab === "history"  && "No history"}
-          </div>
+
+          {/* Position tab */}
+          {activeTab === "position" && (
+            <div className="p-2">
+              {positions.length === 0 ? (
+                <p className="py-8 text-center text-sm text-gray-400">No positions</p>
+              ) : (
+                positions.map((pos) => (
+                  <PositionCard
+                    key={pos.id}
+                    pos={pos}
+                    currentPrice={price}
+                    onClose={() => closePosition(pos.id, price)}
+                    getPnl={getPnl}
+                  />
+                ))
+              )}
+            </div>
+          )}
+
+          {/* Orders tab */}
+          {activeTab === "orders" && (
+            <p className="py-8 text-center text-sm text-gray-400">No orders</p>
+          )}
+
+          {/* History tab */}
+          {activeTab === "history" && (
+            <div className="p-2">
+              {history.length === 0 ? (
+                <p className="py-8 text-center text-sm text-gray-400">No history</p>
+              ) : (
+                history.map((trade) => {
+                  const isProfit = trade.pnl >= 0;
+                  return (
+                    <div key={trade.id} className="mx-1 mb-3 bg-gray-50 rounded-xl border border-gray-100 p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                            trade.side === "long" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-500"
+                          }`}>
+                            {trade.side === "long" ? "Long" : "Short"}
+                          </span>
+                          <span className="text-xs text-gray-400">{trade.leverage}x</span>
+                        </div>
+                        <span className={`text-sm font-bold ${isProfit ? "text-green-500" : "text-red-500"}`}>
+                          {isProfit ? "+" : ""}${fmt(trade.pnl)}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-y-2">
+                        <div>
+                          <p className="text-[10px] text-gray-400">Size</p>
+                          <p className="text-xs font-medium text-gray-700">${fmt(trade.size)}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[10px] text-gray-400">Entry</p>
+                          <p className="text-xs font-medium text-gray-700">${fmt(trade.entryPrice, 1)}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] text-gray-400">Close</p>
+                          <p className="text-xs font-medium text-gray-700">${fmt(trade.closePrice, 1)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* ── Leverage modal ── */}
+      {/* Leverage modal */}
       {showLeverageModal && (
-        <div
-          className="fixed inset-0 bg-black/50 z-50 flex items-end"
-          onClick={() => setShowLeverageModal(false)}
-        >
-          <div
-            className="bg-white w-full rounded-t-2xl p-5 max-w-md mx-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end" onClick={() => setShowLeverageModal(false)}>
+          <div className="bg-white w-full rounded-t-2xl p-5 max-w-md mx-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <span className="font-semibold text-gray-800">Select Leverage</span>
               <button onClick={() => setShowLeverageModal(false)}>
@@ -335,9 +518,7 @@ export function FuturesPage() {
                 </button>
               ))}
             </div>
-            <p className="text-xs text-gray-400 text-center">
-              Max leverage: 125x. Higher leverage = higher risk.
-            </p>
+            <p className="text-xs text-gray-400 text-center">Max leverage: 125x. Higher leverage = higher risk.</p>
           </div>
         </div>
       )}
