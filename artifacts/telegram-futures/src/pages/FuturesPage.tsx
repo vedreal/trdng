@@ -9,7 +9,6 @@ import {
 } from "../hooks/useTradingStore";
 import { CandleChart } from "../components/CandleChart";
 
-type OrderSide = "buy" | "sell";
 type OrderType = "limit" | "market";
 type TabType = "position" | "orders" | "history";
 
@@ -202,12 +201,12 @@ export function FuturesPage() {
   const { price, priceChangePercent, candles, interval, setInterval } = useBinancePrice("BTCUSDT");
   const { balance, positions, history, openPosition, closePosition, updateSlTp, getPnl } = useTradingStore();
 
-  const [side, setSide]           = useState<OrderSide>("buy");
   const [orderType, setOrderType] = useState<OrderType>("limit");
   const [marginInput, setMarginInput] = useState("");
   const [leverage, setLeverage]   = useState(50);
-  const [marginMode, setMarginMode] = useState<"Cross" | "Isolated">("Cross");
   const [sliderValue, setSliderValue] = useState(0);
+  // Limit price — pre-filled with market price; user can override
+  const [limitPriceInput, setLimitPriceInput] = useState("");
 
   const [showSlTpEntry, setShowSlTpEntry] = useState(false);
   const [entrySl, setEntrySl] = useState("");
@@ -221,7 +220,11 @@ export function FuturesPage() {
   const priceDisplay = price > 0
     ? "$" + price.toLocaleString("en-US", { maximumFractionDigits: 0 })
     : "$...";
-  const limitPrice = price > 0 ? Math.round(price).toString() : "...";
+
+  // Entry price used for calculations and order submission
+  const entryPrice = orderType === "market"
+    ? price
+    : (parseFloat(limitPriceInput) > 0 ? parseFloat(limitPriceInput) : price);
 
   // ── Core calculations ────────────────────────────────────────────────
   const rawMargin = parseFloat(marginInput) || 0;
@@ -236,10 +239,10 @@ export function FuturesPage() {
   const tierMax = getMaxNotional(leverage);
   const isCapped = rawMargin > 0 && (rawMargin * leverage) > tierMax;
 
-  // Liq. price preview (uses mark price as entry for preview)
+  // Liq. price preview — always Cross margin
   function liqPreview(tradeSide: "long" | "short"): string {
-    if (effectiveNotional <= 0 || price <= 0) return "--";
-    const liq = calcLiqPrice(tradeSide, price, effectiveNotional, effectiveCost, marginMode, balance);
+    if (effectiveNotional <= 0 || entryPrice <= 0) return "--";
+    const liq = calcLiqPrice(tradeSide, entryPrice, effectiveNotional, effectiveCost, "Cross", balance);
     if (tradeSide === "long" && liq <= 0) return "No Liq.";
     return "$" + fmt(liq, 1);
   }
@@ -265,15 +268,14 @@ export function FuturesPage() {
     setMarginInput(m > 0 ? m.toFixed(5) : "");
   }, [balance]);
 
-  const handleSubmit = (forceSide?: "long" | "short") => {
-    if (price <= 0) return showToast("Price not loaded yet", false);
-    const tradeSide = forceSide ?? (side === "buy" ? "long" : "short");
+  const handleSubmit = (tradeSide: "long" | "short") => {
+    if (entryPrice <= 0) return showToast("Price not loaded yet", false);
     const result = openPosition(
       tradeSide,
       rawMargin,
-      price,
+      entryPrice,
       leverage,
-      marginMode,
+      "Cross",
       parseFloat(entrySl) || undefined,
       parseFloat(entryTp) || undefined,
       balance
@@ -282,7 +284,8 @@ export function FuturesPage() {
       setMarginInput(""); setSliderValue(0);
       setEntrySl(""); setEntryTp("");
       setActiveTab("position");
-      showToast(`${tradeSide === "long" ? "Long" : "Short"} opened at $${Math.round(price).toLocaleString()}`, true);
+      const label = orderType === "limit" ? `Limit @$${Math.round(entryPrice).toLocaleString()}` : `Market @$${Math.round(entryPrice).toLocaleString()}`;
+      showToast(`${tradeSide === "long" ? "Long" : "Short"} ${label}`, true);
     } else {
       showToast(result.message, false);
     }
@@ -363,12 +366,11 @@ export function FuturesPage() {
         <CandleChart candles={candles} currentPrice={price} />
       </div>
 
-      {/* Margin mode / leverage */}
+      {/* Cross label + leverage */}
       <div className="flex items-center px-4 py-2 flex-shrink-0">
-        <button onClick={() => setMarginMode(m => m === "Cross" ? "Isolated" : "Cross")}
-          className="bg-white border border-gray-200 rounded-full px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm mr-2">
-          {marginMode}
-        </button>
+        <span className="bg-white border border-gray-200 rounded-full px-3 py-1.5 text-sm font-medium text-gray-500 mr-2">
+          Cross
+        </span>
         <button onClick={() => setShowLevModal(true)}
           className="bg-amber-100 border border-amber-200 rounded-full px-3 py-1.5 text-sm font-bold text-orange-600 shadow-sm">
           {leverage}x
@@ -381,19 +383,19 @@ export function FuturesPage() {
         {/* Trade panel */}
         <div className="mx-3 bg-[#fdf6ec] border border-amber-100 rounded-2xl p-4 shadow-sm">
 
-          {/* Buy / Sell */}
-          <div className="flex gap-2 mb-4">
-            <button onClick={() => setSide("buy")}
-              className={`flex-1 py-3 rounded-xl font-semibold text-base transition-all ${
-                side === "buy" ? "bg-white border-2 border-green-400 text-green-600 shadow-sm" : "text-gray-400"
+          {/* Limit / Market tabs */}
+          <div className="flex bg-white rounded-xl border border-gray-200 p-1 mb-4">
+            <button onClick={() => setOrderType("limit")}
+              className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
+                orderType === "limit" ? "bg-orange-500 text-white shadow-sm" : "text-gray-400"
               }`}>
-              <span className="text-green-500 mr-1">₿</span> Buy
+              Limit
             </button>
-            <button onClick={() => setSide("sell")}
-              className={`flex-1 py-3 rounded-xl font-semibold text-base transition-all ${
-                side === "sell" ? "bg-white border-2 border-orange-400 text-orange-600 shadow-sm" : "text-gray-400"
+            <button onClick={() => setOrderType("market")}
+              className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
+                orderType === "market" ? "bg-orange-500 text-white shadow-sm" : "text-gray-400"
               }`}>
-              <span className="text-orange-500 mr-1">₿</span> Sell
+              Market
             </button>
           </div>
 
@@ -426,21 +428,19 @@ export function FuturesPage() {
           )}
           {!isCapped && <div className="mb-2" />}
 
-          {/* Order type */}
-          <div className="flex items-center gap-2 mb-3">
-            <button onClick={() => setOrderType(t => t === "limit" ? "market" : "limit")}
-              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${
-                orderType === "limit" ? "border-orange-500" : "border-gray-300"
-              }`}>
-              {orderType === "limit" && <div className="w-2.5 h-2.5 rounded-full bg-orange-500" />}
-            </button>
-            <span className="text-sm text-gray-600">Limit</span>
-          </div>
-
+          {/* Limit price input (only for Limit orders) */}
           {orderType === "limit" && (
             <div className="bg-white rounded-xl border border-gray-200 flex items-center px-4 py-3 mb-3">
               <span className="text-sm text-gray-400 mr-3 flex-shrink-0">Price</span>
-              <div className="flex-1 text-right text-sm font-medium text-gray-500">{limitPrice}</div>
+              <input
+                type="number"
+                value={limitPriceInput}
+                onChange={(e) => setLimitPriceInput(e.target.value)}
+                onFocus={(e) => { if (!limitPriceInput && price > 0) setLimitPriceInput(Math.round(price).toString()); e.target.select(); }}
+                placeholder={price > 0 ? Math.round(price).toString() : "0"}
+                className="flex-1 text-right text-sm font-medium text-gray-700 bg-transparent outline-none"
+                min="0" step="1"
+              />
               <span className="text-sm text-gray-400 ml-2 flex-shrink-0">USDC</span>
             </div>
           )}
@@ -504,64 +504,29 @@ export function FuturesPage() {
             </div>
           )}
 
-          {/* ── Order summary (Max / Cost / Liq) — like real exchange ── */}
-          {effectiveNotional > 0 ? (
-            <div className="bg-white/60 rounded-xl border border-amber-100 px-4 py-3 mb-4 space-y-1.5">
-              <div className="flex justify-between">
-                <span className="text-xs text-gray-500">Max</span>
-                <span className="text-xs font-semibold text-gray-700">
-                  {fmtCompact(effectiveNotional)} USDC
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-xs text-gray-500">Cost</span>
-                <span className="text-xs font-semibold text-gray-700">
-                  {fmt(effectiveCost, 5)} USDC
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-xs text-gray-500">Liq. Price</span>
-                <span className={`text-xs font-semibold ${longLiqPreview === "No Liq." ? "text-green-500" : "text-orange-500"}`}>
-                  {side === "buy" ? longLiqPreview : shortLiqPreview}
-                </span>
-              </div>
-            </div>
-          ) : (
-            <div className="mb-4" />
-          )}
-
-          {/* Submit — shows both Long and Short info when amount > 0, like reference exchange */}
-          {effectiveNotional > 0 ? (
-            <div className="space-y-2">
-              {/* Open Long */}
-              <button
-                onClick={() => handleSubmit("long")}
-                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-semibold text-sm shadow-sm active:scale-[0.98] transition-all text-left px-4">
-                <div className="font-bold">Open Long</div>
+          {/* Open Long / Open Short — always show both */}
+          <div className="space-y-2">
+            <button
+              onClick={() => handleSubmit("long")}
+              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-semibold text-sm shadow-sm active:scale-[0.98] transition-all text-left px-4">
+              <div className="font-bold">Open Long</div>
+              {effectiveNotional > 0 && (
                 <div className="text-xs text-green-100 font-normal mt-0.5">
                   Max {fmtCompact(effectiveNotional)} · Cost {fmt(effectiveCost, 2)} · Liq {longLiqPreview}
                 </div>
-              </button>
-              {/* Open Short */}
-              <button
-                onClick={() => handleSubmit("short")}
-                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-orange-400 to-red-500 text-white font-semibold text-sm shadow-sm active:scale-[0.98] transition-all text-left px-4">
-                <div className="font-bold">Open Short</div>
+              )}
+            </button>
+            <button
+              onClick={() => handleSubmit("short")}
+              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-orange-400 to-red-500 text-white font-semibold text-sm shadow-sm active:scale-[0.98] transition-all text-left px-4">
+              <div className="font-bold">Open Short</div>
+              {effectiveNotional > 0 && (
                 <div className="text-xs text-red-100 font-normal mt-0.5">
                   Max {fmtCompact(effectiveNotional)} · Cost {fmt(effectiveCost, 2)} · Liq {shortLiqPreview}
                 </div>
-              </button>
-            </div>
-          ) : (
-            <button onClick={() => handleSubmit()}
-              className={`w-full py-4 rounded-xl text-white font-semibold text-base shadow-sm transition-all active:scale-[0.98] ${
-                side === "buy"
-                  ? "bg-gradient-to-r from-green-400 to-green-500"
-                  : "bg-gradient-to-r from-orange-300 to-red-400"
-              }`}>
-              {side === "buy" ? "Open Long" : "Open Short"}
+              )}
             </button>
-          )}
+          </div>
         </div>
 
         {/* Position / Orders / History */}
