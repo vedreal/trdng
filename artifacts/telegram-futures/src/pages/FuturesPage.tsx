@@ -72,7 +72,7 @@ function SlTpModal({
           <div className="bg-gray-50 rounded-xl border border-red-100 flex items-center px-4 py-3">
             <input type="number" value={sl} onChange={(e) => setSl(e.target.value)}
               placeholder="0.00" className="flex-1 text-sm font-medium text-gray-700 bg-transparent outline-none" />
-            <span className="text-sm text-gray-400 ml-2">USDC</span>
+            <span className="text-sm text-gray-400 ml-2">USDT</span>
           </div>
         </div>
 
@@ -83,7 +83,7 @@ function SlTpModal({
           <div className="bg-gray-50 rounded-xl border border-green-100 flex items-center px-4 py-3">
             <input type="number" value={tp} onChange={(e) => setTp(e.target.value)}
               placeholder="0.00" className="flex-1 text-sm font-medium text-gray-700 bg-transparent outline-none" />
-            <span className="text-sm text-gray-400 ml-2">USDC</span>
+            <span className="text-sm text-gray-400 ml-2">USDT</span>
           </div>
         </div>
 
@@ -338,35 +338,21 @@ export function FuturesPage() {
           onClose={() => setEditingPos(null)} />
       )}
 
-      {/* Header */}
+      {/* Header — placeholder divs keep height identical, buttons removed */}
       <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 flex-shrink-0">
-        <button className="p-1">
-          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+        <div className="p-1 w-[26px] h-[26px]" />
         <div />
         <div className="flex items-center gap-2">
-          <button className="p-1">
-            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-          <button className="p-1">
-            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <circle cx="12" cy="5"  r="1.5" fill="currentColor"/>
-              <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
-              <circle cx="12" cy="19" r="1.5" fill="currentColor"/>
-            </svg>
-          </button>
+          <div className="p-1 w-[26px] h-[26px]" />
+          <div className="p-1 w-[26px] h-[26px]" />
         </div>
       </div>
 
       {/* Price row */}
-      <div className="flex items-center px-4 py-2 bg-white border-b border-gray-100 flex-shrink-0">
+      <div className="flex items-center px-4 py-2 bg-white flex-shrink-0">
         <div className="w-7 h-7 rounded-full bg-orange-400 flex items-center justify-center text-white text-xs font-bold mr-2">₿</div>
         <button className="flex items-center gap-1 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1">
-          <span className="text-sm font-semibold text-gray-700">BTC-USD</span>
+          <span className="text-sm font-semibold text-gray-700">BTC/USDT</span>
           <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
@@ -433,7 +419,7 @@ export function FuturesPage() {
           {/* Available */}
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm text-gray-500">Avail.</span>
-            <span className="text-sm font-semibold text-gray-700">${fmt(balance, 5)} USDC</span>
+            <span className="text-sm font-semibold text-gray-700">${fmt(balance, 5)} USDT</span>
           </div>
 
           {/* Margin input */}
@@ -446,7 +432,7 @@ export function FuturesPage() {
               className="flex-1 text-right text-sm font-medium text-gray-700 bg-transparent outline-none"
               placeholder="0.00000" min="0" step="0.00001"
             />
-            <span className="text-sm text-gray-400 ml-2 flex-shrink-0">USDC</span>
+            <span className="text-sm text-gray-400 ml-2 flex-shrink-0">USDT</span>
           </div>
 
           {/* Tier cap notice */}
@@ -472,7 +458,7 @@ export function FuturesPage() {
                 className="flex-1 text-right text-sm font-medium text-gray-700 bg-transparent outline-none"
                 min="0" step="1"
               />
-              <span className="text-sm text-gray-400 ml-2 flex-shrink-0">USDC</span>
+              <span className="text-sm text-gray-400 ml-2 flex-shrink-0">USDT</span>
             </div>
           )}
 
@@ -520,7 +506,7 @@ export function FuturesPage() {
                   <input type="number" value={entrySl} onChange={(e) => setEntrySl(e.target.value)}
                     className="flex-1 text-xs font-medium text-gray-700 bg-transparent outline-none w-0"
                     placeholder="Price" />
-                  <span className="text-[10px] text-gray-400 ml-1 flex-shrink-0">USDC</span>
+                  <span className="text-[10px] text-gray-400 ml-1 flex-shrink-0">USDT</span>
                 </div>
               </div>
               <div>
@@ -529,7 +515,7 @@ export function FuturesPage() {
                   <input type="number" value={entryTp} onChange={(e) => setEntryTp(e.target.value)}
                     className="flex-1 text-xs font-medium text-gray-700 bg-transparent outline-none w-0"
                     placeholder="Price" />
-                  <span className="text-[10px] text-gray-400 ml-1 flex-shrink-0">USDC</span>
+                  <span className="text-[10px] text-gray-400 ml-1 flex-shrink-0">USDT</span>
                 </div>
               </div>
             </div>
