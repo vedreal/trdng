@@ -7,7 +7,7 @@ type OrderSide = "buy" | "sell";
 type OrderType = "limit" | "market";
 type TabType = "position" | "orders" | "history";
 
-const LEVERAGE_OPTIONS = [5, 10, 20, 40, 50, 75, 100, 125];
+const LEVERAGE_OPTIONS = [10, 25, 50, 100, 200];
 
 const INTERVALS = [
   { label: "5m", value: "5m" },
@@ -16,19 +16,125 @@ const INTERVALS = [
   { label: "1D", value: "1d" },
 ];
 
+const SLIDER_MARKS = [0, 25, 50, 75, 100];
+
 function fmt(n: number, dec = 2) {
   return n.toLocaleString("en-US", { minimumFractionDigits: dec, maximumFractionDigits: dec });
 }
 
+// ── SL/TP Edit Modal ────────────────────────────────────────────────
+function SlTpModal({
+  pos,
+  onSave,
+  onClose,
+}: {
+  pos: Position;
+  onSave: (sl?: number, tp?: number) => void;
+  onClose: () => void;
+}) {
+  const [sl, setSl] = useState(pos.sl ? pos.sl.toString() : "");
+  const [tp, setTp] = useState(pos.tp ? pos.tp.toString() : "");
+
+  const handleSave = () => {
+    onSave(
+      sl && parseFloat(sl) > 0 ? parseFloat(sl) : undefined,
+      tp && parseFloat(tp) > 0 ? parseFloat(tp) : undefined
+    );
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-end" onClick={onClose}>
+      <div
+        className="bg-white w-full rounded-t-2xl p-5 max-w-md mx-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <span className="font-semibold text-gray-800">Edit SL / TP</span>
+          <button onClick={onClose}>
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="text-xs text-gray-400 mb-3">
+          Entry price: <span className="text-gray-600 font-medium">${fmt(pos.entryPrice, 1)}</span>
+          &nbsp;·&nbsp;
+          <span className={pos.side === "long" ? "text-green-500 font-medium" : "text-red-500 font-medium"}>
+            {pos.side === "long" ? "Long" : "Short"} {pos.leverage}x
+          </span>
+        </div>
+
+        <div className="mb-4">
+          <label className="text-xs font-medium text-gray-500 mb-1 block">
+            Stop Loss (SL)
+            <span className="text-gray-400 font-normal ml-1">
+              — {pos.side === "long" ? "below" : "above"} entry
+            </span>
+          </label>
+          <div className="bg-gray-50 rounded-xl border border-gray-200 flex items-center px-4 py-3">
+            <input
+              type="number"
+              value={sl}
+              onChange={(e) => setSl(e.target.value)}
+              placeholder="0.00"
+              className="flex-1 text-sm font-medium text-gray-700 bg-transparent outline-none"
+            />
+            <span className="text-sm text-gray-400">USDC</span>
+          </div>
+        </div>
+
+        <div className="mb-5">
+          <label className="text-xs font-medium text-gray-500 mb-1 block">
+            Take Profit (TP)
+            <span className="text-gray-400 font-normal ml-1">
+              — {pos.side === "long" ? "above" : "below"} entry
+            </span>
+          </label>
+          <div className="bg-gray-50 rounded-xl border border-gray-200 flex items-center px-4 py-3">
+            <input
+              type="number"
+              value={tp}
+              onChange={(e) => setTp(e.target.value)}
+              placeholder="0.00"
+              className="flex-1 text-sm font-medium text-gray-700 bg-transparent outline-none"
+            />
+            <span className="text-sm text-gray-400">USDC</span>
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={() => { onSave(undefined, undefined); onClose(); }}
+            className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-500 text-sm font-medium"
+          >
+            Clear
+          </button>
+          <button
+            onClick={handleSave}
+            className="flex-1 py-3 rounded-xl bg-orange-500 text-white text-sm font-semibold"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Position Card ────────────────────────────────────────────────────
 function PositionCard({
   pos,
   currentPrice,
   onClose,
+  onEditSlTp,
   getPnl,
 }: {
   pos: Position;
   currentPrice: number;
   onClose: () => void;
+  onEditSlTp: () => void;
   getPnl: (p: Position, price: number) => number;
 }) {
   const pnl = getPnl(pos, currentPrice);
@@ -40,13 +146,9 @@ function PositionCard({
       {/* Top row */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <span
-            className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-              pos.side === "long"
-                ? "bg-green-100 text-green-600"
-                : "bg-red-100 text-red-500"
-            }`}
-          >
+          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+            pos.side === "long" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-500"
+          }`}>
             {pos.side === "long" ? "Long" : "Short"}
           </span>
           <span className="text-xs text-gray-500 font-medium">{pos.leverage}x</span>
@@ -61,7 +163,7 @@ function PositionCard({
       </div>
 
       {/* Stats grid */}
-      <div className="grid grid-cols-3 gap-y-3">
+      <div className="grid grid-cols-3 gap-y-3 mb-3">
         <div>
           <p className="text-[10px] text-gray-400 mb-0.5">Size</p>
           <p className="text-xs font-semibold text-gray-700">${fmt(pos.size)}</p>
@@ -89,25 +191,57 @@ function PositionCard({
           </p>
         </div>
       </div>
+
+      {/* SL / TP row */}
+      <div className="flex items-center justify-between pt-2.5 border-t border-gray-100">
+        <div className="flex items-center gap-4">
+          <div>
+            <span className="text-[10px] text-gray-400">SL&nbsp;</span>
+            <span className={`text-xs font-medium ${pos.sl ? "text-red-500" : "text-gray-400"}`}>
+              {pos.sl ? `$${fmt(pos.sl, 1)}` : "--"}
+            </span>
+          </div>
+          <div>
+            <span className="text-[10px] text-gray-400">TP&nbsp;</span>
+            <span className={`text-xs font-medium ${pos.tp ? "text-green-500" : "text-gray-400"}`}>
+              {pos.tp ? `$${fmt(pos.tp, 1)}` : "--"}
+            </span>
+          </div>
+        </div>
+        <button
+          onClick={onEditSlTp}
+          className="text-[10px] text-orange-500 font-semibold border border-orange-200 bg-orange-50 px-2.5 py-1 rounded-full"
+        >
+          Edit SL/TP
+        </button>
+      </div>
     </div>
   );
 }
 
+// ── Main Page ────────────────────────────────────────────────────────
 export function FuturesPage() {
   const { price, priceChangePercent, candles, interval, setInterval } =
     useBinancePrice("BTCUSDT");
-  const { balance, positions, history, openPosition, closePosition, getPnl } =
+  const { balance, positions, history, openPosition, closePosition, updateSlTp, getPnl } =
     useTradingStore();
 
-  const [side, setSide] = useState<OrderSide>("buy");
+  const [side, setSide]           = useState<OrderSide>("buy");
   const [orderType, setOrderType] = useState<OrderType>("limit");
-  const [amount, setAmount] = useState("");
-  const [leverage, setLeverage] = useState(40);
+  const [amount, setAmount]       = useState("");
+  const [leverage, setLeverage]   = useState(50);
   const [marginMode, setMarginMode] = useState<"Cross" | "Isolated">("Cross");
   const [sliderValue, setSliderValue] = useState(0);
-  const [activeTab, setActiveTab] = useState<TabType>("position");
-  const [showLeverageModal, setShowLeverageModal] = useState(false);
-  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
+
+  // SL/TP on entry
+  const [showSlTpEntry, setShowSlTpEntry] = useState(false);
+  const [entrySl, setEntrySl] = useState("");
+  const [entryTp, setEntryTp] = useState("");
+
+  const [activeTab, setActiveTab]     = useState<TabType>("position");
+  const [showLevModal, setShowLevModal] = useState(false);
+  const [editingPos, setEditingPos]   = useState<Position | null>(null);
+  const [toast, setToast]             = useState<{ msg: string; ok: boolean } | null>(null);
 
   const priceDisplay =
     price > 0
@@ -116,14 +250,17 @@ export function FuturesPage() {
   const limitPrice = price > 0 ? Math.round(price).toString() : "...";
 
   const parsedAmount = parseFloat(amount) || 0;
-  const margin = parsedAmount > 0 && leverage > 0 ? parsedAmount / leverage : 0;
+  const margin       = parsedAmount > 0 ? parsedAmount / leverage : 0;
 
-  const liqPrice =
-    parsedAmount > 0 && price > 0
-      ? side === "buy"
-        ? (price * (1 - (1 / leverage) * 0.9)).toFixed(1)
-        : (price * (1 + (1 / leverage) * 0.9)).toFixed(1)
-      : "--";
+  const liqPrice = (() => {
+    if (parsedAmount <= 0 || price <= 0) return "--";
+    const MMR = 0.005;
+    const col  = marginMode === "Cross" ? balance : margin;
+    const eff  = Math.max(col - parsedAmount * MMR, col * 0.01);
+    const dist = eff / parsedAmount;
+    if (side === "buy")  return `$${fmt(Math.max(price * (1 - dist), 0), 1)}`;
+    return `$${fmt(price * (1 + dist), 1)}`;
+  })();
 
   const showToast = (msg: string, ok: boolean) => {
     setToast({ msg, ok });
@@ -133,11 +270,9 @@ export function FuturesPage() {
   const handleAmountChange = useCallback((v: string) => {
     const clean = v.replace(/[^0-9.]/g, "");
     setAmount(clean);
-    if (price > 0 && balance > 0) {
-      const pct = Math.min((parseFloat(clean || "0") / balance) * 100, 100);
-      setSliderValue(isNaN(pct) ? 0 : Math.round(pct));
-    }
-  }, [price, balance]);
+    const num = parseFloat(clean) || 0;
+    setSliderValue(balance > 0 ? Math.min(Math.round((num / balance) * 100), 100) : 0);
+  }, [balance]);
 
   const handleSliderChange = useCallback((pct: number) => {
     setSliderValue(pct);
@@ -147,17 +282,19 @@ export function FuturesPage() {
 
   const handleSubmit = () => {
     if (price <= 0) return showToast("Price not loaded yet", false);
-    const notional = parsedAmount;
     const result = openPosition(
       side === "buy" ? "long" : "short",
-      notional,
+      parsedAmount,
       price,
       leverage,
-      marginMode
+      marginMode,
+      parseFloat(entrySl) || undefined,
+      parseFloat(entryTp) || undefined,
+      balance
     );
     if (result.success) {
-      setAmount("");
-      setSliderValue(0);
+      setAmount(""); setSliderValue(0);
+      setEntrySl(""); setEntryTp("");
       setActiveTab("position");
       showToast(`${side === "buy" ? "Long" : "Short"} opened at $${Math.round(price).toLocaleString()}`, true);
     } else {
@@ -170,13 +307,18 @@ export function FuturesPage() {
 
       {/* Toast */}
       {toast && (
-        <div
-          className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl shadow-lg text-sm font-medium text-white transition-all ${
-            toast.ok ? "bg-green-500" : "bg-red-500"
-          }`}
-        >
+        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-[60] px-4 py-2.5 rounded-xl shadow-lg text-sm font-medium text-white transition-all ${toast.ok ? "bg-green-500" : "bg-red-500"}`}>
           {toast.msg}
         </div>
+      )}
+
+      {/* SL/TP edit modal */}
+      {editingPos && (
+        <SlTpModal
+          pos={editingPos}
+          onSave={(sl, tp) => updateSlTp(editingPos.id, sl, tp)}
+          onClose={() => setEditingPos(null)}
+        />
       )}
 
       {/* Header */}
@@ -205,9 +347,7 @@ export function FuturesPage() {
 
       {/* Price row */}
       <div className="flex items-center px-4 py-2 bg-white border-b border-gray-100 flex-shrink-0">
-        <div className="w-7 h-7 rounded-full bg-orange-400 flex items-center justify-center text-white text-xs font-bold mr-2">
-          ₿
-        </div>
+        <div className="w-7 h-7 rounded-full bg-orange-400 flex items-center justify-center text-white text-xs font-bold mr-2">₿</div>
         <button className="flex items-center gap-1 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1">
           <span className="text-sm font-semibold text-gray-700">BTC-USD</span>
           <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -251,7 +391,7 @@ export function FuturesPage() {
           {marginMode}
         </button>
         <button
-          onClick={() => setShowLeverageModal(true)}
+          onClick={() => setShowLevModal(true)}
           className="bg-amber-100 border border-amber-200 rounded-full px-3 py-1.5 text-sm font-bold text-orange-600 shadow-sm"
         >
           {leverage}x
@@ -269,9 +409,7 @@ export function FuturesPage() {
             <button
               onClick={() => setSide("buy")}
               className={`flex-1 py-3 rounded-xl font-semibold text-base transition-all ${
-                side === "buy"
-                  ? "bg-white border-2 border-green-400 text-green-600 shadow-sm"
-                  : "text-gray-400"
+                side === "buy" ? "bg-white border-2 border-green-400 text-green-600 shadow-sm" : "text-gray-400"
               }`}
             >
               <span className="text-green-500 mr-1">₿</span> Buy
@@ -279,16 +417,14 @@ export function FuturesPage() {
             <button
               onClick={() => setSide("sell")}
               className={`flex-1 py-3 rounded-xl font-semibold text-base transition-all ${
-                side === "sell"
-                  ? "bg-white border-2 border-orange-400 text-orange-600 shadow-sm"
-                  : "text-gray-400"
+                side === "sell" ? "bg-white border-2 border-orange-400 text-orange-600 shadow-sm" : "text-gray-400"
               }`}
             >
               <span className="text-orange-500 mr-1">₿</span> Sell
             </button>
           </div>
 
-          {/* Available balance */}
+          {/* Available */}
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm text-gray-500">Available</span>
             <span className="text-sm font-semibold text-gray-700">${fmt(balance)}</span>
@@ -303,8 +439,7 @@ export function FuturesPage() {
               onChange={(e) => handleAmountChange(e.target.value)}
               className="flex-1 text-right text-sm font-medium text-gray-700 bg-transparent outline-none"
               placeholder="0.00"
-              min="0"
-              step="0.01"
+              min="0" step="0.01"
             />
             <span className="text-sm text-gray-400 ml-2 flex items-center gap-0.5 flex-shrink-0">
               USDC
@@ -322,9 +457,7 @@ export function FuturesPage() {
                 orderType === "limit" ? "border-orange-500" : "border-gray-300"
               }`}
             >
-              {orderType === "limit" && (
-                <div className="w-2.5 h-2.5 rounded-full bg-orange-500" />
-              )}
+              {orderType === "limit" && <div className="w-2.5 h-2.5 rounded-full bg-orange-500" />}
             </button>
             <span className="text-sm text-gray-600">Limit</span>
           </div>
@@ -333,15 +466,14 @@ export function FuturesPage() {
           {orderType === "limit" && (
             <div className="bg-white rounded-xl border border-gray-200 flex items-center px-4 py-3 mb-3">
               <span className="text-sm text-gray-400 mr-3 flex-shrink-0">Price</span>
-              <div className="flex-1 text-right text-sm font-medium text-gray-500">
-                {limitPrice}
-              </div>
+              <div className="flex-1 text-right text-sm font-medium text-gray-500">{limitPrice}</div>
               <span className="text-sm text-gray-400 ml-2 flex-shrink-0">USDC</span>
             </div>
           )}
 
-          {/* Slider */}
+          {/* ── Slider with % marks ── */}
           <div className="mb-3 px-1">
+            {/* Track */}
             <div className="relative h-6 flex items-center">
               <div className="absolute inset-x-0 h-[3px] rounded-full bg-gray-200">
                 <div
@@ -360,32 +492,80 @@ export function FuturesPage() {
                 className="absolute inset-0 w-full opacity-0 cursor-pointer"
               />
             </div>
-            <div className="flex justify-between mt-2 px-0.5">
-              {[0, 25, 50, 75, 100].map((v) => (
-                <button
-                  key={v}
-                  onClick={() => handleSliderChange(v)}
-                  className={`w-1.5 h-1.5 rounded-full transition-all ${
-                    sliderValue >= v ? "bg-orange-400" : "bg-gray-300"
-                  }`}
-                />
+
+            {/* Tick marks + percentage labels */}
+            <div className="flex justify-between mt-1 px-0.5">
+              {SLIDER_MARKS.map((v) => (
+                <div key={v} className="flex flex-col items-center gap-1">
+                  <button
+                    onClick={() => handleSliderChange(v)}
+                    className={`w-1.5 h-1.5 rounded-full transition-all ${
+                      sliderValue >= v ? "bg-orange-400" : "bg-gray-300"
+                    }`}
+                  />
+                  <span className={`text-[9px] font-medium transition-all ${
+                    sliderValue >= v ? "text-orange-400" : "text-gray-400"
+                  }`}>
+                    {v}%
+                  </span>
+                </div>
               ))}
             </div>
           </div>
 
-          {/* Margin info */}
+          {/* SL / TP toggle on entry */}
+          <button
+            onClick={() => setShowSlTpEntry(!showSlTpEntry)}
+            className="flex items-center gap-1.5 mb-3 text-xs text-orange-500 font-medium"
+          >
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d={showSlTpEntry ? "M19 9l-7 7-7-7" : "M9 5l7 7-7 7"} />
+            </svg>
+            SL / TP
+          </button>
+
+          {showSlTpEntry && (
+            <div className="mb-3 grid grid-cols-2 gap-2">
+              <div>
+                <span className="text-[10px] text-gray-400 block mb-1">Stop Loss</span>
+                <div className="bg-white rounded-xl border border-red-100 flex items-center px-3 py-2">
+                  <input
+                    type="number"
+                    value={entrySl}
+                    onChange={(e) => setEntrySl(e.target.value)}
+                    className="flex-1 text-xs font-medium text-gray-700 bg-transparent outline-none w-0"
+                    placeholder="Price"
+                  />
+                  <span className="text-[10px] text-gray-400 ml-1 flex-shrink-0">USDC</span>
+                </div>
+              </div>
+              <div>
+                <span className="text-[10px] text-gray-400 block mb-1">Take Profit</span>
+                <div className="bg-white rounded-xl border border-green-100 flex items-center px-3 py-2">
+                  <input
+                    type="number"
+                    value={entryTp}
+                    onChange={(e) => setEntryTp(e.target.value)}
+                    className="flex-1 text-xs font-medium text-gray-700 bg-transparent outline-none w-0"
+                    placeholder="Price"
+                  />
+                  <span className="text-[10px] text-gray-400 ml-1 flex-shrink-0">USDC</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Liq / Margin */}
           <div className="flex justify-between mb-1">
             <span className="text-xs text-gray-500">Liq. Price</span>
-            <span className="text-xs text-gray-500">{liqPrice}</span>
+            <span className="text-xs text-gray-600 font-medium">{liqPrice}</span>
           </div>
           <div className="flex justify-between mb-4">
             <span className="text-xs text-gray-500">Margin Required</span>
-            <span className="text-xs text-gray-700">
-              {margin > 0 ? `$${fmt(margin)}` : "$0.00"}
-            </span>
+            <span className="text-xs text-gray-700">{margin > 0 ? `$${fmt(margin)}` : "$0.00"}</span>
           </div>
 
-          {/* Action button */}
+          {/* Submit */}
           <button
             onClick={handleSubmit}
             className={`w-full py-4 rounded-xl text-white font-semibold text-base shadow-sm transition-all active:scale-[0.98] ${
@@ -398,7 +578,7 @@ export function FuturesPage() {
           </button>
         </div>
 
-        {/* Tabs */}
+        {/* Position / Orders / History tabs */}
         <div className="mx-3 mt-3 mb-3 bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
           <div className="flex">
             {(["position", "orders", "history"] as TabType[]).map((tab, idx) => (
@@ -406,9 +586,7 @@ export function FuturesPage() {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`flex-1 py-3 text-sm font-medium capitalize transition-all border-b-2 relative ${
-                  activeTab === tab
-                    ? "text-gray-800 border-orange-500"
-                    : "text-gray-400 border-transparent"
+                  activeTab === tab ? "text-gray-800 border-orange-500" : "text-gray-400 border-transparent"
                 } ${idx > 0 ? "border-l border-gray-100" : ""}`}
               >
                 {tab === "position" ? "Position" : tab === "orders" ? "Orders" : "History"}
@@ -421,7 +599,6 @@ export function FuturesPage() {
             ))}
           </div>
 
-          {/* Position tab */}
           {activeTab === "position" && (
             <div className="p-2">
               {positions.length === 0 ? (
@@ -433,6 +610,7 @@ export function FuturesPage() {
                     pos={pos}
                     currentPrice={price}
                     onClose={() => closePosition(pos.id, price)}
+                    onEditSlTp={() => setEditingPos(pos)}
                     getPnl={getPnl}
                   />
                 ))
@@ -440,12 +618,10 @@ export function FuturesPage() {
             </div>
           )}
 
-          {/* Orders tab */}
           {activeTab === "orders" && (
             <p className="py-8 text-center text-sm text-gray-400">No orders</p>
           )}
 
-          {/* History tab */}
           {activeTab === "history" && (
             <div className="p-2">
               {history.length === 0 ? (
@@ -492,23 +668,23 @@ export function FuturesPage() {
       </div>
 
       {/* Leverage modal */}
-      {showLeverageModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end" onClick={() => setShowLeverageModal(false)}>
+      {showLevModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end" onClick={() => setShowLevModal(false)}>
           <div className="bg-white w-full rounded-t-2xl p-5 max-w-md mx-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <span className="font-semibold text-gray-800">Select Leverage</span>
-              <button onClick={() => setShowLeverageModal(false)}>
+              <button onClick={() => setShowLevModal(false)}>
                 <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
-            <div className="grid grid-cols-4 gap-2 mb-4">
+            <div className="flex gap-2 mb-4">
               {LEVERAGE_OPTIONS.map((lev) => (
                 <button
                   key={lev}
-                  onClick={() => { setLeverage(lev); setShowLeverageModal(false); }}
-                  className={`py-2.5 rounded-xl text-sm font-bold border transition-all ${
+                  onClick={() => { setLeverage(lev); setShowLevModal(false); }}
+                  className={`flex-1 py-3 rounded-xl text-sm font-bold border transition-all ${
                     leverage === lev
                       ? "bg-orange-500 text-white border-orange-500"
                       : "border-gray-200 text-gray-600 bg-gray-50"
@@ -518,7 +694,7 @@ export function FuturesPage() {
                 </button>
               ))}
             </div>
-            <p className="text-xs text-gray-400 text-center">Max leverage: 125x. Higher leverage = higher risk.</p>
+            <p className="text-xs text-gray-400 text-center">Higher leverage = higher risk. Trade responsibly.</p>
           </div>
         </div>
       )}
