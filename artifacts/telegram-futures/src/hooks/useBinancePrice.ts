@@ -88,9 +88,9 @@ export function useBinancePrice(symbol = "BTCUSDT"): BinancePriceData {
   const [price, setPrice] = useState(MOCK_PRICE);
   const [priceChange, setPriceChange] = useState(-120);
   const [priceChangePercent, setPriceChangePercent] = useState(-0.18);
-  const [candles, setCandles] = useState<CandleData[]>(() => generateMockCandles(MOCK_PRICE));
+  const [candles, setCandles] = useState<CandleData[]>(() => generateMockCandles(MOCK_PRICE, 60, 300000));
   const [connected, setConnected] = useState(false);
-  const [interval, setIntervalState] = useState("1m");
+  const [interval, setIntervalState] = useState("5m");
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mockUpdateRef = useRef<ReturnType<typeof setInterval> | null>(null);
