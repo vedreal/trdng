@@ -1,0 +1,11 @@
+export function AITradePage() {
+  return (
+    <div className="flex flex-col h-screen bg-[#f5ede0] items-center justify-center">
+      <div className="text-center px-6">
+        <div className="w-16 h-16 rounded-2xl bg-purple-500 flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">AI</div>
+        <h2 className="text-xl font-bold text-gray-800 mb-2">AI Trade</h2>
+        <p className="text-sm text-gray-500">Coming soon — let AI trade for you</p>
+      </div>
+    </div>
+  );
+}

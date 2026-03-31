@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Catrix Futures Trading"
+version = "1.0.0"
+id = "artifacts/telegram-futures"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21174
+
+[services.development]
+run = "pnpm --filter @workspace/telegram-futures run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/telegram-futures", "run", "build" ]
+publicDir = "artifacts/telegram-futures/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21174"
+BASE_PATH = "/"
