@@ -48,7 +48,8 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-40">
+    <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#C8B040]"
+      style={{ background: 'linear-gradient(90deg, #ECECEC 0%, #E4DFC4 100%)' }}>
       <div className="flex items-center justify-around py-2 px-2 max-w-lg mx-auto">
         {items.map((item) => {
           const active = current === item.id;
@@ -57,11 +58,11 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
               key={item.id}
               onClick={() => onChange(item.id)}
               className={`flex flex-col items-center gap-0.5 px-4 py-1 rounded-xl transition-all ${
-                active ? "text-orange-500" : "text-gray-400"
+                active ? "text-[#C9A227]" : "text-[#888888]"
               }`}
             >
               {item.icon}
-              <span className="text-[10px] font-medium">{item.label}</span>
+              <span className={`text-[10px] font-medium ${active ? "font-bold" : ""}`}>{item.label}</span>
             </button>
           );
         })}
