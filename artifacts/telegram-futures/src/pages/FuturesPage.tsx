@@ -13,7 +13,7 @@ type OrderSide = "buy" | "sell";
 type OrderType = "limit" | "market";
 type TabType = "position" | "orders" | "history";
 
-const LEVERAGE_OPTIONS = [10, 25, 50, 100, 200];
+const LEVERAGE_OPTIONS = [50, 100, 200];
 const SLIDER_MARKS = [0, 25, 50, 75, 100];
 
 const INTERVALS = [

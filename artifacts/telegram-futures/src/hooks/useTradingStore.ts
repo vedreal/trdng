@@ -32,39 +32,33 @@ export const INITIAL_BALANCE = 10_000;
 /**
  * Max notional (position size in USDC) allowed per leverage level.
  * Mirrors bracket system used by real perpetual futures exchanges.
+ * Available leverage options: 50x, 100x, 200x.
  */
 export const LEVERAGE_MAX_NOTIONAL: Record<number, number> = {
-  200:    50_000,
-  100:   500_000,
-   50: 2_000_000,
-   25: 5_000_000,
-   20: 10_000_000,
-   10: 50_000_000,
+  200:   250_000,   // 200x → max $250k notional → cost = $1,250 with $10k balance
+  100:   500_000,   // 100x → max $500k notional → cost = $5,000 with $10k balance
+   50: 2_000_000,   // 50x  → max $2M  notional → no cap for typical balance
 };
 
 /**
- * Maintenance Margin Rate (MMR) tiers by notional value.
- * The larger the position, the higher the MMR.
+ * Maintenance Margin Rate (MMR) tiers by notional value (upper-bound inclusive).
+ * Larger positions carry higher MMR — same bracket system as major futures exchanges.
+ *
+ * Using upTo (inclusive) so boundary values like 500,000 fall into the lower tier.
+ *   e.g. 100x capped at exactly 500,000 → MMR = 0.5% ✓
+ *        50x uncapped at ~690,000      → MMR = 1.0% ✓ (matches screenshot data)
  */
-const NOTIONAL_MMR_TIERS: { threshold: number; mmr: number }[] = [
-  { threshold:        0, mmr: 0.005  }, // 0–500k  → 0.5%
-  { threshold:  500_000, mmr: 0.010  }, // 500k–2M → 1.0%
-  { threshold: 2_000_000, mmr: 0.015 }, // 2M–5M   → 1.5%
-  { threshold: 5_000_000, mmr: 0.020 }, // 5M–10M  → 2.0%
-  { threshold: 10_000_000, mmr: 0.025 },// 10M+    → 2.5%
+const NOTIONAL_MMR_TIERS: { upTo: number; mmr: number }[] = [
+  { upTo:   500_000, mmr: 0.005 }, // 0 – 500k  → 0.5%
+  { upTo: 2_000_000, mmr: 0.010 }, // 500k – 2M → 1.0%
+  { upTo: 5_000_000, mmr: 0.015 }, // 2M – 5M   → 1.5%
+  { upTo:10_000_000, mmr: 0.020 }, // 5M – 10M  → 2.0%
+  { upTo: Infinity,  mmr: 0.025 }, // 10M+       → 2.5%
 ];
 
 /** Get the applicable MMR for a given notional position size */
 export function getMmr(notional: number): number {
-  let mmr = NOTIONAL_MMR_TIERS[0].mmr;
-  for (const tier of NOTIONAL_MMR_TIERS) {
-    if (notional >= tier.threshold) {
-      mmr = tier.mmr;
-    } else {
-      break;
-    }
-  }
-  return mmr;
+  return NOTIONAL_MMR_TIERS.find((t) => notional <= t.upTo)?.mmr ?? 0.025;
 }
 
 /** Get the max allowed notional for the chosen leverage */
