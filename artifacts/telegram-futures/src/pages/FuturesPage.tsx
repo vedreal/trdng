@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useBinancePrice } from "../hooks/useBinancePrice";
 import {
   useTradingStore,
@@ -199,7 +199,11 @@ function PositionCard({
 // ── Main Page ─────────────────────────────────────────────────────────
 export function FuturesPage() {
   const { price, priceChangePercent, candles, interval, setInterval } = useBinancePrice("BTCUSDT");
-  const { balance, positions, history, openPosition, closePosition, updateSlTp, getPnl } = useTradingStore();
+  const {
+    balance, positions, pendingOrders, history,
+    openPosition, placeLimitOrder, cancelPendingOrder, checkPendingOrders,
+    closePosition, updateSlTp, getPnl,
+  } = useTradingStore();
 
   const [orderType, setOrderType] = useState<OrderType>("limit");
   const [marginInput, setMarginInput] = useState("");
@@ -255,6 +259,13 @@ export function FuturesPage() {
     setTimeout(() => setToast(null), 2800);
   };
 
+  // Watch price ticks — trigger any pending limit orders that have been hit
+  useEffect(() => {
+    if (price > 0 && pendingOrders.length > 0) {
+      checkPendingOrders(price, balance);
+    }
+  }, [price]);
+
   const handleMarginChange = useCallback((v: string) => {
     const clean = v.replace(/[^0-9.]/g, "");
     setMarginInput(clean);
@@ -269,25 +280,44 @@ export function FuturesPage() {
   }, [balance]);
 
   const handleSubmit = (tradeSide: "long" | "short") => {
-    if (entryPrice <= 0) return showToast("Price not loaded yet", false);
-    const result = openPosition(
-      tradeSide,
-      rawMargin,
-      entryPrice,
-      leverage,
-      "Cross",
-      parseFloat(entrySl) || undefined,
-      parseFloat(entryTp) || undefined,
-      balance
-    );
-    if (result.success) {
-      setMarginInput(""); setSliderValue(0);
-      setEntrySl(""); setEntryTp("");
-      setActiveTab("position");
-      const label = orderType === "limit" ? `Limit @$${Math.round(entryPrice).toLocaleString()}` : `Market @$${Math.round(entryPrice).toLocaleString()}`;
-      showToast(`${tradeSide === "long" ? "Long" : "Short"} ${label}`, true);
+    if (price <= 0) return showToast("Price not loaded yet", false);
+
+    const sl = parseFloat(entrySl) || undefined;
+    const tp = parseFloat(entryTp) || undefined;
+
+    // Determine if a limit order should be PENDING or fill immediately
+    // Long  limit fills immediately if limitPrice >= market (already at/above target)
+    // Short limit fills immediately if limitPrice <= market (already at/below target)
+    const isLimitImmediateFill =
+      orderType === "limit"
+        ? (tradeSide === "long"
+            ? entryPrice >= price
+            : entryPrice <= price)
+        : false;
+
+    if (orderType === "market" || isLimitImmediateFill) {
+      // Execute immediately at market price (or limit price that's already met)
+      const fillPrice = orderType === "market" ? price : entryPrice;
+      const result = openPosition(tradeSide, rawMargin, fillPrice, leverage, "Cross", sl, tp, balance);
+      if (result.success) {
+        setMarginInput(""); setSliderValue(0);
+        setEntrySl(""); setEntryTp("");
+        setActiveTab("position");
+        showToast(`${tradeSide === "long" ? "Long" : "Short"} opened @$${Math.round(fillPrice).toLocaleString()}`, true);
+      } else {
+        showToast(result.message, false);
+      }
     } else {
-      showToast(result.message, false);
+      // Place as pending limit order
+      const result = placeLimitOrder(tradeSide, rawMargin, entryPrice, leverage, sl, tp, balance);
+      if (result.success) {
+        setMarginInput(""); setSliderValue(0);
+        setEntrySl(""); setEntryTp("");
+        setActiveTab("orders");
+        showToast(`Limit ${tradeSide === "long" ? "Long" : "Short"} pending @$${Math.round(entryPrice).toLocaleString()}`, true);
+      } else {
+        showToast(result.message, false);
+      }
     }
   };
 
@@ -366,22 +396,23 @@ export function FuturesPage() {
         <CandleChart candles={candles} currentPrice={price} />
       </div>
 
-      {/* Cross label + leverage */}
-      <div className="flex items-center px-4 py-2 flex-shrink-0">
-        <span className="bg-white border border-gray-200 rounded-full px-3 py-1.5 text-sm font-medium text-gray-500 mr-2">
-          Cross
-        </span>
-        <button onClick={() => setShowLevModal(true)}
-          className="bg-amber-100 border border-amber-200 rounded-full px-3 py-1.5 text-sm font-bold text-orange-600 shadow-sm">
-          {leverage}x
-        </button>
-      </div>
-
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto">
 
         {/* Trade panel */}
-        <div className="mx-3 bg-[#fdf6ec] border border-amber-100 rounded-2xl p-4 shadow-sm">
+        <div className="mx-3 mt-3 bg-[#fdf6ec] border border-amber-100 rounded-2xl p-4 shadow-sm">
+
+          {/* Leverage selector — compact inline */}
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs text-gray-400 font-medium">Cross Margin</span>
+            <button onClick={() => setShowLevModal(true)}
+              className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 text-xs font-bold text-orange-600 active:bg-amber-100 transition-all">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m-8-8h16" />
+              </svg>
+              Leverage {leverage}x
+            </button>
+          </div>
 
           {/* Limit / Market tabs */}
           <div className="flex bg-white rounded-xl border border-gray-200 p-1 mb-4">
@@ -543,6 +574,11 @@ export function FuturesPage() {
                     {positions.length}
                   </span>
                 )}
+                {tab === "orders" && pendingOrders.length > 0 && (
+                  <span className="absolute top-2 right-3 w-4 h-4 bg-amber-400 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                    {pendingOrders.length}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -562,7 +598,60 @@ export function FuturesPage() {
           )}
 
           {activeTab === "orders" && (
-            <p className="py-8 text-center text-sm text-gray-400">No orders</p>
+            <div className="p-2">
+              {pendingOrders.length === 0
+                ? <p className="py-8 text-center text-sm text-gray-400">No pending orders</p>
+                : pendingOrders.map((order) => (
+                  <div key={order.id} className="mx-1 mb-3 bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                          order.side === "long" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-500"
+                        }`}>
+                          {order.side === "long" ? "Long" : "Short"}
+                        </span>
+                        <span className="text-xs text-gray-500 font-medium">{order.leverage}x</span>
+                        <span className="text-xs bg-amber-100 text-amber-600 font-medium px-2 py-0.5 rounded-full">Pending</span>
+                      </div>
+                      <button onClick={() => cancelPendingOrder(order.id)}
+                        className="text-xs bg-gray-100 hover:bg-red-50 hover:text-red-500 text-gray-500 font-medium px-3 py-1 rounded-full transition-all">
+                        Cancel
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-3 gap-y-2">
+                      <div>
+                        <p className="text-[10px] text-gray-400">Type</p>
+                        <p className="text-xs font-semibold text-gray-700">Limit</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-[10px] text-gray-400">Limit Price</p>
+                        <p className="text-xs font-semibold text-orange-500">${fmt(order.limitPrice, 1)}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] text-gray-400">Mark Price</p>
+                        <p className="text-xs font-semibold text-gray-700">${fmt(price, 1)}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-gray-400">Margin</p>
+                        <p className="text-xs font-semibold text-gray-700">${fmt(order.requestedMargin, 5)}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-[10px] text-gray-400">SL</p>
+                        <p className={`text-xs font-medium ${order.sl ? "text-red-500" : "text-gray-400"}`}>
+                          {order.sl ? `$${fmt(order.sl, 1)}` : "--"}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] text-gray-400">TP</p>
+                        <p className={`text-xs font-medium ${order.tp ? "text-green-500" : "text-gray-400"}`}>
+                          {order.tp ? `$${fmt(order.tp, 1)}` : "--"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              }
+            </div>
           )}
 
           {activeTab === "history" && (

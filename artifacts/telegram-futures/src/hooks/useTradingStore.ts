@@ -3,8 +3,8 @@ import { useState, useCallback } from "react";
 export interface Position {
   id: string;
   side: "long" | "short";
-  notional: number;        // position size in USDC (= margin × leverage)
-  margin: number;          // collateral posted (cost)
+  notional: number;
+  margin: number;
   entryPrice: number;
   leverage: number;
   marginMode: "Cross" | "Isolated";
@@ -12,6 +12,17 @@ export interface Position {
   sl?: number;
   tp?: number;
   openTime: number;
+}
+
+export interface PendingOrder {
+  id: string;
+  side: "long" | "short";
+  requestedMargin: number;
+  limitPrice: number;
+  leverage: number;
+  sl?: number;
+  tp?: number;
+  createdAt: number;
 }
 
 export interface ClosedTrade {
@@ -29,73 +40,36 @@ export interface ClosedTrade {
 
 export const INITIAL_BALANCE = 10_000;
 
-/**
- * Max notional (position size in USDC) allowed per leverage level.
- * Mirrors bracket system used by real perpetual futures exchanges.
- * Available leverage options: 50x, 100x, 200x.
- */
 export const LEVERAGE_MAX_NOTIONAL: Record<number, number> = {
-  200:   250_000,   // 200x → max $250k notional → cost = $1,250 with $10k balance
-  100:   500_000,   // 100x → max $500k notional → cost = $5,000 with $10k balance
-   50: 2_000_000,   // 50x  → max $2M  notional → no cap for typical balance
+  200:   250_000,
+  100:   500_000,
+   50: 2_000_000,
 };
 
-/**
- * Maintenance Margin Rate (MMR) tiers by notional value (upper-bound inclusive).
- * Larger positions carry higher MMR — same bracket system as major futures exchanges.
- *
- * Using upTo (inclusive) so boundary values like 500,000 fall into the lower tier.
- *   e.g. 100x capped at exactly 500,000 → MMR = 0.5% ✓
- *        50x uncapped at ~690,000      → MMR = 1.0% ✓ (matches screenshot data)
- */
 const NOTIONAL_MMR_TIERS: { upTo: number; mmr: number }[] = [
-  { upTo:   500_000, mmr: 0.005 }, // 0 – 500k  → 0.5%
-  { upTo: 2_000_000, mmr: 0.010 }, // 500k – 2M → 1.0%
-  { upTo: 5_000_000, mmr: 0.015 }, // 2M – 5M   → 1.5%
-  { upTo:10_000_000, mmr: 0.020 }, // 5M – 10M  → 2.0%
-  { upTo: Infinity,  mmr: 0.025 }, // 10M+       → 2.5%
+  { upTo:   500_000, mmr: 0.005 },
+  { upTo: 2_000_000, mmr: 0.010 },
+  { upTo: 5_000_000, mmr: 0.015 },
+  { upTo:10_000_000, mmr: 0.020 },
+  { upTo: Infinity,  mmr: 0.025 },
 ];
 
-/** Get the applicable MMR for a given notional position size */
 export function getMmr(notional: number): number {
   return NOTIONAL_MMR_TIERS.find((t) => notional <= t.upTo)?.mmr ?? 0.025;
 }
 
-/** Get the max allowed notional for the chosen leverage */
 export function getMaxNotional(leverage: number): number {
   return LEVERAGE_MAX_NOTIONAL[leverage] ?? 50_000_000;
 }
 
-/**
- * Calculate the effective (capped) notional and margin given user inputs.
- *
- * @param requestedMargin  - raw margin the user wants to use
- * @param leverage         - chosen leverage
- * @returns { notional, margin } both capped by the leverage tier limit
- */
 export function calcEffectivePosition(requestedMargin: number, leverage: number) {
   const maxNotional = getMaxNotional(leverage);
   const requestedNotional = requestedMargin * leverage;
   const notional = Math.min(requestedNotional, maxNotional);
-  const margin = notional / leverage;   // cost (may be less than requestedMargin if capped)
+  const margin = notional / leverage;
   return { notional, margin };
 }
 
-/**
- * Liquidation price — verified against real exchange screenshots.
- *
- * At liquidation the account equity equals the maintenance margin requirement:
- *   collateral + unrealised_pnl = MMR × notional_at_liq
- *
- * Solving for liq_price:
- *   Long  → liq = (notional - collateral) × entry / (notional × (1 − MMR))
- *   Short → liq = (notional + collateral) × entry / (notional × (1 + MMR))
- *
- * Cross margin: collateral = full wallet balance (WB)
- * Isolated margin: collateral = position margin only
- *
- * MMR is tiered by notional size (see getMmr).
- */
 export function calcLiqPrice(
   side: "long" | "short",
   entryPrice: number,
@@ -118,24 +92,16 @@ export function calcLiqPrice(
 export function useTradingStore() {
   const [balance, setBalance] = useState(INITIAL_BALANCE);
   const [positions, setPositions] = useState<Position[]>([]);
+  const [pendingOrders, setPendingOrders] = useState<PendingOrder[]>([]);
   const [history, setHistory] = useState<ClosedTrade[]>([]);
 
-  /**
-   * Open a new position.
-   * @param requestedMargin  - collateral the user wants to use (may be reduced by tier cap)
-   * @param price            - current mark/entry price
-   * @param leverage         - chosen leverage
-   * @param marginMode       - Cross or Isolated
-   * @param sl / tp          - optional stop-loss / take-profit prices
-   * @param currentBalance   - passed from UI to avoid stale closure
-   */
-  const openPosition = useCallback(
+  // Internal: execute a position open (used for market orders and triggered limit orders)
+  const _executeOpen = useCallback(
     (
       side: "long" | "short",
       requestedMargin: number,
       price: number,
       leverage: number,
-      marginMode: "Cross" | "Isolated",
       sl?: number,
       tp?: number,
       currentBalance?: number
@@ -147,17 +113,16 @@ export function useTradingStore() {
       if (requestedMargin > avail) return { success: false, message: `Insufficient balance. Need $${requestedMargin.toFixed(2)}` };
 
       const { notional, margin } = calcEffectivePosition(requestedMargin, leverage);
-
-      const liquidationPrice = calcLiqPrice(side, price, notional, margin, marginMode, avail);
+      const liquidationPrice = calcLiqPrice(side, price, notional, margin, "Cross", avail);
 
       const pos: Position = {
-        id: Date.now().toString(),
+        id: Date.now().toString() + Math.random().toString(36).slice(2, 6),
         side,
         notional,
         margin,
         entryPrice: price,
         leverage,
-        marginMode,
+        marginMode: "Cross",
         liquidationPrice,
         sl: sl && sl > 0 ? sl : undefined,
         tp: tp && tp > 0 ? tp : undefined,
@@ -167,6 +132,138 @@ export function useTradingStore() {
       setBalance((b) => parseFloat((b - margin).toFixed(5)));
       setPositions((prev) => [...prev, pos]);
       return { success: true, message: "Position opened" };
+    },
+    []
+  );
+
+  /**
+   * Open a market order — executes immediately at current price.
+   */
+  const openPosition = useCallback(
+    (
+      side: "long" | "short",
+      requestedMargin: number,
+      price: number,
+      leverage: number,
+      _marginMode: "Cross" | "Isolated",
+      sl?: number,
+      tp?: number,
+      currentBalance?: number
+    ): { success: boolean; message: string } => {
+      return _executeOpen(side, requestedMargin, price, leverage, sl, tp, currentBalance);
+    },
+    [_executeOpen]
+  );
+
+  /**
+   * Place a limit order — goes into pendingOrders queue.
+   * Will be triggered when market price crosses the limit price.
+   *
+   * Trigger conditions:
+   *   Long  (buy):  triggered when market price FALLS TO or BELOW limitPrice
+   *   Short (sell): triggered when market price RISES TO or ABOVE limitPrice
+   */
+  const placeLimitOrder = useCallback(
+    (
+      side: "long" | "short",
+      requestedMargin: number,
+      limitPrice: number,
+      leverage: number,
+      sl?: number,
+      tp?: number,
+      currentBalance?: number
+    ): { success: boolean; message: string } => {
+      const avail = currentBalance ?? INITIAL_BALANCE;
+
+      if (requestedMargin <= 0) return { success: false, message: "Enter a margin amount greater than 0" };
+      if (requestedMargin < 1)  return { success: false, message: "Minimum margin is $1" };
+      if (requestedMargin > avail) return { success: false, message: `Insufficient balance. Need $${requestedMargin.toFixed(2)}` };
+      if (limitPrice <= 0) return { success: false, message: "Invalid limit price" };
+
+      const order: PendingOrder = {
+        id: Date.now().toString() + Math.random().toString(36).slice(2, 6),
+        side,
+        requestedMargin,
+        limitPrice,
+        leverage,
+        sl: sl && sl > 0 ? sl : undefined,
+        tp: tp && tp > 0 ? tp : undefined,
+        createdAt: Date.now(),
+      };
+
+      setPendingOrders((prev) => [...prev, order]);
+      return { success: true, message: "Limit order placed" };
+    },
+    []
+  );
+
+  /**
+   * Cancel a pending limit order (returns margin to balance — balance not locked in
+   * this simplified implementation since we check balance at fill time).
+   */
+  const cancelPendingOrder = useCallback((orderId: string) => {
+    setPendingOrders((prev) => prev.filter((o) => o.id !== orderId));
+  }, []);
+
+  /**
+   * Called on every price tick from the UI.
+   * Checks if any pending limit orders should be filled at the current market price.
+   *
+   * Long  limit: fill when marketPrice <= limitPrice  (price dropped to our buy target)
+   * Short limit: fill when marketPrice >= limitPrice  (price rose to our sell target)
+   */
+  const checkPendingOrders = useCallback(
+    (marketPrice: number, currentBalance: number) => {
+      setPendingOrders((prev) => {
+        if (prev.length === 0) return prev;
+
+        const toFill: PendingOrder[] = [];
+        const remaining: PendingOrder[] = [];
+
+        for (const order of prev) {
+          const shouldFill =
+            order.side === "long"
+              ? marketPrice <= order.limitPrice
+              : marketPrice >= order.limitPrice;
+
+          if (shouldFill) {
+            toFill.push(order);
+          } else {
+            remaining.push(order);
+          }
+        }
+
+        if (toFill.length === 0) return prev;
+
+        // Execute each triggered order sequentially (balance updated per fill)
+        let runningBalance = currentBalance;
+        for (const order of toFill) {
+          if (order.requestedMargin <= runningBalance) {
+            const { notional, margin } = calcEffectivePosition(order.requestedMargin, order.leverage);
+            const liquidationPrice = calcLiqPrice(order.side, order.limitPrice, notional, margin, "Cross", runningBalance);
+
+            const pos: Position = {
+              id: order.id + "_filled",
+              side: order.side,
+              notional,
+              margin,
+              entryPrice: order.limitPrice,
+              leverage: order.leverage,
+              marginMode: "Cross",
+              liquidationPrice,
+              sl: order.sl,
+              tp: order.tp,
+              openTime: Date.now(),
+            };
+
+            setPositions((p) => [...p, pos]);
+            setBalance((b) => parseFloat((b - margin).toFixed(5)));
+            runningBalance -= margin;
+          }
+        }
+
+        return remaining;
+      });
     },
     []
   );
@@ -222,5 +319,17 @@ export function useTradingStore() {
       : (-priceDiff / pos.entryPrice) * pos.notional;
   }, []);
 
-  return { balance, positions, history, openPosition, closePosition, updateSlTp, getPnl };
+  return {
+    balance,
+    positions,
+    pendingOrders,
+    history,
+    openPosition,
+    placeLimitOrder,
+    cancelPendingOrder,
+    checkPendingOrders,
+    closePosition,
+    updateSlTp,
+    getPnl,
+  };
 }
