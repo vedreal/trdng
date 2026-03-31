@@ -1,6 +1,12 @@
 import { useState, useCallback } from "react";
 import { useBinancePrice } from "../hooks/useBinancePrice";
-import { useTradingStore, type Position } from "../hooks/useTradingStore";
+import {
+  useTradingStore,
+  type Position,
+  calcLiqPrice,
+  calcEffectivePosition,
+  getMaxNotional,
+} from "../hooks/useTradingStore";
 import { CandleChart } from "../components/CandleChart";
 
 type OrderSide = "buy" | "sell";
@@ -9,7 +15,6 @@ type TabType = "position" | "orders" | "history";
 
 const LEVERAGE_OPTIONS = [10, 25, 50, 100, 200];
 const SLIDER_MARKS = [0, 25, 50, 75, 100];
-const MMR = 0.005;
 
 const INTERVALS = [
   { label: "5m", value: "5m" },
@@ -22,25 +27,10 @@ function fmt(n: number, dec = 2) {
   return n.toLocaleString("en-US", { minimumFractionDigits: dec, maximumFractionDigits: dec });
 }
 
-/** Mirror of store formula so the UI preview is consistent */
-function previewLiq(
-  side: "long" | "short",
-  entry: number,
-  notional: number,
-  margin: number,
-  marginMode: "Cross" | "Isolated",
-  wallet: number
-): string {
-  if (notional <= 0 || entry <= 0) return "--";
-  const collateral = marginMode === "Cross" ? wallet : margin;
-  let liq: number;
-  if (side === "long") {
-    liq = (entry * (notional - collateral)) / (notional * (1 - MMR));
-    if (liq <= 0) return "No Liq.";
-  } else {
-    liq = (entry * (notional + collateral)) / (notional * (1 + MMR));
-  }
-  return "$" + fmt(liq, 1);
+function fmtCompact(n: number): string {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(3) + "M";
+  if (n >= 1_000) return (n / 1_000).toFixed(2) + "K";
+  return fmt(n, 2);
 }
 
 // ── SL/TP Edit Modal ──────────────────────────────────────────────────
@@ -154,8 +144,8 @@ function PositionCard({
 
       <div className="grid grid-cols-3 gap-y-3 mb-3">
         <div>
-          <p className="text-[10px] text-gray-400 mb-0.5">Position</p>
-          <p className="text-xs font-semibold text-gray-700">${fmt(pos.notional)}</p>
+          <p className="text-[10px] text-gray-400 mb-0.5">Max (Pos.)</p>
+          <p className="text-xs font-semibold text-gray-700">${fmtCompact(pos.notional)}</p>
         </div>
         <div className="text-center">
           <p className="text-[10px] text-gray-400 mb-0.5">Entry Price</p>
@@ -166,8 +156,8 @@ function PositionCard({
           <p className="text-xs font-semibold text-gray-700">${fmt(currentPrice, 1)}</p>
         </div>
         <div>
-          <p className="text-[10px] text-gray-400 mb-0.5">Margin</p>
-          <p className="text-xs font-semibold text-gray-700">${fmt(pos.margin)}</p>
+          <p className="text-[10px] text-gray-400 mb-0.5">Cost</p>
+          <p className="text-xs font-semibold text-gray-700">${fmt(pos.margin, 5)}</p>
         </div>
         <div className="text-center">
           <p className="text-[10px] text-gray-400 mb-0.5">Liq. Price</p>
@@ -212,10 +202,10 @@ export function FuturesPage() {
   const { price, priceChangePercent, candles, interval, setInterval } = useBinancePrice("BTCUSDT");
   const { balance, positions, history, openPosition, closePosition, updateSlTp, getPnl } = useTradingStore();
 
-  const [side, setSide]         = useState<OrderSide>("buy");
+  const [side, setSide]           = useState<OrderSide>("buy");
   const [orderType, setOrderType] = useState<OrderType>("limit");
-  const [marginInput, setMarginInput] = useState(""); // user enters margin (collateral)
-  const [leverage, setLeverage] = useState(50);
+  const [marginInput, setMarginInput] = useState("");
+  const [leverage, setLeverage]   = useState(50);
   const [marginMode, setMarginMode] = useState<"Cross" | "Isolated">("Cross");
   const [sliderValue, setSliderValue] = useState(0);
 
@@ -223,19 +213,39 @@ export function FuturesPage() {
   const [entrySl, setEntrySl] = useState("");
   const [entryTp, setEntryTp] = useState("");
 
-  const [activeTab, setActiveTab]   = useState<TabType>("position");
+  const [activeTab, setActiveTab]     = useState<TabType>("position");
   const [showLevModal, setShowLevModal] = useState(false);
-  const [editingPos, setEditingPos] = useState<Position | null>(null);
-  const [toast, setToast]           = useState<{ msg: string; ok: boolean } | null>(null);
+  const [editingPos, setEditingPos]   = useState<Position | null>(null);
+  const [toast, setToast]             = useState<{ msg: string; ok: boolean } | null>(null);
 
   const priceDisplay = price > 0
     ? "$" + price.toLocaleString("en-US", { maximumFractionDigits: 0 })
     : "$...";
   const limitPrice = price > 0 ? Math.round(price).toString() : "...";
 
-  const parsedMargin  = parseFloat(marginInput) || 0;
-  const posNotional   = parsedMargin * leverage;           // position size
-  const liqPreview    = previewLiq(side === "buy" ? "long" : "short", price, posNotional, parsedMargin, marginMode, balance);
+  // ── Core calculations ────────────────────────────────────────────────
+  const rawMargin = parseFloat(marginInput) || 0;
+
+  // Effective position after applying tier cap
+  const { notional: effectiveNotional, margin: effectiveCost } =
+    rawMargin > 0 && leverage > 0
+      ? calcEffectivePosition(rawMargin, leverage)
+      : { notional: 0, margin: 0 };
+
+  // Whether the tier cap was hit
+  const tierMax = getMaxNotional(leverage);
+  const isCapped = rawMargin > 0 && (rawMargin * leverage) > tierMax;
+
+  // Liq. price preview (uses mark price as entry for preview)
+  function liqPreview(tradeSide: "long" | "short"): string {
+    if (effectiveNotional <= 0 || price <= 0) return "--";
+    const liq = calcLiqPrice(tradeSide, price, effectiveNotional, effectiveCost, marginMode, balance);
+    if (tradeSide === "long" && liq <= 0) return "No Liq.";
+    return "$" + fmt(liq, 1);
+  }
+
+  const longLiqPreview  = liqPreview("long");
+  const shortLiqPreview = liqPreview("short");
 
   const showToast = (msg: string, ok: boolean) => {
     setToast({ msg, ok });
@@ -252,14 +262,15 @@ export function FuturesPage() {
   const handleSliderChange = useCallback((pct: number) => {
     setSliderValue(pct);
     const m = (balance * pct) / 100;
-    setMarginInput(m > 0 ? m.toFixed(2) : "");
+    setMarginInput(m > 0 ? m.toFixed(5) : "");
   }, [balance]);
 
-  const handleSubmit = () => {
+  const handleSubmit = (forceSide?: "long" | "short") => {
     if (price <= 0) return showToast("Price not loaded yet", false);
+    const tradeSide = forceSide ?? (side === "buy" ? "long" : "short");
     const result = openPosition(
-      side === "buy" ? "long" : "short",
-      parsedMargin,
+      tradeSide,
+      rawMargin,
       price,
       leverage,
       marginMode,
@@ -271,7 +282,7 @@ export function FuturesPage() {
       setMarginInput(""); setSliderValue(0);
       setEntrySl(""); setEntryTp("");
       setActiveTab("position");
-      showToast(`${side === "buy" ? "Long" : "Short"} opened at $${Math.round(price).toLocaleString()}`, true);
+      showToast(`${tradeSide === "long" ? "Long" : "Short"} opened at $${Math.round(price).toLocaleString()}`, true);
     } else {
       showToast(result.message, false);
     }
@@ -388,8 +399,8 @@ export function FuturesPage() {
 
           {/* Available */}
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm text-gray-500">Available</span>
-            <span className="text-sm font-semibold text-gray-700">${fmt(balance)}</span>
+            <span className="text-sm text-gray-500">Avail.</span>
+            <span className="text-sm font-semibold text-gray-700">${fmt(balance, 5)} USDC</span>
           </div>
 
           {/* Margin input */}
@@ -400,20 +411,20 @@ export function FuturesPage() {
               value={marginInput}
               onChange={(e) => handleMarginChange(e.target.value)}
               className="flex-1 text-right text-sm font-medium text-gray-700 bg-transparent outline-none"
-              placeholder="0.00" min="0" step="0.01"
+              placeholder="0.00000" min="0" step="0.00001"
             />
             <span className="text-sm text-gray-400 ml-2 flex-shrink-0">USDC</span>
           </div>
 
-          {/* Position size hint */}
-          {posNotional > 0 && (
-            <div className="flex justify-end mb-3 pr-1">
-              <span className="text-[10px] text-gray-400">
-                Position size: <span className="text-orange-500 font-medium">${fmt(posNotional)}</span>
+          {/* Tier cap notice */}
+          {isCapped && (
+            <div className="flex justify-end mb-2 pr-1">
+              <span className="text-[10px] text-orange-500 font-medium">
+                ⚠ Max position capped at ${fmtCompact(tierMax)} for {leverage}x
               </span>
             </div>
           )}
-          {posNotional === 0 && <div className="mb-3" />}
+          {!isCapped && <div className="mb-2" />}
 
           {/* Order type */}
           <div className="flex items-center gap-2 mb-3">
@@ -493,29 +504,64 @@ export function FuturesPage() {
             </div>
           )}
 
-          {/* Liq / Margin summary */}
-          <div className="flex justify-between mb-1">
-            <span className="text-xs text-gray-500">Liq. Price</span>
-            <span className={`text-xs font-medium ${liqPreview === "No Liq." ? "text-green-500" : "text-gray-600"}`}>
-              {liqPreview}
-            </span>
-          </div>
-          <div className="flex justify-between mb-4">
-            <span className="text-xs text-gray-500">Margin Required</span>
-            <span className="text-xs text-gray-700">
-              {parsedMargin > 0 ? `$${fmt(parsedMargin)}` : "$0.00"}
-            </span>
-          </div>
+          {/* ── Order summary (Max / Cost / Liq) — like real exchange ── */}
+          {effectiveNotional > 0 ? (
+            <div className="bg-white/60 rounded-xl border border-amber-100 px-4 py-3 mb-4 space-y-1.5">
+              <div className="flex justify-between">
+                <span className="text-xs text-gray-500">Max</span>
+                <span className="text-xs font-semibold text-gray-700">
+                  {fmtCompact(effectiveNotional)} USDC
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-xs text-gray-500">Cost</span>
+                <span className="text-xs font-semibold text-gray-700">
+                  {fmt(effectiveCost, 5)} USDC
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-xs text-gray-500">Liq. Price</span>
+                <span className={`text-xs font-semibold ${longLiqPreview === "No Liq." ? "text-green-500" : "text-orange-500"}`}>
+                  {side === "buy" ? longLiqPreview : shortLiqPreview}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="mb-4" />
+          )}
 
-          {/* Submit */}
-          <button onClick={handleSubmit}
-            className={`w-full py-4 rounded-xl text-white font-semibold text-base shadow-sm transition-all active:scale-[0.98] ${
-              side === "buy"
-                ? "bg-gradient-to-r from-green-400 to-green-500"
-                : "bg-gradient-to-r from-orange-300 to-red-400"
-            }`}>
-            {side === "buy" ? "Buy / Long" : "Sell / Short"}
-          </button>
+          {/* Submit — shows both Long and Short info when amount > 0, like reference exchange */}
+          {effectiveNotional > 0 ? (
+            <div className="space-y-2">
+              {/* Open Long */}
+              <button
+                onClick={() => handleSubmit("long")}
+                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-green-400 to-green-500 text-white font-semibold text-sm shadow-sm active:scale-[0.98] transition-all text-left px-4">
+                <div className="font-bold">Open Long</div>
+                <div className="text-xs text-green-100 font-normal mt-0.5">
+                  Max {fmtCompact(effectiveNotional)} · Cost {fmt(effectiveCost, 2)} · Liq {longLiqPreview}
+                </div>
+              </button>
+              {/* Open Short */}
+              <button
+                onClick={() => handleSubmit("short")}
+                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-orange-400 to-red-500 text-white font-semibold text-sm shadow-sm active:scale-[0.98] transition-all text-left px-4">
+                <div className="font-bold">Open Short</div>
+                <div className="text-xs text-red-100 font-normal mt-0.5">
+                  Max {fmtCompact(effectiveNotional)} · Cost {fmt(effectiveCost, 2)} · Liq {shortLiqPreview}
+                </div>
+              </button>
+            </div>
+          ) : (
+            <button onClick={() => handleSubmit()}
+              className={`w-full py-4 rounded-xl text-white font-semibold text-base shadow-sm transition-all active:scale-[0.98] ${
+                side === "buy"
+                  ? "bg-gradient-to-r from-green-400 to-green-500"
+                  : "bg-gradient-to-r from-orange-300 to-red-400"
+              }`}>
+              {side === "buy" ? "Open Long" : "Open Short"}
+            </button>
+          )}
         </div>
 
         {/* Position / Orders / History */}
@@ -577,8 +623,8 @@ export function FuturesPage() {
                       </div>
                       <div className="grid grid-cols-3 gap-y-2">
                         <div>
-                          <p className="text-[10px] text-gray-400">Position</p>
-                          <p className="text-xs font-medium text-gray-700">${fmt(trade.notional)}</p>
+                          <p className="text-[10px] text-gray-400">Max (Pos.)</p>
+                          <p className="text-xs font-medium text-gray-700">${fmtCompact(trade.notional)}</p>
                         </div>
                         <div className="text-center">
                           <p className="text-[10px] text-gray-400">Entry</p>
@@ -587,6 +633,20 @@ export function FuturesPage() {
                         <div className="text-right">
                           <p className="text-[10px] text-gray-400">Close</p>
                           <p className="text-xs font-medium text-gray-700">${fmt(trade.closePrice, 1)}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-gray-400">Cost</p>
+                          <p className="text-xs font-medium text-gray-700">${fmt(trade.margin, 2)}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[10px] text-gray-400">Leverage</p>
+                          <p className="text-xs font-medium text-gray-700">{trade.leverage}x</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] text-gray-400">PnL%</p>
+                          <p className={`text-xs font-bold ${profit ? "text-green-500" : "text-red-500"}`}>
+                            {profit ? "+" : ""}{((trade.pnl / trade.margin) * 100).toFixed(2)}%
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -612,7 +672,7 @@ export function FuturesPage() {
             </div>
             <div className="flex gap-2 mb-4">
               {LEVERAGE_OPTIONS.map((lev) => (
-                <button key={lev} onClick={() => { setLeverage(lev); setShowLevModal(false); }}
+                <button key={lev} onClick={() => { setLeverage(lev); setShowLevModal(false); setMarginInput(""); setSliderValue(0); }}
                   className={`flex-1 py-3 rounded-xl text-sm font-bold border transition-all ${
                     leverage === lev
                       ? "bg-orange-500 text-white border-orange-500"
@@ -622,7 +682,18 @@ export function FuturesPage() {
                 </button>
               ))}
             </div>
-            <p className="text-xs text-gray-400 text-center">Higher leverage = higher risk. Trade responsibly.</p>
+            {/* Show max position per leverage */}
+            <div className="bg-gray-50 rounded-xl p-3 space-y-1.5">
+              <p className="text-xs text-gray-400 font-medium mb-2">Max Position by Leverage</p>
+              {LEVERAGE_OPTIONS.map((lev) => (
+                <div key={lev} className="flex justify-between">
+                  <span className={`text-xs font-medium ${lev === leverage ? "text-orange-500" : "text-gray-500"}`}>{lev}x</span>
+                  <span className={`text-xs ${lev === leverage ? "text-orange-500 font-semibold" : "text-gray-400"}`}>
+                    Max ${fmtCompact(getMaxNotional(lev))}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

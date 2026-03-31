@@ -4,7 +4,7 @@ export interface Position {
   id: string;
   side: "long" | "short";
   notional: number;        // position size in USDC (= margin × leverage)
-  margin: number;          // collateral posted
+  margin: number;          // collateral posted (cost)
   entryPrice: number;
   leverage: number;
   marginMode: "Cross" | "Isolated";
@@ -27,26 +27,82 @@ export interface ClosedTrade {
   closeTime: number;
 }
 
-const INITIAL_BALANCE = 10_000;
-const MMR = 0.005; // 0.5% maintenance margin rate (standard for BTC futures)
+export const INITIAL_BALANCE = 10_000;
 
 /**
- * Liquidation price — mirrors real futures exchange logic.
- *
- * The position is liquidated when:
- *   unrealised PnL + collateral = maintenance margin
- *
- * Cross  Long  → Liq = Entry × (N − W) / (N × (1 − MMR))
- * Cross  Short → Liq = Entry × (N + W) / (N × (1 + MMR))
- * Isol.  Long  → same as cross but collateral = margin (= N / leverage)
- * Isol.  Short → same as cross but collateral = margin
- *
- * where N = positionNotional, W = wallet/margin used.
- *
- * If Liq ≤ 0 for a long (collateral > notional), the account can absorb any
- * loss before the price reaches 0 — show "No Liq." in the UI.
+ * Max notional (position size in USDC) allowed per leverage level.
+ * Mirrors bracket system used by real perpetual futures exchanges.
  */
-function calcLiqPrice(
+export const LEVERAGE_MAX_NOTIONAL: Record<number, number> = {
+  200:    50_000,
+  100:   500_000,
+   50: 2_000_000,
+   25: 5_000_000,
+   20: 10_000_000,
+   10: 50_000_000,
+};
+
+/**
+ * Maintenance Margin Rate (MMR) tiers by notional value.
+ * The larger the position, the higher the MMR.
+ */
+const NOTIONAL_MMR_TIERS: { threshold: number; mmr: number }[] = [
+  { threshold:        0, mmr: 0.005  }, // 0–500k  → 0.5%
+  { threshold:  500_000, mmr: 0.010  }, // 500k–2M → 1.0%
+  { threshold: 2_000_000, mmr: 0.015 }, // 2M–5M   → 1.5%
+  { threshold: 5_000_000, mmr: 0.020 }, // 5M–10M  → 2.0%
+  { threshold: 10_000_000, mmr: 0.025 },// 10M+    → 2.5%
+];
+
+/** Get the applicable MMR for a given notional position size */
+export function getMmr(notional: number): number {
+  let mmr = NOTIONAL_MMR_TIERS[0].mmr;
+  for (const tier of NOTIONAL_MMR_TIERS) {
+    if (notional >= tier.threshold) {
+      mmr = tier.mmr;
+    } else {
+      break;
+    }
+  }
+  return mmr;
+}
+
+/** Get the max allowed notional for the chosen leverage */
+export function getMaxNotional(leverage: number): number {
+  return LEVERAGE_MAX_NOTIONAL[leverage] ?? 50_000_000;
+}
+
+/**
+ * Calculate the effective (capped) notional and margin given user inputs.
+ *
+ * @param requestedMargin  - raw margin the user wants to use
+ * @param leverage         - chosen leverage
+ * @returns { notional, margin } both capped by the leverage tier limit
+ */
+export function calcEffectivePosition(requestedMargin: number, leverage: number) {
+  const maxNotional = getMaxNotional(leverage);
+  const requestedNotional = requestedMargin * leverage;
+  const notional = Math.min(requestedNotional, maxNotional);
+  const margin = notional / leverage;   // cost (may be less than requestedMargin if capped)
+  return { notional, margin };
+}
+
+/**
+ * Liquidation price — verified against real exchange screenshots.
+ *
+ * At liquidation the account equity equals the maintenance margin requirement:
+ *   collateral + unrealised_pnl = MMR × notional_at_liq
+ *
+ * Solving for liq_price:
+ *   Long  → liq = (notional - collateral) × entry / (notional × (1 − MMR))
+ *   Short → liq = (notional + collateral) × entry / (notional × (1 + MMR))
+ *
+ * Cross margin: collateral = full wallet balance (WB)
+ * Isolated margin: collateral = position margin only
+ *
+ * MMR is tiered by notional size (see getMmr).
+ */
+export function calcLiqPrice(
   side: "long" | "short",
   entryPrice: number,
   notional: number,
@@ -55,12 +111,13 @@ function calcLiqPrice(
   walletBalance: number
 ): number {
   const collateral = marginMode === "Cross" ? walletBalance : margin;
+  const mmr = getMmr(notional);
 
   if (side === "long") {
-    const liq = (entryPrice * (notional - collateral)) / (notional * (1 - MMR));
+    const liq = (notional - collateral) * entryPrice / (notional * (1 - mmr));
     return Math.max(liq, 0);
   } else {
-    return (entryPrice * (notional + collateral)) / (notional * (1 + MMR));
+    return (notional + collateral) * entryPrice / (notional * (1 + mmr));
   }
 }
 
@@ -70,17 +127,18 @@ export function useTradingStore() {
   const [history, setHistory] = useState<ClosedTrade[]>([]);
 
   /**
-   * @param margin    – collateral to post (USDC)
-   * @param price     – current mark price
-   * @param leverage  – chosen leverage
-   * @param marginMode
-   * @param sl / tp   – optional stop loss / take profit prices
-   * @param currentBalance – passed from UI to avoid stale closure
+   * Open a new position.
+   * @param requestedMargin  - collateral the user wants to use (may be reduced by tier cap)
+   * @param price            - current mark/entry price
+   * @param leverage         - chosen leverage
+   * @param marginMode       - Cross or Isolated
+   * @param sl / tp          - optional stop-loss / take-profit prices
+   * @param currentBalance   - passed from UI to avoid stale closure
    */
   const openPosition = useCallback(
     (
       side: "long" | "short",
-      margin: number,
+      requestedMargin: number,
       price: number,
       leverage: number,
       marginMode: "Cross" | "Isolated",
@@ -90,11 +148,12 @@ export function useTradingStore() {
     ): { success: boolean; message: string } => {
       const avail = currentBalance ?? INITIAL_BALANCE;
 
-      if (margin <= 0)      return { success: false, message: "Enter a margin amount greater than 0" };
-      if (margin < 1)       return { success: false, message: "Minimum margin is $1" };
-      if (margin > avail)   return { success: false, message: `Insufficient balance. Need $${margin.toFixed(2)}` };
+      if (requestedMargin <= 0) return { success: false, message: "Enter a margin amount greater than 0" };
+      if (requestedMargin < 1)  return { success: false, message: "Minimum margin is $1" };
+      if (requestedMargin > avail) return { success: false, message: `Insufficient balance. Need $${requestedMargin.toFixed(2)}` };
 
-      const notional = margin * leverage;
+      const { notional, margin } = calcEffectivePosition(requestedMargin, leverage);
+
       const liquidationPrice = calcLiqPrice(side, price, notional, margin, marginMode, avail);
 
       const pos: Position = {
@@ -111,7 +170,7 @@ export function useTradingStore() {
         openTime: Date.now(),
       };
 
-      setBalance((b) => parseFloat((b - margin).toFixed(2)));
+      setBalance((b) => parseFloat((b - margin).toFixed(5)));
       setPositions((prev) => [...prev, pos]);
       return { success: true, message: "Position opened" };
     },
@@ -130,7 +189,7 @@ export function useTradingStore() {
           : (-priceDiff / pos.entryPrice) * pos.notional;
 
       const returned = pos.margin + pnl;
-      setBalance((b) => parseFloat((b + Math.max(returned, 0)).toFixed(2)));
+      setBalance((b) => parseFloat((b + Math.max(returned, 0)).toFixed(5)));
 
       setHistory((h) => [
         {
