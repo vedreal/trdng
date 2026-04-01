@@ -1,0 +1,10 @@
+{
+  "buildCommand": "pnpm run typecheck:libs && pnpm --filter @workspace/telegram-futures run build",
+  "outputDirectory": "artifacts/telegram-futures/dist/public",
+  "framework": null,
+  "rewrites": [
+    { "source": "/api/binance/klines", "destination": "/api/binance/klines" },
+    { "source": "/api/binance/ticker", "destination": "/api/binance/ticker" },
+    { "source": "/api/healthz", "destination": "/api/healthz" }
+  ]
+}
