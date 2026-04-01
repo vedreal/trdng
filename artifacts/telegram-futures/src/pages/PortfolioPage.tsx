@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useTrading } from "../contexts/TradingContext";
 import { useBinancePrice } from "../hooks/useBinancePrice";
 
@@ -36,6 +36,8 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
       .filter((t) => t.closeTime >= TODAY_START.getTime())
       .reduce((sum, t) => sum + t.pnl, 0);
   }, [history]);
+
+  const [assetTab, setAssetTab] = useState<"spot" | "futures">("spot");
 
   const todayPnl = unrealizedPnl + todayRealizedPnl;
   const bnbValueUsdt = bnbBalance * (bnbPrice > 0 ? bnbPrice : 600);
@@ -172,71 +174,91 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
 
         {/* Assets */}
         <div>
-          <p className="text-xs font-semibold text-[#888888] uppercase tracking-wide mb-2">Assets</p>
+          {/* Header + tab switcher */}
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold text-[#888888] uppercase tracking-wide">Assets</p>
+            <div className="flex rounded-lg border border-[#C8C0A0] bg-[#E8E4D0] p-0.5 gap-0.5">
+              {(["spot", "futures"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setAssetTab(tab)}
+                  className={`px-3 py-0.5 rounded-md text-[11px] font-semibold transition-all ${
+                    assetTab === tab ? "btn-3d-gold" : "text-[#888888]"
+                  }`}>
+                  {tab === "spot" ? "Spot" : "Futures"}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="space-y-2">
-            {/* USDT — Portfolio (Spot) */}
-            <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3.5 flex items-center gap-3">
-              <img src={COIN_ICONS.USDT} alt="USDT" className="w-10 h-10 rounded-full flex-shrink-0"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-[#1A1A1A]">USDT</span>
-                  <span className="text-sm font-bold text-[#1A1A1A]">${fmtUsd(spotUsdtBalance)}</span>
+            {assetTab === "spot" ? (
+              <>
+                {/* USDT Spot */}
+                <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3.5 flex items-center gap-3">
+                  <img src={COIN_ICONS.USDT} alt="USDT" className="w-10 h-10 rounded-full flex-shrink-0"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-[#1A1A1A]">USDT</span>
+                      <span className="text-sm font-bold text-[#1A1A1A]">${fmtUsd(spotUsdtBalance)}</span>
+                    </div>
+                    <div className="flex items-center justify-between mt-0.5">
+                      <span className="text-[11px] text-[#888888]">Tether USD</span>
+                      <span className="text-[11px] text-[#888888]">{fmtUsd(spotUsdtBalance)} USDT</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between mt-0.5">
-                  <span className="text-[11px] text-[#888888]">Portfolio (Spot)</span>
-                  <span className="text-[11px] text-[#888888]">{fmtUsd(spotUsdtBalance)} USDT</span>
-                </div>
-              </div>
-            </div>
 
-            {/* USDT — Futures */}
-            <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3.5 flex items-center gap-3">
-              <img src={COIN_ICONS.USDT} alt="USDT" className="w-10 h-10 rounded-full flex-shrink-0"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-[#1A1A1A]">USDT</span>
-                  <span className="text-sm font-bold text-[#1A1A1A]">${fmtUsd(balance)}</span>
+                {/* XAUT */}
+                <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3.5 flex items-center gap-3">
+                  <img src={COIN_ICONS.XAUT} alt="XAUT" className="w-10 h-10 rounded-full flex-shrink-0"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-[#1A1A1A]">XAUT</span>
+                      <span className="text-sm font-bold text-[#1A1A1A]">${fmtUsd(xautValueUsdt)}</span>
+                    </div>
+                    <div className="flex items-center justify-between mt-0.5">
+                      <span className="text-[11px] text-[#888888]">Tether Gold</span>
+                      <span className="text-[11px] text-[#888888]">{xautBalance.toFixed(6)} XAUT</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between mt-0.5">
-                  <span className="text-[11px] text-[#888888]">Futures</span>
-                  <span className="text-[11px] text-[#888888]">{fmtUsd(balance)} USDT</span>
-                </div>
-              </div>
-            </div>
 
-            {/* XAUT */}
-            <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3.5 flex items-center gap-3">
-              <img src={COIN_ICONS.XAUT} alt="XAUT" className="w-10 h-10 rounded-full flex-shrink-0"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-[#1A1A1A]">XAUT</span>
-                  <span className="text-sm font-bold text-[#1A1A1A]">${fmtUsd(xautValueUsdt)}</span>
+                {/* BNB */}
+                <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3.5 flex items-center gap-3">
+                  <img src={COIN_ICONS.BNB} alt="BNB" className="w-10 h-10 rounded-full flex-shrink-0"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-[#1A1A1A]">BNB</span>
+                      <span className="text-sm font-bold text-[#1A1A1A]">${fmtUsd(bnbValueUsdt)}</span>
+                    </div>
+                    <div className="flex items-center justify-between mt-0.5">
+                      <span className="text-[11px] text-[#888888]">BNB</span>
+                      <span className="text-[11px] text-[#888888]">{bnbBalance.toFixed(4)} BNB</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between mt-0.5">
-                  <span className="text-[11px] text-[#888888]">Tether Gold</span>
-                  <span className="text-[11px] text-[#888888]">{xautBalance.toFixed(6)} XAUT</span>
+              </>
+            ) : (
+              /* Futures tab */
+              <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3.5 flex items-center gap-3">
+                <img src={COIN_ICONS.USDT} alt="USDT" className="w-10 h-10 rounded-full flex-shrink-0"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-[#1A1A1A]">USDT</span>
+                    <span className="text-sm font-bold text-[#1A1A1A]">${fmtUsd(balance)}</span>
+                  </div>
+                  <div className="flex items-center justify-between mt-0.5">
+                    <span className="text-[11px] text-[#888888]">Futures Balance</span>
+                    <span className="text-[11px] text-[#888888]">{fmtUsd(balance)} USDT</span>
+                  </div>
                 </div>
               </div>
-            </div>
-
-            {/* BNB */}
-            <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3.5 flex items-center gap-3">
-              <img src={COIN_ICONS.BNB} alt="BNB" className="w-10 h-10 rounded-full flex-shrink-0"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-[#1A1A1A]">BNB</span>
-                  <span className="text-sm font-bold text-[#1A1A1A]">${fmtUsd(bnbValueUsdt)}</span>
-                </div>
-                <div className="flex items-center justify-between mt-0.5">
-                  <span className="text-[11px] text-[#888888]">BNB</span>
-                  <span className="text-[11px] text-[#888888]">{bnbBalance.toFixed(4)} BNB</span>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
