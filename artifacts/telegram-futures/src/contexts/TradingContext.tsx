@@ -5,7 +5,7 @@ const BNB_INITIAL = 0.5;
 const XAUT_INITIAL = 0;
 const SPOT_USDT_INITIAL = 5_000; // Portfolio (spot) wallet starts at $5,000
 
-export type WalletTxType = "deposit" | "withdraw" | "swap" | "transfer";
+export type WalletTxType = "deposit" | "withdraw" | "swap" | "transfer" | "bonus";
 
 export interface WalletTransaction {
   id: string;
@@ -30,6 +30,8 @@ interface TradingContextType extends ReturnType<typeof useTradingStore> {
   transferFromFutures: (amount: number) => { success: boolean; message: string };
   walletHistory: WalletTransaction[];
   addWalletTx: (tx: Omit<WalletTransaction, "id" | "timestamp" | "status">) => void;
+  futuresBonus: number;
+  addFuturesBonus: (amount: number) => void;
 }
 
 const TradingContext = createContext<TradingContextType | null>(null);
@@ -40,6 +42,7 @@ export function TradingProvider({ children }: { children: ReactNode }) {
   const [xautBalance, setXautBalance] = useState(XAUT_INITIAL);
   const [spotUsdtBalance, setSpotUsdtBalance] = useState(SPOT_USDT_INITIAL);
   const [walletHistory, setWalletHistory] = useState<WalletTransaction[]>([]);
+  const [futuresBonus, setFuturesBonus] = useState(0);
 
   const addWalletTx = useCallback((tx: Omit<WalletTransaction, "id" | "timestamp" | "status">) => {
     const entry: WalletTransaction = {
@@ -81,6 +84,16 @@ export function TradingProvider({ children }: { children: ReactNode }) {
     [store, addWalletTx]
   );
 
+  /** Add Futures Bonus */
+  const addFuturesBonus = useCallback(
+    (amount: number) => {
+      if (amount <= 0) return;
+      setFuturesBonus((prev) => parseFloat((prev + amount).toFixed(5)));
+      addWalletTx({ type: "bonus", asset: "USDT", amount });
+    },
+    [addWalletTx]
+  );
+
   return (
     <TradingContext.Provider value={{
       ...store,
@@ -90,6 +103,7 @@ export function TradingProvider({ children }: { children: ReactNode }) {
       transferToFutures,
       transferFromFutures,
       walletHistory, addWalletTx,
+      futuresBonus, addFuturesBonus,
     }}>
       {children}
     </TradingContext.Provider>

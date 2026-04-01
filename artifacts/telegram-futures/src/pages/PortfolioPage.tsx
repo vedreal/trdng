@@ -24,12 +24,14 @@ function fmtUsd(n: number, dec = 2) {
 function TransferModal({
   spotBalance,
   futuresBalance,
+  futuresBonus,
   onTransferToFutures,
   onTransferFromFutures,
   onClose,
 }: {
   spotBalance: number;
   futuresBalance: number;
+  futuresBonus: number;
   onTransferToFutures: (amount: number) => { success: boolean; message: string };
   onTransferFromFutures: (amount: number) => { success: boolean; message: string };
   onClose: () => void;
@@ -86,9 +88,15 @@ function TransferModal({
             <span className="text-xs text-[#888888]">Spot</span>
             <span className="text-sm font-semibold text-[#333333]">${fmtUsd(spotBalance)} USDT</span>
           </div>
-          <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-[#F5F3EA] border border-[#E0DDD0]">
-            <span className="text-xs text-[#888888]">Futures</span>
-            <span className="text-sm font-semibold text-[#333333]">${fmtUsd(futuresBalance)} USDT</span>
+          <div className="px-3 py-2 rounded-xl bg-[#F5F3EA] border border-[#E0DDD0]">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-[#888888]">Futures</span>
+              <span className="text-sm font-semibold text-[#333333]">${fmtUsd(futuresBalance)} USDT</span>
+            </div>
+            <div className="flex items-center justify-between mt-1">
+              <span className="text-xs text-[#888888]">Bonus</span>
+              <span className="text-xs font-medium text-[#C9A227]">${fmtUsd(futuresBonus)} USDT</span>
+            </div>
           </div>
         </div>
 
@@ -132,6 +140,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
     balance, positions, history, getPnl,
     bnbBalance, xautBalance, spotUsdtBalance,
     walletHistory, transferToFutures, transferFromFutures,
+    futuresBonus,
   } = useTrading();
 
   const { price: btcPrice } = useBinancePrice("BTCUSDT");
@@ -159,11 +168,12 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
   const todayPct        = totalBalance > 0 ? (todayPnl / (totalBalance - todayPnl)) * 100 : 0;
   const pnlPositive     = todayPnl >= 0;
 
-  // Merged recent activity for Futures tab: closed trades + transfer txs, sorted by time, max 3
+  // Merged recent activity for Futures tab: closed trades + transfer txs + bonus, sorted by time, max 3
   const futuresActivity = useMemo(() => {
     type ActivityItem =
       | { kind: "trade"; id: string; side: "long" | "short"; leverage: number; pnl: number; time: number }
-      | { kind: "transfer"; id: string; direction: "toFutures" | "fromFutures"; amount: number; time: number };
+      | { kind: "transfer"; id: string; direction: "toFutures" | "fromFutures"; amount: number; time: number }
+      | { kind: "bonus"; id: string; amount: number; time: number };
 
     const trades: ActivityItem[] = history.map((t) => ({
       kind: "trade",
@@ -184,7 +194,16 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
         time: w.timestamp,
       }));
 
-    return [...trades, ...transfers]
+    const bonuses: ActivityItem[] = walletHistory
+      .filter((w) => w.type === "bonus")
+      .map((w) => ({
+        kind: "bonus",
+        id: w.id,
+        amount: w.amount,
+        time: w.timestamp,
+      }));
+
+    return [...trades, ...transfers, ...bonuses]
       .sort((a, b) => b.time - a.time)
       .slice(0, 3);
   }, [history, walletHistory]);
@@ -240,6 +259,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
         <TransferModal
           spotBalance={spotUsdtBalance}
           futuresBalance={balance}
+          futuresBonus={futuresBonus}
           onTransferToFutures={transferToFutures}
           onTransferFromFutures={transferFromFutures}
           onClose={() => setShowTransfer(false)}
@@ -247,9 +267,9 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 panel-header border-b border-[#C8B040] flex-shrink-0">
+      <div className="relative flex items-center justify-center px-4 py-3 panel-header border-b border-[#C8B040] flex-shrink-0">
         <span className="font-bold text-[#1A1A1A] text-base">Portfolio</span>
-        <div className="flex items-center gap-1.5">
+        <div className="absolute right-4 flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full bg-green-500" />
           <span className="text-[10px] text-[#666666]">MAINNET</span>
         </div>
@@ -423,11 +443,15 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-bold text-[#1A1A1A]">USDT</span>
-                    <span className="text-sm font-bold text-[#1A1A1A]">${fmtUsd(balance)}</span>
+                    <span className="text-sm font-bold text-[#1A1A1A]">${fmtUsd(balance + futuresBonus)}</span>
                   </div>
                   <div className="flex items-center justify-between mt-0.5">
                     <span className="text-[11px] text-[#888888]">Futures Balance</span>
                     <span className="text-[11px] text-[#888888]">{fmtUsd(balance)} USDT</span>
+                  </div>
+                  <div className="flex items-center justify-between mt-0.5">
+                    <span className="text-[11px] text-[#888888]">Futures Bonus</span>
+                    <span className="text-[11px] text-[#888888]">{fmtUsd(futuresBonus)} USDT</span>
                   </div>
                 </div>
               </div>
@@ -464,6 +488,32 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                           </div>
                           <span className={`text-sm font-bold ${profit ? "text-green-600" : "text-red-500"}`}>
                             {profit ? "+" : ""}${fmtUsd(item.pnl)}
+                          </span>
+                        </div>
+                      );
+                    }
+
+                    // bonus item
+                    if (item.kind === "bonus") {
+                      return (
+                        <div key={item.id}
+                          className="panel-silver border border-[#D8D0A8] rounded-xl px-4 py-3 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-[#8B6300] text-xs font-bold flex-shrink-0"
+                              style={{ background: "linear-gradient(135deg, #E8C84A, #D4AF37)" }}>
+                              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v13m0-13C10.832 5.477 9.246 5 7.5 5A5.5 5.5 0 002 10.5c0 3.038 2.5 5 5.5 5 2.5 0 4.5-1 5.5-2.5m0 0c1-1.5 3-2.5 5.5-2.5 3 0 5.5 1.962 5.5 5A5.5 5.5 0 0116.5 21c-1.746 0-3.332-.477-4.5-1.5" />
+                              </svg>
+                            </div>
+                            <div>
+                              <p className="text-xs font-semibold text-[#333333]">Futures Bonus</p>
+                              <p className="text-[10px] text-[#888888]">
+                                {new Date(item.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                              </p>
+                            </div>
+                          </div>
+                          <span className="text-sm font-semibold text-[#C9A227]">
+                            +${fmtUsd(item.amount)}
                           </span>
                         </div>
                       );

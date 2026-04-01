@@ -517,12 +517,14 @@ function CloseModal({
 function TransferModal({
   spotBalance,
   futuresBalance,
+  futuresBonus,
   onTransferToFutures,
   onTransferFromFutures,
   onClose,
 }: {
   spotBalance: number;
   futuresBalance: number;
+  futuresBonus: number;
   onTransferToFutures: (amount: number) => { success: boolean; message: string };
   onTransferFromFutures: (amount: number) => { success: boolean; message: string };
   onClose: () => void;
@@ -580,9 +582,15 @@ function TransferModal({
             <span className="text-xs text-[#888888]">Spot</span>
             <span className="text-sm font-semibold text-[#333333]">${fmt(spotBalance, 2)} USDT</span>
           </div>
-          <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-[#F5F3EA] border border-[#E0DDD0]">
-            <span className="text-xs text-[#888888]">Futures</span>
-            <span className="text-sm font-semibold text-[#333333]">${fmt(futuresBalance, 2)} USDT</span>
+          <div className="px-3 py-2 rounded-xl bg-[#F5F3EA] border border-[#E0DDD0]">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-[#888888]">Futures</span>
+              <span className="text-sm font-semibold text-[#333333]">${fmt(futuresBalance, 2)} USDT</span>
+            </div>
+            <div className="flex items-center justify-between mt-1">
+              <span className="text-xs text-[#888888]">Bonus</span>
+              <span className="text-xs font-medium text-[#C9A227]">${fmt(futuresBonus, 2)} USDT</span>
+            </div>
           </div>
         </div>
 
@@ -634,6 +642,7 @@ export function FuturesPage() {
     openPosition, placeLimitOrder, cancelPendingOrder, checkPendingOrders, checkLiquidations,
     closePosition, updateSlTp, updateLimitClose, getPnl,
     spotUsdtBalance, transferToFutures, transferFromFutures,
+    futuresBonus,
   } = useTrading();
 
   const [orderType, setOrderType] = useState<OrderType>("limit");
@@ -832,6 +841,7 @@ export function FuturesPage() {
         <TransferModal
           spotBalance={spotUsdtBalance}
           futuresBalance={balance}
+          futuresBonus={futuresBonus}
           onTransferToFutures={(amount) => {
             const result = transferToFutures(amount);
             if (result.success) showToast(result.message, true);

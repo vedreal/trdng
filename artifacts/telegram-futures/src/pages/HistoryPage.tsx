@@ -39,6 +39,16 @@ function TxIcon({ type }: { type: WalletTransaction["type"] }) {
       </div>
     );
   }
+  if (type === "bonus") {
+    return (
+      <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-[#8B6300]"
+        style={{ background: "linear-gradient(135deg, #E8C84A, #D4AF37)" }}>
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v13m0-13C10.832 5.477 9.246 5 7.5 5A5.5 5.5 0 002 10.5c0 3.038 2.5 5 5.5 5 2.5 0 4.5-1 5.5-2.5m0 0c1-1.5 3-2.5 5.5-2.5 3 0 5.5 1.962 5.5 5A5.5 5.5 0 0116.5 21c-1.746 0-3.332-.477-4.5-1.5" />
+        </svg>
+      </div>
+    );
+  }
   return (
     <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-[#8B6300]"
       style={{ background: "linear-gradient(135deg, #E8C84A, #D4AF37)" }}>
@@ -50,7 +60,13 @@ function TxIcon({ type }: { type: WalletTransaction["type"] }) {
 }
 
 function TxCard({ tx }: { tx: WalletTransaction }) {
-  const label = tx.type === "deposit" ? "Deposit" : tx.type === "withdraw" ? "Withdraw" : "Swap";
+  const label =
+    tx.type === "deposit" ? "Deposit"
+    : tx.type === "withdraw" ? "Withdraw"
+    : tx.type === "bonus" ? "Futures Bonus"
+    : "Swap";
+
+  const isBonus = tx.type === "bonus";
 
   return (
     <div className="panel-silver border border-[#D8D0A8] rounded-2xl px-4 py-3.5 flex items-start gap-3">
@@ -69,6 +85,10 @@ function TxCard({ tx }: { tx: WalletTransaction }) {
                 +{tx.toAmount!.toFixed(tx.toAsset === "USDT" ? 2 : 6)} {tx.toAsset}
               </p>
             </div>
+          ) : isBonus ? (
+            <span className="text-sm font-bold text-[#C9A227]">
+              +{tx.amount.toFixed(2)} {tx.asset}
+            </span>
           ) : (
             <span className={`text-sm font-bold ${tx.type === "deposit" ? "text-green-600" : "text-red-500"}`}>
               {tx.type === "deposit" ? "+" : "-"}{tx.amount.toFixed(tx.asset === "USDT" ? 2 : 6)} {tx.asset}
@@ -76,11 +96,13 @@ function TxCard({ tx }: { tx: WalletTransaction }) {
           )}
         </div>
 
-        {/* Row 2: address / swap route */}
+        {/* Row 2: address / swap route / bonus label */}
         {tx.type === "swap" ? (
           <p className="text-[11px] text-[#888888]">
             {tx.asset} → {tx.toAsset} · BEP-20
           </p>
+        ) : isBonus ? (
+          <p className="text-[11px] text-[#888888]">Futures Account</p>
         ) : tx.address ? (
           <p className="text-[11px] text-[#888888] font-mono truncate">
             {tx.type === "deposit" ? "From" : "To"}: {shortAddr(tx.address)}
@@ -116,7 +138,12 @@ export function HistoryPage({ onBack }: HistoryPageProps) {
   const { walletHistory } = useTrading();
   const [filter, setFilter] = useState<FilterType>("all");
 
-  const filtered = filter === "all" ? walletHistory : walletHistory.filter((t) => t.type === filter);
+  const filtered =
+    filter === "all"
+      ? walletHistory
+      : filter === "deposit"
+      ? walletHistory.filter((t) => t.type === "deposit" || t.type === "bonus")
+      : walletHistory.filter((t) => t.type === filter);
 
   return (
     <div className="flex flex-col h-full page-bg overflow-y-auto">
