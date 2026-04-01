@@ -153,32 +153,38 @@ export function calcMaxMarginForBalance(
 }
 
 /**
- * Liquidation price for a single cross-margin position.
+ * Liquidation price using Binance's isolated-margin formula.
  *
- * Cross margin: wallet balance = free cash + locked margin of this position
- *               = (initial_balance - openingFee) at time of opening
+ * Liq condition: margin - openingFee + unrealizedPnL ≤ notional * mmr + mmAmount
  *
- * Liq condition: walletBalance + unrealizedPnL ≤ maintenanceMargin + maintenanceAmount
+ * Long  liq = entryPrice × (1 − 1/leverage + mmr + mmAmount/notional)
+ * Short liq = entryPrice × (1 + 1/leverage − mmr − mmAmount/notional)
  *
- * Long  liq = entryPrice * (notional - walletBalance + mmAmount) / (notional * (1 - mmr))
- * Short liq = entryPrice * (notional + walletBalance - mmAmount) / (notional * (1 + mmr))
+ * This produces realistic liq prices that scale correctly with leverage:
+ *   100x → ~1 % from entry, 50x → ~2 %, 10x → ~10 %, etc.
+ *
+ * The walletBalance parameter is kept for API compatibility but is not used.
  */
 export function calcLiqPrice(
   side: "long" | "short",
   entryPrice: number,
   notional: number,
-  _margin: number,          // kept for API compat but unused
+  margin: number,
   _marginMode: "Cross" | "Isolated",
-  walletBalance: number     // balance AFTER opening fee, BEFORE deducting margin
+  _walletBalance: number
 ): number {
-  if (notional <= 0 || entryPrice <= 0) return 0;
+  if (notional <= 0 || entryPrice <= 0 || margin <= 0) return 0;
+
   const { mmr, mmAmount } = getMmrTier(notional);
+  const leverage = notional / margin;           // e.g. 10 000 / 100 = 100
 
   if (side === "long") {
-    const liq = entryPrice * (notional - walletBalance + mmAmount) / (notional * (1 - mmr));
+    // Price must fall this far before maintenance margin is breached
+    const liq = entryPrice * (1 - 1 / leverage + mmr + mmAmount / notional);
     return Math.max(liq, 0);
   } else {
-    const liq = entryPrice * (notional + walletBalance - mmAmount) / (notional * (1 + mmr));
+    // Price must rise this far before maintenance margin is breached
+    const liq = entryPrice * (1 + 1 / leverage - mmr - mmAmount / notional);
     return Math.max(liq, 0);
   }
 }

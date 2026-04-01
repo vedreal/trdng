@@ -59,16 +59,6 @@ const TRADING_PAIRS: TradingPair[] = [
     icon: IPFS + "bafkreihfoippppifivpnf6cc5ixwn7lxcw2wz2rrtwazdb4qpa4dabqyvq",
     fallback: 180, priceDec: 2, stepSize: 0.1,
   },
-  {
-    symbol: "XRPUSDT", label: "XRP/USDT", base: "XRP",
-    icon: IPFS + "bafkreid4facbu3tnnzgzwng4q4ub37jd5ozjplymp4n546jgeerol2bqju",
-    fallback: 0.55, priceDec: 4, stepSize: 1,
-  },
-  {
-    symbol: "DOGEUSDT", label: "DOGE/USDT", base: "DOGE",
-    icon: IPFS + "bafybeih5opbcbecdjyznzohjlsczvoh7hbtbpx7k5ozmgfuz5hmhwgmndu",
-    fallback: 0.16, priceDec: 5, stepSize: 1,
-  },
 ];
 
 function fmtPrice(n: number, dec: number): string {
