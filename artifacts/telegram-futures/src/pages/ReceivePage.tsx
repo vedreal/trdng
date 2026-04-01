@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useTrading } from "../contexts/TradingContext";
 
 const DEPOSIT_ADDRESS = "0x742d35Cc6634C0532925a3b8D4C9A7C9f8A1B2E";
-const NETWORK = "Binance Smart Chain (BEP-20)";
 
 interface ReceivePageProps {
   onBack: () => void;
@@ -59,18 +58,24 @@ export function ReceivePage({ onBack }: ReceivePageProps) {
 
       <div className="px-4 py-5 space-y-4">
 
-        {/* Asset selector */}
+        {/* Asset dropdown */}
         <div>
           <p className="text-xs font-semibold text-[#888888] mb-2 uppercase tracking-wide">Select Asset</p>
-          <div className="flex gap-2">
-            {(["USDT", "BNB"] as const).map((a) => (
-              <button key={a} onClick={() => setSelectedAsset(a)}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                  selectedAsset === a ? "btn-3d-gold" : "btn-3d-silver"
-                }`}>
-                {a}
-              </button>
-            ))}
+          <div className="relative">
+            <select
+              value={selectedAsset}
+              onChange={(e) => setSelectedAsset(e.target.value as "USDT" | "BNB")}
+              className="w-full appearance-none bg-[#F5F3EA] border border-[#D4AF37] rounded-xl px-4 py-3 text-sm font-semibold text-[#333333] outline-none cursor-pointer pr-10"
+              style={{ WebkitAppearance: 'none' }}
+            >
+              <option value="USDT">USDT — Tether USD</option>
+              <option value="BNB">BNB — BNB Chain</option>
+            </select>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#C9A227]">
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
           </div>
         </div>
 
@@ -79,68 +84,72 @@ export function ReceivePage({ onBack }: ReceivePageProps) {
           <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
           <div>
             <p className="text-[10px] text-[#888888]">Network</p>
-            <p className="text-xs font-semibold text-[#333333]">{NETWORK}</p>
+            <p className="text-xs font-semibold text-[#333333]">Binance Smart Chain (BEP-20)</p>
           </div>
         </div>
 
-        {/* QR Code placeholder */}
+        {/* QR Code */}
         <div className="panel-silver border border-[#D4AF37] rounded-2xl p-5 flex flex-col items-center">
-          <div className="w-36 h-36 rounded-xl border-4 border-[#D4AF37] bg-[#FAFAFA] flex items-center justify-center mb-3"
-            style={{ position: 'relative', overflow: 'hidden' }}>
-            {/* Simulated QR pattern */}
+          <div className="w-36 h-36 rounded-xl border-4 border-[#D4AF37] bg-white flex items-center justify-center mb-3 overflow-hidden">
             <svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
               <rect width="120" height="120" fill="white" />
-              {/* Top-left finder */}
               <rect x="8" y="8" width="30" height="30" rx="3" fill="#1A1A1A" />
               <rect x="12" y="12" width="22" height="22" rx="2" fill="white" />
               <rect x="16" y="16" width="14" height="14" rx="1" fill="#1A1A1A" />
-              {/* Top-right finder */}
               <rect x="82" y="8" width="30" height="30" rx="3" fill="#1A1A1A" />
               <rect x="86" y="12" width="22" height="22" rx="2" fill="white" />
               <rect x="90" y="16" width="14" height="14" rx="1" fill="#1A1A1A" />
-              {/* Bottom-left finder */}
               <rect x="8" y="82" width="30" height="30" rx="3" fill="#1A1A1A" />
               <rect x="12" y="86" width="22" height="22" rx="2" fill="white" />
               <rect x="16" y="90" width="14" height="14" rx="1" fill="#1A1A1A" />
-              {/* Data dots pattern */}
-              {[44,48,52,56,60,64,68,72,76].map((x) =>
-                [8,12,16,20,24,28].map((y) =>
-                  Math.random() > 0.45 ? <rect key={`${x}-${y}`} x={x} y={y} width="3" height="3" fill="#1A1A1A" /> : null
-                )
-              )}
-              {[8,12,16,20,24,28,32,36,40].map((y) =>
-                [44,48,52,56,60,64,68,72,76].map((x) =>
-                  Math.random() > 0.45 ? <rect key={`${x}-${y}b`} x={x} y={y} width="3" height="3" fill="#1A1A1A" /> : null
-                )
-              )}
-              {[44,48,52,56,60,64,68,72,76].map((x) =>
-                [44,48,52,56,60,64,68,72,76].map((y) =>
-                  (x + y) % 8 < 4 ? <rect key={`${x}-${y}c`} x={x} y={y} width="3" height="3" fill="#1A1A1A" /> : null
-                )
-              )}
-              {/* Gold center logo */}
+              <rect x="44" y="8" width="4" height="4" fill="#1A1A1A" /><rect x="52" y="8" width="4" height="4" fill="#1A1A1A" />
+              <rect x="60" y="8" width="4" height="4" fill="#1A1A1A" /><rect x="44" y="16" width="4" height="4" fill="#1A1A1A" />
+              <rect x="56" y="16" width="4" height="4" fill="#1A1A1A" /><rect x="68" y="16" width="4" height="4" fill="#1A1A1A" />
+              <rect x="48" y="24" width="4" height="4" fill="#1A1A1A" /><rect x="60" y="24" width="4" height="4" fill="#1A1A1A" />
+              <rect x="8" y="44" width="4" height="4" fill="#1A1A1A" /><rect x="16" y="44" width="4" height="4" fill="#1A1A1A" />
+              <rect x="28" y="44" width="4" height="4" fill="#1A1A1A" /><rect x="8" y="52" width="4" height="4" fill="#1A1A1A" />
+              <rect x="20" y="52" width="4" height="4" fill="#1A1A1A" /><rect x="32" y="52" width="4" height="4" fill="#1A1A1A" />
+              <rect x="12" y="60" width="4" height="4" fill="#1A1A1A" /><rect x="24" y="60" width="4" height="4" fill="#1A1A1A" />
+              <rect x="44" y="44" width="4" height="4" fill="#1A1A1A" /><rect x="52" y="44" width="4" height="4" fill="#1A1A1A" />
+              <rect x="60" y="44" width="4" height="4" fill="#1A1A1A" /><rect x="68" y="44" width="4" height="4" fill="#1A1A1A" />
+              <rect x="76" y="44" width="4" height="4" fill="#1A1A1A" /><rect x="48" y="52" width="4" height="4" fill="#1A1A1A" />
+              <rect x="64" y="52" width="4" height="4" fill="#1A1A1A" /><rect x="44" y="60" width="4" height="4" fill="#1A1A1A" />
+              <rect x="56" y="60" width="4" height="4" fill="#1A1A1A" /><rect x="72" y="60" width="4" height="4" fill="#1A1A1A" />
+              <rect x="84" y="44" width="4" height="4" fill="#1A1A1A" /><rect x="96" y="44" width="4" height="4" fill="#1A1A1A" />
+              <rect x="108" y="44" width="4" height="4" fill="#1A1A1A" /><rect x="88" y="52" width="4" height="4" fill="#1A1A1A" />
+              <rect x="100" y="52" width="4" height="4" fill="#1A1A1A" /><rect x="84" y="60" width="4" height="4" fill="#1A1A1A" />
+              <rect x="96" y="60" width="4" height="4" fill="#1A1A1A" /><rect x="108" y="60" width="4" height="4" fill="#1A1A1A" />
+              <rect x="44" y="76" width="4" height="4" fill="#1A1A1A" /><rect x="56" y="76" width="4" height="4" fill="#1A1A1A" />
+              <rect x="68" y="76" width="4" height="4" fill="#1A1A1A" /><rect x="48" y="84" width="4" height="4" fill="#1A1A1A" />
+              <rect x="60" y="84" width="4" height="4" fill="#1A1A1A" /><rect x="72" y="84" width="4" height="4" fill="#1A1A1A" />
+              <rect x="44" y="92" width="4" height="4" fill="#1A1A1A" /><rect x="52" y="100" width="4" height="4" fill="#1A1A1A" />
+              <rect x="64" y="92" width="4" height="4" fill="#1A1A1A" /><rect x="76" y="100" width="4" height="4" fill="#1A1A1A" />
+              <rect x="84" y="76" width="4" height="4" fill="#1A1A1A" /><rect x="100" y="76" width="4" height="4" fill="#1A1A1A" />
+              <rect x="92" y="84" width="4" height="4" fill="#1A1A1A" /><rect x="108" y="84" width="4" height="4" fill="#1A1A1A" />
+              <rect x="84" y="92" width="4" height="4" fill="#1A1A1A" /><rect x="96" y="96" width="4" height="4" fill="#1A1A1A" />
+              <rect x="108" y="92" width="4" height="4" fill="#1A1A1A" />
               <rect x="51" y="51" width="18" height="18" rx="4" fill="#D4AF37" />
-              <text x="60" y="63" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold">₿</text>
+              <text x="60" y="64" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold">₿</text>
             </svg>
           </div>
 
-          <p className="text-[10px] text-[#888888] mb-1">Deposit Address ({selectedAsset} · BEP-20)</p>
+          <p className="text-[10px] text-[#888888] mb-1.5">{selectedAsset} · BEP-20 Deposit Address</p>
           <div className="w-full bg-[#EEECDC] rounded-xl px-3 py-2.5 flex items-center gap-2 border border-[#D8D0A8]">
             <p className="text-[11px] font-mono text-[#333333] flex-1 break-all">{DEPOSIT_ADDRESS}</p>
-            <button onClick={handleCopy} className="flex-shrink-0 btn-3d-gold px-2 py-1 rounded-lg text-[10px]">
-              {copied ? "✓" : "Copy"}
+            <button onClick={handleCopy} className="flex-shrink-0 btn-3d-gold px-2.5 py-1 rounded-lg text-[10px]">
+              {copied ? "✓ Copied" : "Copy"}
             </button>
           </div>
         </div>
 
-        {/* Warning notice */}
+        {/* Warning */}
         <div className="bg-[#FFF8E0] border border-[#F0D060] rounded-xl px-4 py-3">
           <p className="text-[11px] text-[#8B6914] leading-relaxed">
-            ⚠ Only send <strong>{selectedAsset}</strong> on the <strong>Binance Smart Chain (BEP-20)</strong> network to this address. Sending other assets or using another network may result in permanent loss.
+            ⚠ Only send <strong>{selectedAsset}</strong> on the <strong>Binance Smart Chain (BEP-20)</strong> network. Sending other assets or using a different network may result in permanent loss.
           </p>
         </div>
 
-        {/* Simulate deposit (demo feature) */}
+        {/* Simulate deposit */}
         <div className="panel-card rounded-2xl p-4 border border-[#D4AF37]">
           <p className="text-xs font-semibold text-[#888888] mb-2">Simulate Deposit (Demo)</p>
           <div className="flex gap-2">

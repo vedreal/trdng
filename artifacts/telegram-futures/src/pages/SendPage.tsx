@@ -170,21 +170,24 @@ export function SendPage({ onBack, bnbPrice }: SendPageProps) {
       </div>
 
       <div className="px-4 py-5 space-y-4">
-        {/* Asset selector */}
+        {/* Asset dropdown */}
         <div>
           <p className="text-xs font-semibold text-[#888888] mb-2 uppercase tracking-wide">Asset</p>
-          <div className="flex gap-2">
-            {(["USDT", "BNB"] as const).map((a) => (
-              <button key={a} onClick={() => { setAsset(a); setAmount(""); }}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                  asset === a ? "btn-3d-gold" : "btn-3d-silver"
-                }`}>
-                <span className="block text-current">{a}</span>
-                <span className={`text-[10px] font-normal ${asset === a ? "text-[#5A3A00]" : "text-[#888888]"}`}>
-                  {a === "USDT" ? `${balance.toFixed(2)}` : `${bnbBalance.toFixed(4)}`} available
-                </span>
-              </button>
-            ))}
+          <div className="relative">
+            <select
+              value={asset}
+              onChange={(e) => { setAsset(e.target.value as "USDT" | "BNB"); setAmount(""); }}
+              className="w-full appearance-none bg-[#F5F3EA] border border-[#D4AF37] rounded-xl px-4 py-3 text-sm font-semibold text-[#333333] outline-none cursor-pointer pr-10"
+              style={{ WebkitAppearance: 'none' }}
+            >
+              <option value="USDT">USDT — Available: {balance.toFixed(2)} USDT</option>
+              <option value="BNB">BNB — Available: {bnbBalance.toFixed(4)} BNB</option>
+            </select>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#C9A227]">
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
           </div>
         </div>
 
