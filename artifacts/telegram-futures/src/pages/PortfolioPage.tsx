@@ -2,6 +2,13 @@ import { useMemo } from "react";
 import { useTrading } from "../contexts/TradingContext";
 import { useBinancePrice } from "../hooks/useBinancePrice";
 
+const IPFS = "https://gold-defensive-cattle-30.mypinata.cloud/ipfs/";
+const COIN_ICONS: Record<string, string> = {
+  USDT: IPFS + "bafkreibn4y6llleughtp5pgu37lve7mymvcffpo5i2h6iw4t4iwo6z5ocu",
+  XAUT: IPFS + "bafkreihi5zcqhan34bdvusmv3wgabbd53uyab27ufzngf6lrhfdpfoltym",
+  BNB:  IPFS + "bafkreieg2zkdn3muod7uir7q77lee37cmisxoqqym3sjsm6smfn5wkq2da",
+};
+
 interface PortfolioPageProps {
   onNavigate: (route: "receive" | "send" | "swap" | "history") => void;
 }
@@ -169,9 +176,8 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
           <div className="space-y-2">
             {/* USDT */}
             <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3.5 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-[#1A0F00] btn-3d-gold">
-                $
-              </div>
+              <img src={COIN_ICONS.USDT} alt="USDT" className="w-10 h-10 rounded-full flex-shrink-0"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-bold text-[#1A1A1A]">USDT</span>
@@ -186,9 +192,8 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
 
             {/* XAUT */}
             <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3.5 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-[#1A0F00] text-xs btn-3d-gold">
-                XAU
-              </div>
+              <img src={COIN_ICONS.XAUT} alt="XAUT" className="w-10 h-10 rounded-full flex-shrink-0"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-bold text-[#1A1A1A]">XAUT</span>
@@ -203,9 +208,8 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
 
             {/* BNB */}
             <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3.5 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-[#1A0F00] btn-3d-gold">
-                B
-              </div>
+              <img src={COIN_ICONS.BNB} alt="BNB" className="w-10 h-10 rounded-full flex-shrink-0"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-bold text-[#1A1A1A]">BNB</span>

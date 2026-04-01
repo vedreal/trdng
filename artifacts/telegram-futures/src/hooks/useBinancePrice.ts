@@ -85,7 +85,11 @@ async function fetchTicker24h(symbol: string): Promise<{ price: number; change: 
 
 const SYMBOL_MOCK_PRICES: Record<string, number> = {
   BTCUSDT: 67000,
+  ETHUSDT: 3500,
   BNBUSDT: 600,
+  SOLUSDT: 180,
+  XRPUSDT: 0.55,
+  DOGEUSDT: 0.16,
   XAUTUSDT: 2620,
 };
 

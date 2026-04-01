@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { useBinancePrice } from "../hooks/useBinancePrice";
+import { useBinancePrice, type CandleData } from "../hooks/useBinancePrice";
 import {
   type Position,
   calcLiqPrice,
@@ -22,6 +22,55 @@ const INTERVALS = [
   { label: "1D", value: "1d" },
 ];
 
+const IPFS = "https://gold-defensive-cattle-30.mypinata.cloud/ipfs/";
+
+interface TradingPair {
+  symbol: string;
+  label: string;
+  base: string;
+  icon: string;
+  fallback: number;
+  priceDec: number;
+}
+
+const TRADING_PAIRS: TradingPair[] = [
+  {
+    symbol: "BTCUSDT", label: "BTC/USDT", base: "BTC",
+    icon: IPFS + "bafkreih4mag7tt75x3lxxcgg6tx5wsitcdypqti3fvmdq6kyypcb5fieoy",
+    fallback: 67000, priceDec: 0,
+  },
+  {
+    symbol: "ETHUSDT", label: "ETH/USDT", base: "ETH",
+    icon: IPFS + "bafkreid26dhrj4oqunpcirvrvwg3j7ccjrttlrgkfxwriehy2owwsrljcm",
+    fallback: 3500, priceDec: 2,
+  },
+  {
+    symbol: "BNBUSDT", label: "BNB/USDT", base: "BNB",
+    icon: IPFS + "bafkreieg2zkdn3muod7uir7q77lee37cmisxoqqym3sjsm6smfn5wkq2da",
+    fallback: 600, priceDec: 2,
+  },
+  {
+    symbol: "SOLUSDT", label: "SOL/USDT", base: "SOL",
+    icon: IPFS + "bafkreihfoippppifivpnf6cc5ixwn7lxcw2wz2rrtwazdb4qpa4dabqyvq",
+    fallback: 180, priceDec: 2,
+  },
+  {
+    symbol: "XRPUSDT", label: "XRP/USDT", base: "XRP",
+    icon: IPFS + "bafkreid4facbu3tnnzgzwng4q4ub37jd5ozjplymp4n546jgeerol2bqju",
+    fallback: 0.55, priceDec: 4,
+  },
+  {
+    symbol: "DOGEUSDT", label: "DOGE/USDT", base: "DOGE",
+    icon: IPFS + "bafybeih5opbcbecdjyznzohjlsczvoh7hbtbpx7k5ozmgfuz5hmhwgmndu",
+    fallback: 0.16, priceDec: 5,
+  },
+];
+
+function fmtPrice(n: number, dec: number): string {
+  if (n <= 0) return "...";
+  return "$" + n.toLocaleString("en-US", { minimumFractionDigits: dec, maximumFractionDigits: dec });
+}
+
 function fmt(n: number, dec = 2) {
   return n.toLocaleString("en-US", { minimumFractionDigits: dec, maximumFractionDigits: dec });
 }
@@ -32,11 +81,111 @@ function fmtCompact(n: number): string {
   return fmt(n, 2);
 }
 
+// ── Mini Sparkline ─────────────────────────────────────────────────
+function MiniSparkline({ candles, positive }: { candles: CandleData[]; positive: boolean }) {
+  const pts = candles.slice(-24);
+  if (pts.length < 2) return <div style={{ width: 64, height: 32 }} />;
+  const closes = pts.map((c) => c.close);
+  const min = Math.min(...closes);
+  const max = Math.max(...closes);
+  const range = max - min || 1;
+  const W = 64, H = 32;
+  const points = closes
+    .map((v, i) => {
+      const x = (i / (closes.length - 1)) * W;
+      const y = H - ((v - min) / range) * (H - 4) - 2;
+      return `${x},${y}`;
+    })
+    .join(" ");
+  return (
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ flexShrink: 0 }}>
+      <polyline
+        points={points}
+        fill="none"
+        stroke={positive ? "#22c55e" : "#ef4444"}
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+// ── Pair Picker Row ────────────────────────────────────────────────
+function PairPickerRow({ pair, isSelected, onSelect }: {
+  pair: TradingPair;
+  isSelected: boolean;
+  onSelect: () => void;
+}) {
+  const { price, priceChangePercent, candles } = useBinancePrice(pair.symbol);
+  const positive = priceChangePercent >= 0;
+
+  return (
+    <button
+      onClick={onSelect}
+      className={`w-full flex items-center gap-3 px-4 py-3 transition-all ${
+        isSelected ? "bg-[#F5E9B8]" : "hover:bg-[#F0EED8] active:bg-[#EEE8C8]"
+      }`}
+    >
+      <img src={pair.icon} alt={pair.base} className="w-9 h-9 rounded-full flex-shrink-0"
+        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+      <div className="flex-1 text-left min-w-0">
+        <p className="text-sm font-bold text-[#1A1A1A]">{pair.label}</p>
+        <p className={`text-xs font-medium ${positive ? "text-green-600" : "text-red-500"}`}>
+          {positive ? "+" : ""}{priceChangePercent.toFixed(2)}%
+        </p>
+      </div>
+      <MiniSparkline candles={candles} positive={positive} />
+      <div className="text-right flex-shrink-0 ml-1">
+        <p className="text-sm font-bold text-[#1A1A1A]">
+          {price > 0 ? fmtPrice(price, pair.priceDec) : "..."}
+        </p>
+        {isSelected && (
+          <p className="text-[10px] font-semibold text-[#C9A227]">Selected</p>
+        )}
+      </div>
+    </button>
+  );
+}
+
+// ── Pair Picker Modal ─────────────────────────────────────────────
+function PairPickerModal({ selectedSymbol, onSelect, onClose }: {
+  selectedSymbol: string;
+  onSelect: (pair: TradingPair) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-end" onClick={onClose}>
+      <div className="w-full rounded-t-2xl max-w-md mx-auto panel-silver border-t border-[#D4AF37] overflow-hidden"
+        onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[#D8D0A8]">
+          <span className="font-bold text-[#1A1A1A]">Select Trading Pair</span>
+          <button onClick={onClose} className="text-[#888888]">
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="overflow-y-auto" style={{ maxHeight: "65vh" }}>
+          {TRADING_PAIRS.map((pair, idx) => (
+            <div key={pair.symbol}>
+              {idx > 0 && <div className="border-t border-[#EEEAD8] mx-4" />}
+              <PairPickerRow
+                pair={pair}
+                isSelected={pair.symbol === selectedSymbol}
+                onSelect={() => { onSelect(pair); onClose(); }}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── SL/TP Edit Modal ──────────────────────────────────────────────
 function SlTpModal({
-  pos,
-  onSave,
-  onClose,
+  pos, onSave, onClose,
 }: {
   pos: Position;
   onSave: (sl?: number, tp?: number) => void;
@@ -57,7 +206,6 @@ function SlTpModal({
             </svg>
           </button>
         </div>
-
         <p className="text-xs text-[#888888] mb-3">
           Entry&nbsp;<span className="font-medium text-[#444444]">${fmt(pos.entryPrice, 1)}</span>
           &nbsp;·&nbsp;
@@ -65,7 +213,6 @@ function SlTpModal({
             {pos.side === "long" ? "Long" : "Short"} {pos.leverage}x
           </span>
         </p>
-
         <div className="mb-4">
           <label className="text-xs font-medium text-[#666666] mb-1 block">
             Stop Loss — <span className="text-[#888888] font-normal">{pos.side === "long" ? "below" : "above"} entry</span>
@@ -76,7 +223,6 @@ function SlTpModal({
             <span className="text-sm text-[#888888] ml-2">USDT</span>
           </div>
         </div>
-
         <div className="mb-5">
           <label className="text-xs font-medium text-[#666666] mb-1 block">
             Take Profit — <span className="text-[#888888] font-normal">{pos.side === "long" ? "above" : "below"} entry</span>
@@ -87,12 +233,9 @@ function SlTpModal({
             <span className="text-sm text-[#888888] ml-2">USDT</span>
           </div>
         </div>
-
         <div className="flex gap-3">
           <button onClick={() => { onSave(undefined, undefined); onClose(); }}
-            className="flex-1 py-3 rounded-xl text-sm btn-3d-silver">
-            Clear
-          </button>
+            className="flex-1 py-3 rounded-xl text-sm btn-3d-silver">Clear</button>
           <button
             onClick={() => {
               onSave(
@@ -101,9 +244,7 @@ function SlTpModal({
               );
               onClose();
             }}
-            className="flex-1 py-3 rounded-xl text-sm btn-3d-gold">
-            Save
-          </button>
+            className="flex-1 py-3 rounded-xl text-sm btn-3d-gold">Save</button>
         </div>
       </div>
     </div>
@@ -141,7 +282,6 @@ function PositionCard({
           Close
         </button>
       </div>
-
       <div className="grid grid-cols-3 gap-y-3 mb-3">
         <div>
           <p className="text-[10px] text-[#888888] mb-0.5">Max (Pos.)</p>
@@ -172,7 +312,6 @@ function PositionCard({
           </p>
         </div>
       </div>
-
       <div className="flex items-center justify-between pt-2.5 border-t border-[#D8D0A8]">
         <div className="flex items-center gap-4">
           <div>
@@ -199,7 +338,10 @@ function PositionCard({
 
 // ── Main Page ─────────────────────────────────────────────────────
 export function FuturesPage() {
-  const { price, priceChangePercent, candles, interval, setInterval } = useBinancePrice("BTCUSDT");
+  const [selectedPair, setSelectedPair] = useState<TradingPair>(TRADING_PAIRS[0]);
+  const [showPairPicker, setShowPairPicker] = useState(false);
+
+  const { price, priceChangePercent, candles, interval, setInterval } = useBinancePrice(selectedPair.symbol);
   const {
     balance, positions, pendingOrders, history,
     openPosition, placeLimitOrder, cancelPendingOrder, checkPendingOrders,
@@ -221,9 +363,7 @@ export function FuturesPage() {
   const [editingPos, setEditingPos]   = useState<Position | null>(null);
   const [toast, setToast]             = useState<{ msg: string; ok: boolean } | null>(null);
 
-  const priceDisplay = price > 0
-    ? "$" + price.toLocaleString("en-US", { maximumFractionDigits: 0 })
-    : "$...";
+  const priceDisplay = fmtPrice(price, selectedPair.priceDec);
 
   const entryPrice = orderType === "market"
     ? price
@@ -293,7 +433,7 @@ export function FuturesPage() {
         setMarginInput(""); setSliderValue(0);
         setEntrySl(""); setEntryTp("");
         setActiveTab("position");
-        showToast(`${tradeSide === "long" ? "Long" : "Short"} opened @$${Math.round(fillPrice).toLocaleString()}`, true);
+        showToast(`${tradeSide === "long" ? "Long" : "Short"} opened @${fmtPrice(fillPrice, selectedPair.priceDec)}`, true);
       } else {
         showToast(result.message, false);
       }
@@ -303,7 +443,7 @@ export function FuturesPage() {
         setMarginInput(""); setSliderValue(0);
         setEntrySl(""); setEntryTp("");
         setActiveTab("orders");
-        showToast(`Limit ${tradeSide === "long" ? "Long" : "Short"} pending @$${Math.round(entryPrice).toLocaleString()}`, true);
+        showToast(`Limit ${tradeSide === "long" ? "Long" : "Short"} pending @${fmtPrice(entryPrice, selectedPair.priceDec)}`, true);
       } else {
         showToast(result.message, false);
       }
@@ -327,6 +467,20 @@ export function FuturesPage() {
           onClose={() => setEditingPos(null)} />
       )}
 
+      {/* Pair picker modal */}
+      {showPairPicker && (
+        <PairPickerModal
+          selectedSymbol={selectedPair.symbol}
+          onSelect={(pair) => {
+            setSelectedPair(pair);
+            setMarginInput("");
+            setSliderValue(0);
+            setLimitPriceInput("");
+          }}
+          onClose={() => setShowPairPicker(false)}
+        />
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[#C8B040] flex-shrink-0 panel-header">
         <div className="p-1 w-[26px] h-[26px]" />
@@ -339,10 +493,17 @@ export function FuturesPage() {
 
       {/* Price row */}
       <div className="flex items-center px-4 py-2 flex-shrink-0 panel-header border-b border-[#D8D0A0]">
-        <div className="w-7 h-7 rounded-full flex items-center justify-center text-[#1A0F00] text-xs font-bold mr-2 btn-3d-gold"
-          style={{ width: 28, height: 28, flexShrink: 0 }}>₿</div>
-        <button className="flex items-center gap-1 rounded-lg px-2 py-1 border border-[#D4AF37] bg-[#F5EDD0]">
-          <span className="text-sm font-semibold text-[#333333]">BTC/USDT</span>
+        <img
+          src={selectedPair.icon}
+          alt={selectedPair.base}
+          className="w-7 h-7 rounded-full mr-2 flex-shrink-0"
+          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+        />
+        <button
+          className="flex items-center gap-1 rounded-lg px-2 py-1 border border-[#D4AF37] bg-[#F5EDD0]"
+          onClick={() => setShowPairPicker(true)}
+        >
+          <span className="text-sm font-semibold text-[#333333]">{selectedPair.label}</span>
           <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
@@ -395,15 +556,11 @@ export function FuturesPage() {
             <button onClick={() => setOrderType("limit")}
               className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
                 orderType === "limit" ? "btn-3d-gold" : "text-[#888888]"
-              }`}>
-              Limit
-            </button>
+              }`}>Limit</button>
             <button onClick={() => setOrderType("market")}
               className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
                 orderType === "market" ? "btn-3d-gold" : "text-[#888888]"
-              }`}>
-              Market
-            </button>
+              }`}>Market</button>
           </div>
 
           {/* Available */}
@@ -443,8 +600,8 @@ export function FuturesPage() {
                 type="number"
                 value={limitPriceInput}
                 onChange={(e) => setLimitPriceInput(e.target.value)}
-                onFocus={(e) => { if (!limitPriceInput && price > 0) setLimitPriceInput(Math.round(price).toString()); e.target.select(); }}
-                placeholder={price > 0 ? Math.round(price).toString() : "0"}
+                onFocus={(e) => { if (!limitPriceInput && price > 0) setLimitPriceInput(price.toFixed(selectedPair.priceDec)); e.target.select(); }}
+                placeholder={price > 0 ? price.toFixed(selectedPair.priceDec) : "0"}
                 className="flex-1 text-right text-sm font-medium text-[#333333] bg-transparent outline-none"
                 min="0" step="1"
               />
@@ -452,7 +609,7 @@ export function FuturesPage() {
             </div>
           )}
 
-          {/* Slider with % labels */}
+          {/* Slider */}
           <div className="mb-3 px-1">
             <div className="relative h-6 flex items-center">
               <div className="absolute inset-x-0 h-[3px] rounded-full bg-[#D0CCA8]">
@@ -709,9 +866,7 @@ export function FuturesPage() {
               {LEVERAGE_OPTIONS.map((lev) => (
                 <button key={lev} onClick={() => { setLeverage(lev); setShowLevModal(false); setMarginInput(""); setSliderValue(0); }}
                   className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${
-                    leverage === lev
-                      ? "btn-3d-gold"
-                      : "btn-3d-silver"
+                    leverage === lev ? "btn-3d-gold" : "btn-3d-silver"
                   }`}>
                   {lev}x
                 </button>
