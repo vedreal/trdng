@@ -33,12 +33,17 @@ export function CandleChart({ candles, currentPrice }: CandleChartProps) {
 
     ctx.clearRect(0, 0, W, H);
 
-    // Use up to 70 candles, but always update the last one with currentPrice
-    // so the line endpoint always reflects the live market price
-    const rawVisible = candles.slice(-70);
+    // Take up to 70 candles, sorted by time, filter out invalid entries
+    const rawVisible = candles
+      .filter((c) => c.time > 0 && c.close > 0 && isFinite(c.close))
+      .sort((a, b) => a.time - b.time)
+      .slice(-70);
+
+    if (rawVisible.length < 2) return;
+
+    // Update the last candle's close to currentPrice if it's valid and more recent
     const visible: CandleData[] = rawVisible.map((c, i) => {
-      if (i === rawVisible.length - 1 && currentPrice > 0) {
-        // Live-update the last candle's close to currentPrice
+      if (i === rawVisible.length - 1 && currentPrice > 0 && isFinite(currentPrice)) {
         return {
           ...c,
           close: currentPrice,
@@ -49,11 +54,10 @@ export function CandleChart({ candles, currentPrice }: CandleChartProps) {
       return c;
     });
 
-    // Y-scale: include both candle closes AND currentPrice so nothing is clipped
+    // Y-scale based on close prices only (no extra clipping)
     const closePrices = visible.map((c) => c.close);
-    const allPrices = currentPrice > 0 ? [...closePrices, currentPrice] : closePrices;
-    const rawMax = Math.max(...allPrices);
-    const rawMin = Math.min(...allPrices);
+    const rawMax = Math.max(...closePrices);
+    const rawMin = Math.min(...closePrices);
     const padding = (rawMax - rawMin) * 0.18 || rawMax * 0.002;
     const maxP = rawMax + padding;
     const minP = rawMin - padding;
@@ -89,17 +93,17 @@ export function CandleChart({ candles, currentPrice }: CandleChartProps) {
       );
     }
 
-    // Build smooth path using cubic bezier (Catmull-Rom style)
+    // Build points
     const pts = visible.map((c, i) => ({ x: toX(i), y: toY(c.close) }));
 
-    const buildSmoothPath = () => {
+    // Draw path using straight line segments — this is the correct approach for
+    // financial charts and prevents the "straight vertical spike" artifact that
+    // cubic Bezier control points cause on large price moves.
+    const buildPath = () => {
       ctx.beginPath();
       ctx.moveTo(pts[0].x, pts[0].y);
       for (let i = 1; i < pts.length; i++) {
-        const prev = pts[i - 1];
-        const curr = pts[i];
-        const cpx = (prev.x + curr.x) / 2;
-        ctx.bezierCurveTo(cpx, prev.y, cpx, curr.y, curr.x, curr.y);
+        ctx.lineTo(pts[i].x, pts[i].y);
       }
     };
 
@@ -109,7 +113,7 @@ export function CandleChart({ candles, currentPrice }: CandleChartProps) {
     gradient.addColorStop(0.65, "rgba(249,115,22,0.04)");
     gradient.addColorStop(1,    "rgba(249,115,22,0)");
 
-    buildSmoothPath();
+    buildPath();
     ctx.lineTo(pts[pts.length - 1].x, TOP_PAD + chartH);
     ctx.lineTo(pts[0].x, TOP_PAD + chartH);
     ctx.closePath();
@@ -117,7 +121,7 @@ export function CandleChart({ candles, currentPrice }: CandleChartProps) {
     ctx.fill();
 
     // Main line
-    buildSmoothPath();
+    buildPath();
     ctx.strokeStyle = "#f97316";
     ctx.lineWidth = 1.8;
     ctx.setLineDash([]);
@@ -126,7 +130,9 @@ export function CandleChart({ candles, currentPrice }: CandleChartProps) {
     ctx.stroke();
 
     // Current price dashed horizontal line
-    const livePrice = currentPrice > 0 ? currentPrice : closePrices[closePrices.length - 1];
+    const livePrice = currentPrice > 0 && isFinite(currentPrice)
+      ? currentPrice
+      : closePrices[closePrices.length - 1];
     const py = toY(livePrice);
     if (py >= TOP_PAD - 2 && py <= TOP_PAD + chartH + 2) {
       ctx.strokeStyle = "rgba(239,83,80,0.7)";
@@ -165,7 +171,6 @@ export function CandleChart({ candles, currentPrice }: CandleChartProps) {
 
     // Glowing dot at the live price endpoint
     const lastPt = pts[pts.length - 1];
-    // Outer glow
     const glowGrad = ctx.createRadialGradient(lastPt.x, lastPt.y, 0, lastPt.x, lastPt.y, 8);
     glowGrad.addColorStop(0,   "rgba(249,115,22,0.35)");
     glowGrad.addColorStop(1,   "rgba(249,115,22,0)");

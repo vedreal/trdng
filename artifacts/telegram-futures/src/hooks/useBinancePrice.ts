@@ -39,21 +39,40 @@ function getIntervalMs(interval: string): number {
   return map[interval] ?? 300_000;
 }
 
+/** Validate a single candle — all price fields must be finite positive numbers */
+function isValidCandle(c: CandleData): boolean {
+  return (
+    c.time > 0 &&
+    isFinite(c.close) && c.close > 0 &&
+    isFinite(c.open)  && c.open  > 0 &&
+    isFinite(c.high)  && c.high  > 0 &&
+    isFinite(c.low)   && c.low   > 0
+  );
+}
+
+/**
+ * Sort candles by open time ascending, deduplicate by time (last write wins),
+ * and filter out any invalid entries.
+ */
+function sanitizeCandles(candles: CandleData[]): CandleData[] {
+  const map = new Map<number, CandleData>();
+  for (const c of candles) {
+    if (isValidCandle(c)) map.set(c.time, c);
+  }
+  return Array.from(map.values()).sort((a, b) => a.time - b.time);
+}
+
 /**
  * Generate mock candles with Binance-aligned timestamps.
  * The last candle's open time = floor(now / intervalMs) * intervalMs,
  * which matches what the WebSocket kline stream will send for the current period.
- * This prevents the WebSocket from pushing a brand-new candle (spike) instead of
- * updating the existing last mock candle.
  */
 function generateMockCandles(basePrice: number, count = 60, interval = "5m"): CandleData[] {
   const intervalMs = getIntervalMs(interval);
   const now = Date.now();
-  // Align to the current Binance period boundary
   const currentPeriodStart = Math.floor(now / intervalMs) * intervalMs;
 
   const candles: CandleData[] = [];
-  // Start slightly below basePrice for a natural-looking chart
   let price = basePrice * (0.97 + Math.random() * 0.02);
 
   for (let i = count; i >= 0; i--) {
@@ -65,14 +84,7 @@ function generateMockCandles(basePrice: number, count = 60, interval = "5m"): Ca
     const close = open + closeChange;
     const high = Math.max(open, close) + Math.random() * price * 0.0008;
     const low  = Math.min(open, close) - Math.random() * price * 0.0008;
-    candles.push({
-      time,
-      open,
-      high,
-      low,
-      close,
-      volume: Math.random() * 100,
-    });
+    candles.push({ time, open, high, low, close, volume: Math.random() * 100 });
     price = close;
   }
   return candles;
@@ -86,14 +98,15 @@ async function fetchKlines(symbol: string, interval: string, limit = 60): Promis
     if (!res.ok) throw new Error("klines fetch failed");
     const data = await res.json();
     if (!Array.isArray(data)) throw new Error("Invalid response");
-    return data.map((k: (string | number)[]) => ({
-      time: Number(k[0]),
-      open: parseFloat(String(k[1])),
-      high: parseFloat(String(k[2])),
-      low: parseFloat(String(k[3])),
-      close: parseFloat(String(k[4])),
+    const parsed: CandleData[] = data.map((k: (string | number)[]) => ({
+      time:   Number(k[0]),
+      open:   parseFloat(String(k[1])),
+      high:   parseFloat(String(k[2])),
+      low:    parseFloat(String(k[3])),
+      close:  parseFloat(String(k[4])),
       volume: parseFloat(String(k[5])),
     }));
+    return sanitizeCandles(parsed);
   } catch {
     return [];
   }
@@ -106,8 +119,8 @@ async function fetchTicker24h(symbol: string): Promise<{ price: number; change: 
     const data = await res.json();
     if (!data.lastPrice) throw new Error("Invalid ticker");
     return {
-      price: parseFloat(data.lastPrice),
-      change: parseFloat(data.priceChange),
+      price:     parseFloat(data.lastPrice),
+      change:    parseFloat(data.priceChange),
       changePct: parseFloat(data.priceChangePercent),
     };
   } catch {
@@ -140,7 +153,6 @@ export function useBinancePrice(symbol = "BTCUSDT"): BinancePriceData {
   const mockUpdateRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const activeSymbolRef = useRef(symbol);
   const activeIntervalRef = useRef(interval);
-  // Track whether candles are still placeholder mock data (not yet replaced by real data)
   const isMockDataRef = useRef(true);
 
   const stopAll = () => {
@@ -162,12 +174,13 @@ export function useBinancePrice(symbol = "BTCUSDT"): BinancePriceData {
     }
   };
 
-  const startMockUpdates = (baseP: number, intv: string) => {
+  const startMockUpdates = (baseP: number, _intv: string) => {
     if (mockUpdateRef.current) clearInterval(mockUpdateRef.current);
     let p = baseP;
     mockUpdateRef.current = setInterval(() => {
       const change = (Math.random() - 0.48) * p * 0.0008;
       p = p + change;
+      // Batch price + candle update together so they never diverge
       setPrice(p);
       setCandles((prev) => {
         if (prev.length === 0) return prev;
@@ -242,14 +255,20 @@ export function useBinancePrice(symbol = "BTCUSDT"): BinancePriceData {
           const msg = JSON.parse(event.data);
           if (!msg.k) return;
           const k = msg.k;
+
           const newCandle: CandleData = {
-            time: Number(k.t),
-            open: parseFloat(k.o),
-            high: parseFloat(k.h),
-            low:  parseFloat(k.l),
-            close: parseFloat(k.c),
+            time:   Number(k.t),
+            open:   parseFloat(k.o),
+            high:   parseFloat(k.h),
+            low:    parseFloat(k.l),
+            close:  parseFloat(k.c),
             volume: parseFloat(k.v),
           };
+
+          // Ignore malformed candles from the stream
+          if (!isValidCandle(newCandle)) return;
+
+          // Batch price + candle update in the same state flush
           setPrice(newCandle.close);
 
           setCandles((prev) => {
@@ -257,27 +276,26 @@ export function useBinancePrice(symbol = "BTCUSDT"): BinancePriceData {
             const lastIdx = updated.length - 1;
 
             if (lastIdx >= 0 && updated[lastIdx].time === newCandle.time) {
-              // Normal case: update the current forming candle in-place
+              // Normal: update the current forming candle in-place
               updated[lastIdx] = newCandle;
               isMockDataRef.current = false;
               return updated;
             }
 
-            // Time mismatch: either stale mock data or a new candle starting
             if (isMockDataRef.current || lastIdx < 0) {
-              // Still on mock data → replace entire array with fresh aligned mock
-              // candles ending at the real price, then set the last one to the real kline
+              // Still on mock data — replace with fresh interval-aligned mock candles
+              // and slot in the real kline as the last entry
               const fresh = generateMockCandles(newCandle.close, 60, intv);
-              // Replace the last mock candle with the real kline (times now match)
               fresh[fresh.length - 1] = newCandle;
               isMockDataRef.current = false;
               return fresh;
             }
 
-            // Real historical data present → this is a new completed candle starting
-            updated.push(newCandle);
-            if (updated.length > 80) updated.shift();
-            return updated;
+            // Real historical data is present and a new candle period has started
+            // Deduplicate and keep sorted
+            const merged = sanitizeCandles([...updated, newCandle]);
+            if (merged.length > 80) merged.splice(0, merged.length - 80);
+            return merged;
           });
         } catch {
           /* ignore malformed messages */
@@ -300,7 +318,6 @@ export function useBinancePrice(symbol = "BTCUSDT"): BinancePriceData {
     setPrice(mockPrice);
     setPriceChange(0);
     setPriceChangePercent(0);
-    // Immediately show interval-aligned mock candles
     setCandles(generateMockCandles(mockPrice, 60, interval));
     setConnected(false);
 
@@ -314,7 +331,7 @@ export function useBinancePrice(symbol = "BTCUSDT"): BinancePriceData {
       if (!mounted) return;
 
       let usedPrice = mockPrice;
-      if (ticker.price > 0) {
+      if (ticker.price > 0 && isFinite(ticker.price)) {
         usedPrice = ticker.price;
         setPrice(ticker.price);
         setPriceChange(ticker.change);
@@ -322,15 +339,14 @@ export function useBinancePrice(symbol = "BTCUSDT"): BinancePriceData {
       }
 
       if (klines.length > 0) {
-        // Real historical data loaded — no more mock
         isMockDataRef.current = false;
         setCandles(klines);
+        // Use the last kline's close as the reference price for WS
         usedPrice = klines[klines.length - 1].close;
       } else {
-        // API failed — generate fresh aligned mock candles at the real price
-        // (if ticker succeeded) so WebSocket can match the last candle's time
+        // REST failed — keep mock data aligned to real price so WS can match
         setCandles(generateMockCandles(usedPrice, 60, interval));
-        // isMockDataRef.current stays true so WS handler replaces on first message
+        // isMockDataRef stays true so WS handler replaces on first message
       }
 
       connectWs(symbol, interval, usedPrice);
