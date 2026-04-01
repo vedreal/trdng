@@ -319,6 +319,16 @@ export function useTradingStore() {
       : (-priceDiff / pos.entryPrice) * pos.notional;
   }, []);
 
+  const depositFunds = useCallback((amount: number) => {
+    setBalance((b) => parseFloat((b + amount).toFixed(5)));
+  }, []);
+
+  const withdrawFunds = useCallback((amount: number, currentBalance: number): boolean => {
+    if (amount > currentBalance) return false;
+    setBalance((b) => parseFloat((b - amount).toFixed(5)));
+    return true;
+  }, []);
+
   return {
     balance,
     positions,
@@ -331,5 +341,7 @@ export function useTradingStore() {
     closePosition,
     updateSlTp,
     getPnl,
+    depositFunds,
+    withdrawFunds,
   };
 }

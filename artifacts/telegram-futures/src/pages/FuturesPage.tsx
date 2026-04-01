@@ -1,12 +1,12 @@
 import { useState, useCallback, useEffect } from "react";
 import { useBinancePrice } from "../hooks/useBinancePrice";
 import {
-  useTradingStore,
   type Position,
   calcLiqPrice,
   calcEffectivePosition,
   getMaxNotional,
 } from "../hooks/useTradingStore";
+import { useTrading } from "../contexts/TradingContext";
 import { CandleChart } from "../components/CandleChart";
 
 type OrderType = "limit" | "market";
@@ -204,7 +204,7 @@ export function FuturesPage() {
     balance, positions, pendingOrders, history,
     openPosition, placeLimitOrder, cancelPendingOrder, checkPendingOrders,
     closePosition, updateSlTp, getPnl,
-  } = useTradingStore();
+  } = useTrading();
 
   const [orderType, setOrderType] = useState<OrderType>("limit");
   const [marginInput, setMarginInput] = useState("");

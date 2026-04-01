@@ -83,8 +83,13 @@ async function fetchTicker24h(symbol: string): Promise<{ price: number; change: 
   }
 }
 
+const SYMBOL_MOCK_PRICES: Record<string, number> = {
+  BTCUSDT: 67000,
+  BNBUSDT: 600,
+};
+
 export function useBinancePrice(symbol = "BTCUSDT"): BinancePriceData {
-  const MOCK_PRICE = 67000;
+  const MOCK_PRICE = SYMBOL_MOCK_PRICES[symbol] ?? 67000;
   const [price, setPrice] = useState(MOCK_PRICE);
   const [priceChange, setPriceChange] = useState(-120);
   const [priceChangePercent, setPriceChangePercent] = useState(-0.18);
