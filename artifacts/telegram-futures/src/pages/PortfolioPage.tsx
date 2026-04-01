@@ -3,7 +3,7 @@ import { useTrading } from "../contexts/TradingContext";
 import { useBinancePrice } from "../hooks/useBinancePrice";
 
 interface PortfolioPageProps {
-  onNavigate: (route: "receive" | "send" | "swap") => void;
+  onNavigate: (route: "receive" | "send" | "swap" | "history") => void;
 }
 
 const TODAY_START = new Date();
@@ -35,12 +35,12 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
   const todayPct = totalBalance > 0 ? (todayPnl / (totalBalance - todayPnl)) * 100 : 0;
   const pnlPositive = todayPnl >= 0;
 
-  const actionBtns: { id: "receive" | "send" | "swap"; label: string; icon: React.ReactNode }[] = [
+  const actionBtns: { id: "receive" | "send" | "swap" | "history"; label: string; icon: React.ReactNode }[] = [
     {
       id: "receive",
       label: "Receive",
       icon: (
-        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16" />
         </svg>
       ),
@@ -49,7 +49,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
       id: "send",
       label: "Send",
       icon: (
-        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 20V8m0 0l-4 4m4-4l4 4M4 4h16" />
         </svg>
       ),
@@ -58,8 +58,17 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
       id: "swap",
       label: "Swap",
       icon: (
-        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" />
+        </svg>
+      ),
+    },
+    {
+      id: "history",
+      label: "History",
+      icon: (
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
     },

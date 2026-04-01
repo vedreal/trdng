@@ -9,7 +9,7 @@ interface SwapPageProps {
 const SWAP_FEE = 0.001;
 
 export function SwapPage({ onBack, bnbPrice }: SwapPageProps) {
-  const { balance, bnbBalance, depositFunds, withdrawFunds, setBnbBalance } = useTrading();
+  const { balance, bnbBalance, depositFunds, withdrawFunds, setBnbBalance, addWalletTx } = useTrading();
 
   const [fromAsset, setFromAsset] = useState<"USDT" | "BNB">("USDT");
   const [fromAmount, setFromAmount] = useState("");
@@ -60,6 +60,7 @@ export function SwapPage({ onBack, bnbPrice }: SwapPageProps) {
       depositFunds(toAmount);
       setLastSwap({ from: `${parsedFrom.toFixed(6)} BNB`, to: `${toAmount.toFixed(2)} USDT`, fee: `${feeAmount.toFixed(2)} USDT` });
     }
+    addWalletTx({ type: "swap", asset: fromAsset, amount: parsedFrom, toAsset, toAmount });
     setFromAmount("");
     setStep("done");
   };

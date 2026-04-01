@@ -9,7 +9,7 @@ interface SendPageProps {
 const NETWORK_FEE_BNB = 0.0005;
 
 export function SendPage({ onBack, bnbPrice }: SendPageProps) {
-  const { balance, bnbBalance, withdrawFunds, setBnbBalance } = useTrading();
+  const { balance, bnbBalance, withdrawFunds, setBnbBalance, addWalletTx } = useTrading();
   const [asset, setAsset] = useState<"USDT" | "BNB">("USDT");
   const [address, setAddress] = useState("");
   const [amount, setAmount] = useState("");
@@ -45,6 +45,7 @@ export function SendPage({ onBack, bnbPrice }: SendPageProps) {
       if (parsedAmount > bnbBalance) return showToast("Insufficient BNB");
       setBnbBalance((b) => parseFloat((b - parsedAmount).toFixed(6)));
     }
+    addWalletTx({ type: "withdraw", asset, amount: parsedAmount, address });
     setStep("done");
   };
 

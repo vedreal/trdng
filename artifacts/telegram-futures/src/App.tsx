@@ -7,6 +7,7 @@ import { PortfolioPage } from "@/pages/PortfolioPage";
 import { ReceivePage } from "@/pages/ReceivePage";
 import { SendPage } from "@/pages/SendPage";
 import { SwapPage } from "@/pages/SwapPage";
+import { HistoryPage } from "@/pages/HistoryPage";
 import { EarnPage } from "@/pages/EarnPage";
 import { ProfilePage } from "@/pages/ProfilePage";
 import { useBinancePrice } from "@/hooks/useBinancePrice";
@@ -14,7 +15,7 @@ import { useBinancePrice } from "@/hooks/useBinancePrice";
 const queryClient = new QueryClient();
 
 type NavPage = "portfolio" | "futures" | "earn" | "profile";
-type SubRoute = null | "receive" | "send" | "swap";
+type SubRoute = null | "receive" | "send" | "swap" | "history";
 
 function AppContent() {
   const [page, setPage] = useState<NavPage>("futures");
@@ -26,7 +27,7 @@ function AppContent() {
     setPage(p);
   };
 
-  const handleNavigate = (route: "receive" | "send" | "swap") => {
+  const handleNavigate = (route: "receive" | "send" | "swap" | "history") => {
     setSubRoute(route);
   };
 
@@ -40,6 +41,7 @@ function AppContent() {
         {subRoute === "receive" && <ReceivePage onBack={handleBack} />}
         {subRoute === "send"    && <SendPage onBack={handleBack} bnbPrice={bnbPrice} />}
         {subRoute === "swap"    && <SwapPage onBack={handleBack} bnbPrice={bnbPrice} />}
+        {subRoute === "history" && <HistoryPage onBack={handleBack} />}
         {subRoute === null && (
           <>
             {page === "portfolio" && <PortfolioPage onNavigate={handleNavigate} />}

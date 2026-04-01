@@ -8,7 +8,7 @@ interface ReceivePageProps {
 }
 
 export function ReceivePage({ onBack }: ReceivePageProps) {
-  const { depositFunds, setBnbBalance } = useTrading();
+  const { depositFunds, setBnbBalance, addWalletTx } = useTrading();
   const [copied, setCopied] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<"USDT" | "BNB">("USDT");
   const [simAmount, setSimAmount] = useState("");
@@ -35,6 +35,7 @@ export function ReceivePage({ onBack }: ReceivePageProps) {
       setBnbBalance((b) => parseFloat((b + amount).toFixed(5)));
       showToast(`+${amount.toFixed(4)} BNB deposited`);
     }
+    addWalletTx({ type: "deposit", asset: selectedAsset, amount, address: DEPOSIT_ADDRESS });
     setSimAmount("");
   };
 
