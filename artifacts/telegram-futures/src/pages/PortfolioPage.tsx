@@ -72,18 +72,18 @@ function TransferModal({
           <button
             onClick={() => { setDirection("toFutures"); setAmountInput(""); setFeedback(null); }}
             className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${direction === "toFutures" ? "btn-3d-gold" : "text-[#888888]"}`}>
-            Portfolio → Futures
+            Spot → Futures
           </button>
           <button
             onClick={() => { setDirection("fromFutures"); setAmountInput(""); setFeedback(null); }}
             className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${direction === "fromFutures" ? "btn-3d-gold" : "text-[#888888]"}`}>
-            Futures → Portfolio
+            Futures → Spot
           </button>
         </div>
 
         <div className="space-y-2 mb-4">
           <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-[#F5F3EA] border border-[#E0DDD0]">
-            <span className="text-xs text-[#888888]">Portfolio (Spot)</span>
+            <span className="text-xs text-[#888888]">Spot</span>
             <span className="text-sm font-semibold text-[#333333]">${fmtUsd(spotBalance)} USDT</span>
           </div>
           <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-[#F5F3EA] border border-[#E0DDD0]">
@@ -273,9 +273,9 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
           {/* History icon — top-right */}
           <button
             onClick={() => onNavigate("history")}
-            className="absolute top-3.5 right-4 z-10 text-[rgba(255,255,255,0.7)] hover:text-white transition-colors active:scale-90"
+            className="absolute top-3 right-4 z-10 text-[rgba(255,255,255,0.7)] hover:text-white transition-colors active:scale-90"
             title="History">
-            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </button>
@@ -433,12 +433,15 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
               </div>
 
               {/* Recent Activity — Futures tab only */}
-              {futuresActivity.length > 0 && (
-                <>
-                  <p className="text-[11px] font-semibold text-[#888888] uppercase tracking-wide pt-1 pb-0.5 px-1">
-                    Recent Activity
-                  </p>
-                  {futuresActivity.map((item) => {
+              <>
+                <p className="text-[11px] font-semibold text-[#888888] uppercase tracking-wide pt-1 pb-0.5 px-1">
+                  Recent Activity
+                </p>
+                {futuresActivity.length === 0 ? (
+                  <div className="panel-silver border border-[#D8D0A8] rounded-xl px-4 py-4 text-center">
+                    <p className="text-xs text-[#AAAAAA]">Belum ada aktivitas terbaru</p>
+                  </div>
+                ) : futuresActivity.map((item) => {
                     if (item.kind === "trade") {
                       const profit = item.pnl >= 0;
                       return (
@@ -493,7 +496,6 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                     );
                   })}
                 </>
-              )}
             </div>
           )}
         </div>
