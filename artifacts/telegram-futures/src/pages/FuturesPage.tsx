@@ -277,9 +277,6 @@ function PositionCard({
   const profit  = pnl >= 0;
   const qty     = pos.quantity;
 
-  // Estimated closing fee
-  const estimatedClosingFee = qty * currentPrice * TAKER_FEE;
-
   return (
     <div className="mx-1 mb-3 rounded-2xl border border-[#D4AF37] p-4 shadow-sm panel-silver">
       <div className="flex items-center justify-between mb-3">
@@ -320,27 +317,17 @@ function PositionCard({
           <p className="text-xs font-semibold text-[#333333]">${fmt(currentPrice, 1)}</p>
         </div>
         <div>
-          <p className="text-[10px] text-[#888888] mb-0.5">Open Fee</p>
-          <p className="text-xs font-semibold text-[#C9A227]">-${fmt(pos.openingFee, 4)}</p>
-        </div>
-        <div className="text-center">
           <p className="text-[10px] text-[#888888] mb-0.5">Liq. Price</p>
           <p className="text-xs font-semibold text-[#C9A227]">
             {pos.liquidationPrice > 0 ? `$${fmt(pos.liquidationPrice, 1)}` : "No Liq."}
           </p>
         </div>
-        <div className="text-right">
+        <div className="col-span-2 text-right">
           <p className="text-[10px] text-[#888888] mb-0.5">Unrealized PnL</p>
           <p className={`text-xs font-bold ${profit ? "text-green-600" : "text-red-500"}`}>
             {profit ? "+" : ""}${fmt(pnl)} ({profit ? "+" : ""}{pnlPct.toFixed(2)}%)
           </p>
         </div>
-      </div>
-
-      {/* Est. closing fee notice */}
-      <div className="flex items-center justify-between mb-2.5 px-0.5">
-        <span className="text-[10px] text-[#AAAAAA]">Est. close fee</span>
-        <span className="text-[10px] text-[#AAAAAA]">-${fmt(estimatedClosingFee, 4)} (0.04%)</span>
       </div>
 
       <div className="flex items-center justify-between pt-2.5 border-t border-[#D8D0A8]">
@@ -926,11 +913,7 @@ export function FuturesPage() {
                           <p className="text-[10px] text-[#888888]">Margin</p>
                           <p className="text-xs font-semibold text-[#333333]">${fmt(previewPos.margin, 2)}</p>
                         </div>
-                        <div className="text-center">
-                          <p className="text-[10px] text-[#888888]">Open Fee</p>
-                          <p className="text-xs font-semibold text-[#C9A227]">-${fmt(previewPos.openingFee, 4)}</p>
-                        </div>
-                        <div className="text-right">
+                        <div className="col-span-2 text-right">
                           <p className="text-[10px] text-[#888888]">Total Cost</p>
                           <p className="text-xs font-semibold text-[#333333]">${fmt(previewPos.totalCost, 4)}</p>
                         </div>
@@ -940,15 +923,11 @@ export function FuturesPage() {
                             {order.sl ? `$${fmt(order.sl, 1)}` : "--"}
                           </p>
                         </div>
-                        <div className="text-center">
+                        <div className="col-span-2 text-right">
                           <p className="text-[10px] text-[#888888]">TP</p>
                           <p className={`text-xs font-medium ${order.tp ? "text-green-600" : "text-[#AAAAAA]"}`}>
                             {order.tp ? `$${fmt(order.tp, 1)}` : "--"}
                           </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-[10px] text-[#888888]">Notional</p>
-                          <p className="text-xs font-medium text-[#333333]">${fmtCompact(previewPos.notional)}</p>
                         </div>
                       </div>
                     </div>
