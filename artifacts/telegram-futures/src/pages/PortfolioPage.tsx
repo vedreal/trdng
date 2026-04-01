@@ -439,7 +439,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                 </p>
                 {futuresActivity.length === 0 ? (
                   <div className="panel-silver border border-[#D8D0A8] rounded-xl px-4 py-4 text-center">
-                    <p className="text-xs text-[#AAAAAA]">Belum ada aktivitas terbaru</p>
+                    <p className="text-xs text-[#AAAAAA]">No recent activity</p>
                   </div>
                 ) : futuresActivity.map((item) => {
                     if (item.kind === "trade") {
