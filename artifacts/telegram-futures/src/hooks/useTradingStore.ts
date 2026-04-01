@@ -13,9 +13,10 @@ export interface Position {
   entryPrice: number;
   leverage: number;
   marginMode: "Cross" | "Isolated";
-  liquidationPrice: number; // stored at open; display uses computeDynamicLiqPrice
+  liquidationPrice: number;
   sl?: number;
   tp?: number;
+  limitClosePrice?: number; // for limit-close orders
   openTime: number;
 }
 
@@ -130,21 +131,6 @@ export function calcMaxMarginForBalance(
   return margin;
 }
 
-/**
- * Cross-margin liquidation price (Binance formula, derived from first principles).
- *
- * Liq condition: walletBalance + unrealizedPnL ≤ notional × mmr + mmAmount
- *
- *   Long:  liqPrice = entryPrice × (1 + mmr + (mmAmount − W) / notional)
- *   Short: liqPrice = entryPrice × (1 − mmr + (W − mmAmount) / notional)
- *
- * where W = walletBalance = freeBalance + sum(all locked margins).
- *
- * Effect:
- *  • More balance  → W increases → (mmAmount − W) more negative → liqPrice falls  → further from entry  ✓
- *  • Less balance  → W decreases → (mmAmount − W) less negative → liqPrice rises   → closer to entry     ✓
- *  • If W is very large (W > notional × (1+mmr)) → liqPrice ≤ 0 → show "No Liq." ✓
- */
 export function calcLiqPrice(
   side: "long" | "short",
   entryPrice: number,
@@ -165,19 +151,11 @@ export function calcLiqPrice(
   }
 }
 
-/**
- * Compute the current cross-margin wallet balance.
- * W = free futures balance + all locked position margins.
- */
 export function computeWalletBalance(freeBalance: number, positions: Position[]): number {
   const totalMargins = positions.reduce((sum, p) => sum + p.margin, 0);
   return freeBalance + totalMargins;
 }
 
-/**
- * Compute the live liquidation price for a position given current account state.
- * This should be used for display and liquidation checks — NOT the stored static value.
- */
 export function computeDynamicLiqPrice(
   pos: Position,
   freeBalance: number,
@@ -187,11 +165,6 @@ export function computeDynamicLiqPrice(
   return calcLiqPrice(pos.side, pos.entryPrice, pos.notional, pos.margin, "Cross", W);
 }
 
-/**
- * Risk percentage: how much of the distance to liquidation has been consumed.
- * 0 % = safe (at or above entry for long), 100 % = at liquidation price.
- * Returns null if no liquidation price (fully backed).
- */
 export function computeRiskPercent(
   pos: Position,
   currentPrice: number,
@@ -211,6 +184,8 @@ export function computeRiskPercent(
     return Math.min(Math.max((consumed / total) * 100, 0), 100);
   }
 }
+
+export type TriggerReason = "liquidation" | "sl" | "tp" | "limit_close";
 
 export function useTradingStore() {
   const [balance, setBalance] = useState(INITIAL_BALANCE);
@@ -243,8 +218,6 @@ export function useTradingStore() {
       if (quantity <= 0 || notional <= 0) return { success: false, message: "Order size too small for minimum lot" };
       if (totalCost > avail) return { success: false, message: `Insufficient balance. Need $${totalCost.toFixed(2)}` };
 
-      // W after opening = (avail − totalCost) + (existingMargins + newMargin)
-      //                 = avail − openingFee + existingMargins
       const existingMargins = existingPositions.reduce((s, p) => s + p.margin, 0);
       const W = (avail - totalCost) + existingMargins + margin;
 
@@ -332,8 +305,11 @@ export function useTradingStore() {
     setPendingOrders((prev) => prev.filter((o) => o.id !== orderId));
   }, []);
 
+  // Single-position mode: don't fill pending orders if a position is already open
   const checkPendingOrders = useCallback(
     (marketPrice: number, currentBalance: number) => {
+      if (positions.length > 0) return; // block fill when position already exists
+
       setPendingOrders((prev) => {
         if (prev.length === 0) return prev;
 
@@ -351,14 +327,13 @@ export function useTradingStore() {
 
         if (toFill.length === 0) return prev;
 
-        let runningBalance = currentBalance;
-        for (const order of toFill) {
-          const { quantity, notional, margin, openingFee, totalCost } =
-            calcEffectivePosition(order.requestedMargin, order.leverage, order.limitPrice, order.stepSize, MAKER_FEE);
+        // Only fill the first eligible order (single-position mode)
+        const order = toFill[0];
+        const { quantity, notional, margin, openingFee, totalCost } =
+          calcEffectivePosition(order.requestedMargin, order.leverage, order.limitPrice, order.stepSize, MAKER_FEE);
 
-          if (quantity <= 0 || totalCost > runningBalance) continue;
-
-          const W = runningBalance - openingFee;
+        if (quantity > 0 && totalCost <= currentBalance) {
+          const W = currentBalance - openingFee;
           const liquidationPrice = calcLiqPrice(order.side, order.limitPrice, notional, margin, "Cross", W);
 
           const pos: Position = {
@@ -379,27 +354,27 @@ export function useTradingStore() {
 
           setPositions((p) => [...p, pos]);
           setBalance((b) => parseFloat((b - totalCost).toFixed(5)));
-          runningBalance -= totalCost;
         }
 
-        return remaining;
+        // Cancel all unfilled orders from this batch (single-position mode)
+        return remaining.filter((o) => !toFill.includes(o)).concat(toFill.slice(1));
       });
     },
-    []
+    [positions]
   );
 
-  const closePosition = useCallback((positionId: string, currentPrice: number) => {
+  const closePosition = useCallback((positionId: string, closePrice: number, feeRate = TAKER_FEE) => {
     setPositions((prev) => {
       const pos = prev.find((p) => p.id === positionId);
       if (!pos) return prev;
 
       const rawPnl =
         pos.side === "long"
-          ? (currentPrice - pos.entryPrice) * pos.quantity
-          : (pos.entryPrice - currentPrice) * pos.quantity;
+          ? (closePrice - pos.entryPrice) * pos.quantity
+          : (pos.entryPrice - closePrice) * pos.quantity;
 
-      const closingNotional = pos.quantity * currentPrice;
-      const closingFee = closingNotional * TAKER_FEE;
+      const closingNotional = pos.quantity * closePrice;
+      const closingFee = closingNotional * feeRate;
       const netPnl = rawPnl - closingFee;
       const returned = pos.margin + netPnl;
 
@@ -412,7 +387,7 @@ export function useTradingStore() {
           quantity: pos.quantity,
           notional: pos.notional,
           entryPrice: pos.entryPrice,
-          closePrice: currentPrice,
+          closePrice,
           rawPnl,
           openingFee: pos.openingFee,
           closingFee,
@@ -429,13 +404,9 @@ export function useTradingStore() {
     });
   }, []);
 
-  /**
-   * Check liquidations using DYNAMIC liq price (based on current wallet balance).
-   * This means balance transfers instantly update liq-trigger thresholds.
-   */
   const checkLiquidations = useCallback(
-    (marketPrice: number): { id: string; reason: "liquidation" | "sl" | "tp" }[] => {
-      const result: { id: string; reason: "liquidation" | "sl" | "tp" }[] = [];
+    (marketPrice: number): { id: string; reason: TriggerReason; closePrice: number }[] => {
+      const result: { id: string; reason: TriggerReason; closePrice: number }[] = [];
       const W = computeWalletBalance(balance, positions);
 
       for (const pos of positions) {
@@ -443,19 +414,23 @@ export function useTradingStore() {
 
         if (pos.side === "long") {
           if (liqPrice > 0 && marketPrice <= liqPrice) {
-            result.push({ id: pos.id, reason: "liquidation" });
+            result.push({ id: pos.id, reason: "liquidation", closePrice: liqPrice });
           } else if (pos.sl && marketPrice <= pos.sl) {
-            result.push({ id: pos.id, reason: "sl" });
+            result.push({ id: pos.id, reason: "sl", closePrice: pos.sl });
           } else if (pos.tp && marketPrice >= pos.tp) {
-            result.push({ id: pos.id, reason: "tp" });
+            result.push({ id: pos.id, reason: "tp", closePrice: pos.tp });
+          } else if (pos.limitClosePrice && marketPrice >= pos.limitClosePrice) {
+            result.push({ id: pos.id, reason: "limit_close", closePrice: pos.limitClosePrice });
           }
         } else {
           if (liqPrice > 0 && marketPrice >= liqPrice) {
-            result.push({ id: pos.id, reason: "liquidation" });
+            result.push({ id: pos.id, reason: "liquidation", closePrice: liqPrice });
           } else if (pos.sl && marketPrice >= pos.sl) {
-            result.push({ id: pos.id, reason: "sl" });
+            result.push({ id: pos.id, reason: "sl", closePrice: pos.sl });
           } else if (pos.tp && marketPrice <= pos.tp) {
-            result.push({ id: pos.id, reason: "tp" });
+            result.push({ id: pos.id, reason: "tp", closePrice: pos.tp });
+          } else if (pos.limitClosePrice && marketPrice <= pos.limitClosePrice) {
+            result.push({ id: pos.id, reason: "limit_close", closePrice: pos.limitClosePrice });
           }
         }
       }
@@ -469,6 +444,16 @@ export function useTradingStore() {
       prev.map((p) =>
         p.id === positionId
           ? { ...p, sl: sl && sl > 0 ? sl : undefined, tp: tp && tp > 0 ? tp : undefined }
+          : p
+      )
+    );
+  }, []);
+
+  const updateLimitClose = useCallback((positionId: string, price?: number) => {
+    setPositions((prev) =>
+      prev.map((p) =>
+        p.id === positionId
+          ? { ...p, limitClosePrice: price && price > 0 ? price : undefined }
           : p
       )
     );
@@ -502,6 +487,7 @@ export function useTradingStore() {
     checkLiquidations,
     closePosition,
     updateSlTp,
+    updateLimitClose,
     getPnl,
     depositFunds,
     withdrawFunds,

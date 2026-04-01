@@ -9,7 +9,7 @@ interface SwapPageProps {
 const SWAP_FEE = 0.001;
 
 export function SwapPage({ onBack, bnbPrice }: SwapPageProps) {
-  const { balance, bnbBalance, depositFunds, withdrawFunds, setBnbBalance, addWalletTx } = useTrading();
+  const { spotUsdtBalance, bnbBalance, setSpotUsdtBalance, setBnbBalance, addWalletTx } = useTrading();
 
   const [fromAsset, setFromAsset] = useState<"USDT" | "BNB">("USDT");
   const [fromAmount, setFromAmount] = useState("");
@@ -32,7 +32,7 @@ export function SwapPage({ onBack, bnbPrice }: SwapPageProps) {
     return raw * SWAP_FEE;
   }, [parsedFrom, fromAsset, bnbPrice]);
 
-  const maxFrom = fromAsset === "USDT" ? balance : bnbBalance;
+  const maxFrom = fromAsset === "USDT" ? spotUsdtBalance : bnbBalance;
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -49,15 +49,14 @@ export function SwapPage({ onBack, bnbPrice }: SwapPageProps) {
   const handleSwap = () => {
     if (parsedFrom <= 0) return showToast("Enter a valid amount");
     if (fromAsset === "USDT") {
-      if (parsedFrom > balance) return showToast("Insufficient USDT balance");
-      const ok = withdrawFunds(parsedFrom, balance);
-      if (!ok) return showToast("Insufficient balance");
+      if (parsedFrom > spotUsdtBalance) return showToast("Insufficient USDT balance");
+      setSpotUsdtBalance((b) => parseFloat((b - parsedFrom).toFixed(5)));
       setBnbBalance((b) => parseFloat((b + toAmount).toFixed(6)));
       setLastSwap({ from: `${parsedFrom.toFixed(2)} USDT`, to: `${toAmount.toFixed(6)} BNB`, fee: `${feeAmount.toFixed(6)} BNB` });
     } else {
       if (parsedFrom > bnbBalance) return showToast("Insufficient BNB balance");
       setBnbBalance((b) => parseFloat((b - parsedFrom).toFixed(6)));
-      depositFunds(toAmount);
+      setSpotUsdtBalance((b) => parseFloat((b + toAmount).toFixed(5)));
       setLastSwap({ from: `${parsedFrom.toFixed(6)} BNB`, to: `${toAmount.toFixed(2)} USDT`, fee: `${feeAmount.toFixed(2)} USDT` });
     }
     addWalletTx({ type: "swap", asset: fromAsset, amount: parsedFrom, toAsset, toAmount });
@@ -146,7 +145,7 @@ export function SwapPage({ onBack, bnbPrice }: SwapPageProps) {
             <span className="text-xs font-semibold text-[#888888] uppercase tracking-wide">From</span>
             <span className="text-xs text-[#888888]">
               Balance: <span className="font-semibold text-[#C9A227]">
-                {fromAsset === "USDT" ? `${balance.toFixed(2)} USDT` : `${bnbBalance.toFixed(4)} BNB`}
+                {fromAsset === "USDT" ? `${spotUsdtBalance.toFixed(2)} USDT` : `${bnbBalance.toFixed(4)} BNB`}
               </span>
             </span>
           </div>
@@ -184,7 +183,7 @@ export function SwapPage({ onBack, bnbPrice }: SwapPageProps) {
             <span className="text-xs font-semibold text-[#888888] uppercase tracking-wide">To (estimated)</span>
             <span className="text-xs text-[#888888]">
               Balance: <span className="font-semibold text-[#C9A227]">
-                {toAsset === "USDT" ? `${balance.toFixed(2)} USDT` : `${bnbBalance.toFixed(4)} BNB`}
+                {toAsset === "USDT" ? `${spotUsdtBalance.toFixed(2)} USDT` : `${bnbBalance.toFixed(4)} BNB`}
               </span>
             </span>
           </div>

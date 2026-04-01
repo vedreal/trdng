@@ -25,6 +25,7 @@ interface TradingContextType extends ReturnType<typeof useTradingStore> {
   xautBalance: number;
   setXautBalance: (v: number | ((prev: number) => number)) => void;
   spotUsdtBalance: number;
+  setSpotUsdtBalance: (v: number | ((prev: number) => number)) => void;
   transferToFutures: (amount: number) => { success: boolean; message: string };
   transferFromFutures: (amount: number) => { success: boolean; message: string };
   walletHistory: WalletTransaction[];
@@ -85,7 +86,7 @@ export function TradingProvider({ children }: { children: ReactNode }) {
       ...store,
       bnbBalance, setBnbBalance,
       xautBalance, setXautBalance,
-      spotUsdtBalance,
+      spotUsdtBalance, setSpotUsdtBalance,
       transferToFutures,
       transferFromFutures,
       walletHistory, addWalletTx,

@@ -5,7 +5,6 @@ import {
   type ClosedTrade,
   calcLiqPrice,
   computeDynamicLiqPrice,
-  computeRiskPercent,
   computeWalletBalance,
   calcEffectivePosition,
   calcMaxMarginForBalance,
@@ -273,19 +272,6 @@ function PositionCard({
   const qty     = pos.quantity;
 
   const liqPrice = computeDynamicLiqPrice(pos, futuresBalance, allPositions);
-  const risk     = computeRiskPercent(pos, currentPrice, liqPrice);
-
-  const riskColor =
-    risk === null  ? ""
-    : risk >= 60   ? "text-red-500"
-    : risk >= 25   ? "text-orange-500"
-    : "text-green-600";
-
-  const riskBarColor =
-    risk === null  ? "bg-gray-300"
-    : risk >= 60   ? "bg-red-500"
-    : risk >= 25   ? "bg-orange-400"
-    : "bg-green-500";
 
   return (
     <div className="mx-1 mb-3 rounded-2xl border border-[#D4AF37] p-4 shadow-sm panel-silver">
@@ -340,24 +326,6 @@ function PositionCard({
         </div>
       </div>
 
-      {/* Risk indicator */}
-      {risk !== null && (
-        <div className="mb-3">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] text-[#888888]">Liquidation Risk</span>
-            <span className={`text-[10px] font-bold ${riskColor}`}>
-              {risk.toFixed(1)}%
-            </span>
-          </div>
-          <div className="h-1.5 rounded-full bg-[#E0DDD0] overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all duration-300 ${riskBarColor}`}
-              style={{ width: `${risk}%` }}
-            />
-          </div>
-        </div>
-      )}
-
       <div className="flex items-center justify-between pt-2.5 border-t border-[#D8D0A8]">
         <div className="flex items-center gap-4">
           <div>
@@ -372,6 +340,12 @@ function PositionCard({
               {pos.tp ? `$${fmt(pos.tp, 1)}` : "--"}
             </span>
           </div>
+          {pos.limitClosePrice && (
+            <div>
+              <span className="text-[10px] text-[#888888]">Limit Close&nbsp;</span>
+              <span className="text-xs font-medium text-[#C9A227]">${fmt(pos.limitClosePrice, 1)}</span>
+            </div>
+          )}
         </div>
         <button onClick={onEditSlTp}
           className="text-[10px] font-semibold px-2.5 py-1 rounded-full btn-3d-gold" style={{ fontSize: '10px', padding: '4px 10px' }}>
@@ -440,6 +414,105 @@ function HistoryCard({ trade }: { trade: ClosedTrade }) {
   );
 }
 
+// ── Close Position Modal ───────────────────────────────────────────
+function CloseModal({
+  pos,
+  currentPrice,
+  priceDec,
+  onMarketClose,
+  onLimitClose,
+  onClose,
+}: {
+  pos: Position;
+  currentPrice: number;
+  priceDec: number;
+  onMarketClose: () => void;
+  onLimitClose: (price: number) => void;
+  onClose: () => void;
+}) {
+  const [tab, setTab] = useState<"market" | "limit">("market");
+  const [limitPriceStr, setLimitPriceStr] = useState(currentPrice > 0 ? currentPrice.toFixed(priceDec) : "");
+  const [err, setErr] = useState<string | null>(null);
+
+  const handleConfirm = () => {
+    if (tab === "market") {
+      onMarketClose();
+    } else {
+      const lp = parseFloat(limitPriceStr);
+      if (!lp || lp <= 0) { setErr("Enter a valid price"); return; }
+      onLimitClose(lp);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
+      <div className="w-full max-w-md rounded-t-3xl panel-card border-t border-[#D4AF37] p-5 pb-8 shadow-2xl">
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-base font-bold text-[#1A1A1A]">Close Position</span>
+          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-full bg-[#E0DDD0] text-[#666]">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Position summary */}
+        <div className="flex items-center gap-2 mb-4">
+          <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${pos.side === "long" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-500"}`}>
+            {pos.side === "long" ? "Long" : "Short"}
+          </span>
+          <span className="text-xs text-[#666]">{pos.leverage}x</span>
+          <span className="text-xs text-[#888] ml-auto">Entry: ${fmt(pos.entryPrice, 1)}</span>
+        </div>
+
+        {/* Market / Limit tabs */}
+        <div className="flex rounded-xl border border-[#C8C0A0] p-1 mb-4 bg-[#E8E4D0]">
+          <button onClick={() => setTab("market")}
+            className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "market" ? "btn-3d-gold" : "text-[#888888]"}`}>
+            Market
+          </button>
+          <button onClick={() => setTab("limit")}
+            className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "limit" ? "btn-3d-gold" : "text-[#888888]"}`}>
+            Limit
+          </button>
+        </div>
+
+        {tab === "market" ? (
+          <div className="rounded-xl bg-[#F5F3EA] border border-[#E0DDD0] px-4 py-3 mb-4 text-sm text-[#555]">
+            Close immediately at market price ≈ <span className="font-bold text-[#1A1A1A]">${fmt(currentPrice, 1)}</span>
+          </div>
+        ) : (
+          <div className="mb-4">
+            <div className="rounded-xl border border-[#C8C0A0] flex items-center px-4 py-3 bg-[#F5F3EA]">
+              <span className="text-sm text-[#888888] mr-3 flex-shrink-0">Limit Price</span>
+              <input
+                type="number"
+                value={limitPriceStr}
+                onChange={(e) => { setLimitPriceStr(e.target.value); setErr(null); }}
+                className="flex-1 text-right text-sm font-medium text-[#333333] bg-transparent outline-none"
+                placeholder="0.00"
+              />
+              <span className="text-sm text-[#888888] ml-2">USDT</span>
+            </div>
+            <p className="text-[10px] text-[#888888] mt-1.5 px-1">
+              {pos.side === "long"
+                ? "Position closes when price reaches this level (above = profit, below = stop)"
+                : "Position closes when price reaches this level (below = profit, above = stop)"}
+            </p>
+          </div>
+        )}
+
+        {err && <p className="text-xs text-red-500 text-center mb-3">{err}</p>}
+
+        <button onClick={handleConfirm}
+          className="w-full py-3 rounded-xl text-sm font-bold btn-3d-gold">
+          {tab === "market" ? "Confirm Market Close" : "Set Limit Close"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Transfer Modal ────────────────────────────────────────────────
 function TransferModal({
   spotBalance,
@@ -492,19 +565,19 @@ function TransferModal({
           <button
             onClick={() => { setDirection("toFutures"); setAmountInput(""); setFeedback(null); }}
             className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${direction === "toFutures" ? "btn-3d-gold" : "text-[#888888]"}`}>
-            Portfolio → Futures
+            Spot → Futures
           </button>
           <button
             onClick={() => { setDirection("fromFutures"); setAmountInput(""); setFeedback(null); }}
             className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${direction === "fromFutures" ? "btn-3d-gold" : "text-[#888888]"}`}>
-            Futures → Portfolio
+            Futures → Spot
           </button>
         </div>
 
         {/* Balance rows */}
         <div className="space-y-2 mb-4">
           <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-[#F5F3EA] border border-[#E0DDD0]">
-            <span className="text-xs text-[#888888]">Portfolio (Spot)</span>
+            <span className="text-xs text-[#888888]">Spot</span>
             <span className="text-sm font-semibold text-[#333333]">${fmt(spotBalance, 2)} USDT</span>
           </div>
           <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-[#F5F3EA] border border-[#E0DDD0]">
@@ -559,7 +632,7 @@ export function FuturesPage() {
   const {
     balance, positions, pendingOrders, history,
     openPosition, placeLimitOrder, cancelPendingOrder, checkPendingOrders, checkLiquidations,
-    closePosition, updateSlTp, getPnl,
+    closePosition, updateSlTp, updateLimitClose, getPnl,
     spotUsdtBalance, transferToFutures, transferFromFutures,
   } = useTrading();
 
@@ -576,6 +649,7 @@ export function FuturesPage() {
   const [activeTab, setActiveTab]       = useState<TabType>("position");
   const [showLevModal, setShowLevModal] = useState(false);
   const [editingPos, setEditingPos]     = useState<Position | null>(null);
+  const [closingPos, setClosingPos]     = useState<Position | null>(null);
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [toast, setToast]               = useState<{ msg: string; ok: boolean } | null>(null);
 
@@ -628,10 +702,11 @@ export function FuturesPage() {
   useEffect(() => {
     if (price > 0 && positions.length > 0) {
       const triggered = checkLiquidations(price);
-      for (const { id, reason } of triggered) {
-        closePosition(id, price);
+      for (const { id, reason, closePrice } of triggered) {
+        closePosition(id, closePrice);
         if (reason === "liquidation") showToast("Position liquidated!", false);
         else if (reason === "sl") showToast("Stop Loss triggered", false);
+        else if (reason === "limit_close") showToast("Limit close executed ✓", true);
         else showToast("Take Profit triggered ✓", true);
       }
     }
@@ -675,34 +750,40 @@ export function FuturesPage() {
   const handleSubmit = (tradeSide: "long" | "short") => {
     if (price <= 0) return showToast("Price not loaded yet", false);
 
+    // Single-position mode: block if any position is already open
+    if (positions.length > 0) {
+      return showToast("Close your existing position before opening a new one", false);
+    }
+
     const sl = parseFloat(entrySl) || undefined;
     const tp = parseFloat(entryTp) || undefined;
 
-    const isLimitImmediateFill =
-      orderType === "limit"
-        ? (tradeSide === "long"
-            ? entryPrice >= price
-            : entryPrice <= price)
-        : false;
-
-    if (orderType === "market" || isLimitImmediateFill) {
-      const fillPrice = orderType === "market" ? price : entryPrice;
-      const result = openPosition(tradeSide, rawMargin, fillPrice, leverage, selectedPair.stepSize, "Cross", sl, tp, balance, positions);
+    if (orderType === "market") {
+      const result = openPosition(tradeSide, rawMargin, price, leverage, selectedPair.stepSize, "Cross", sl, tp, balance, positions);
       if (result.success) {
         setMarginInput(""); setSliderValue(0);
         setEntrySl(""); setEntryTp("");
         setActiveTab("position");
-        showToast(`${tradeSide === "long" ? "Long" : "Short"} opened @${fmtPrice(fillPrice, selectedPair.priceDec)}`, true);
+        showToast(`${tradeSide === "long" ? "Long" : "Short"} opened @${fmtPrice(price, selectedPair.priceDec)}`, true);
       } else {
         showToast(result.message, false);
       }
     } else {
-      const result = placeLimitOrder(tradeSide, rawMargin, entryPrice, leverage, selectedPair.stepSize, sl, tp, balance);
+      // Limit order: validate price direction
+      const lp = parseFloat(limitPriceInput);
+      if (!lp || lp <= 0) return showToast("Enter a valid limit price", false);
+      if (tradeSide === "long" && lp >= price) {
+        return showToast("Limit buy price must be below current market price", false);
+      }
+      if (tradeSide === "short" && lp <= price) {
+        return showToast("Limit sell price must be above current market price", false);
+      }
+      const result = placeLimitOrder(tradeSide, rawMargin, lp, leverage, selectedPair.stepSize, sl, tp, balance);
       if (result.success) {
         setMarginInput(""); setSliderValue(0);
         setEntrySl(""); setEntryTp("");
         setActiveTab("orders");
-        showToast(`Limit ${tradeSide === "long" ? "Long" : "Short"} pending @${fmtPrice(entryPrice, selectedPair.priceDec)}`, true);
+        showToast(`Limit ${tradeSide === "long" ? "Long" : "Short"} pending @${fmtPrice(lp, selectedPair.priceDec)}`, true);
       } else {
         showToast(result.message, false);
       }
@@ -724,6 +805,26 @@ export function FuturesPage() {
         <SlTpModal pos={editingPos}
           onSave={(sl, tp) => updateSlTp(editingPos.id, sl, tp)}
           onClose={() => setEditingPos(null)} />
+      )}
+
+      {/* Close position modal */}
+      {closingPos && (
+        <CloseModal
+          pos={closingPos}
+          currentPrice={price}
+          priceDec={selectedPair.priceDec}
+          onMarketClose={() => {
+            closePosition(closingPos.id, price);
+            showToast("Position closed at market price", true);
+            setClosingPos(null);
+          }}
+          onLimitClose={(lp) => {
+            updateLimitClose(closingPos.id, lp);
+            showToast(`Limit close set at $${lp.toFixed(1)}`, true);
+            setClosingPos(null);
+          }}
+          onClose={() => setClosingPos(null)}
+        />
       )}
 
       {/* Transfer modal */}
@@ -761,8 +862,8 @@ export function FuturesPage() {
 
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[#C8B040] flex-shrink-0 panel-header">
-        <div className="p-1 w-[26px] h-[26px]" />
-        <div />
+        <div className="w-[26px]" />
+        <span className="text-base font-bold text-[#1A1A1A] tracking-tight">Futures Trade</span>
         <div className="flex items-center gap-2">
           <div className="p-1 w-[26px] h-[26px]" />
           <div className="p-1 w-[26px] h-[26px]" />
@@ -1033,7 +1134,7 @@ export function FuturesPage() {
                 ? <p className="py-8 text-center text-sm text-[#AAAAAA]">No positions</p>
                 : positions.map((pos) => (
                   <PositionCard key={pos.id} pos={pos} currentPrice={price}
-                    onClose={() => closePosition(pos.id, price)}
+                    onClose={() => setClosingPos(pos)}
                     onEditSlTp={() => setEditingPos(pos)}
                     getPnl={getPnl}
                     pairStepSize={selectedPair.stepSize}
