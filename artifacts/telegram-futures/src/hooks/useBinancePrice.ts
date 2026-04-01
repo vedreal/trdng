@@ -19,7 +19,9 @@ export interface BinancePriceData {
   setInterval: (interval: string) => void;
 }
 
-const BASE_URL = import.meta.env.BASE_URL.replace(/\/$/, "");
+// ── Binance Perpetual Futures endpoints (called directly from the browser) ──
+const FAPI_BASE = "https://fapi.binance.com/fapi/v1";
+const FSTREAM_WS = "wss://fstream.binance.com/ws";
 
 /** Convert Binance interval string to milliseconds */
 function getIntervalMs(interval: string): number {
@@ -39,6 +41,11 @@ function getIntervalMs(interval: string): number {
   return map[interval] ?? 300_000;
 }
 
+/** Normalise "1D" → "1d" for API calls */
+function normaliseInterval(interval: string): string {
+  return interval === "1D" ? "1d" : interval;
+}
+
 /** Validate a single candle — all price fields must be finite positive numbers */
 function isValidCandle(c: CandleData): boolean {
   return (
@@ -51,8 +58,8 @@ function isValidCandle(c: CandleData): boolean {
 }
 
 /**
- * Sort candles by open time ascending, deduplicate by time (last write wins),
- * and filter out any invalid entries.
+ * Sort candles by open time ascending, deduplicate (last write wins),
+ * and filter out invalid entries.
  */
 function sanitizeCandles(candles: CandleData[]): CandleData[] {
   const map = new Map<number, CandleData>();
@@ -63,61 +70,49 @@ function sanitizeCandles(candles: CandleData[]): CandleData[] {
 }
 
 /**
- * Generate mock candles with Binance-aligned timestamps.
- * The last candle's open time = floor(now / intervalMs) * intervalMs,
- * which matches what the WebSocket kline stream will send for the current period.
+ * Fetch perpetual-futures klines directly from the browser.
+ * Returns an empty array on any failure so the caller can fall back gracefully.
  */
-function generateMockCandles(basePrice: number, count = 60, interval = "5m"): CandleData[] {
-  const intervalMs = getIntervalMs(interval);
-  const now = Date.now();
-  const currentPeriodStart = Math.floor(now / intervalMs) * intervalMs;
-
-  const candles: CandleData[] = [];
-  let price = basePrice * (0.97 + Math.random() * 0.02);
-
-  for (let i = count; i >= 0; i--) {
-    const time = currentPeriodStart - i * intervalMs;
-    const change = (Math.random() - 0.48) * price * 0.0015;
-    price = Math.max(price + change, basePrice * 0.88);
-    const open = price;
-    const closeChange = (Math.random() - 0.48) * price * 0.001;
-    const close = open + closeChange;
-    const high = Math.max(open, close) + Math.random() * price * 0.0008;
-    const low  = Math.min(open, close) - Math.random() * price * 0.0008;
-    candles.push({ time, open, high, low, close, volume: Math.random() * 100 });
-    price = close;
-  }
-  return candles;
-}
-
-async function fetchKlines(symbol: string, interval: string, limit = 60): Promise<CandleData[]> {
+async function fetchKlines(
+  symbol: string,
+  interval: string,
+  limit = 100,
+): Promise<CandleData[]> {
   try {
-    const res = await fetch(
-      `${BASE_URL}/api/binance/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`
+    const iv = normaliseInterval(interval);
+    const url =
+      `${FAPI_BASE}/klines?symbol=${symbol}&interval=${iv}&limit=${limit}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data: (string | number)[][] = await res.json();
+    if (!Array.isArray(data)) throw new Error("Bad shape");
+    return sanitizeCandles(
+      data.map((k) => ({
+        time:   Number(k[0]),
+        open:   parseFloat(String(k[1])),
+        high:   parseFloat(String(k[2])),
+        low:    parseFloat(String(k[3])),
+        close:  parseFloat(String(k[4])),
+        volume: parseFloat(String(k[5])),
+      })),
     );
-    if (!res.ok) throw new Error("klines fetch failed");
-    const data = await res.json();
-    if (!Array.isArray(data)) throw new Error("Invalid response");
-    const parsed: CandleData[] = data.map((k: (string | number)[]) => ({
-      time:   Number(k[0]),
-      open:   parseFloat(String(k[1])),
-      high:   parseFloat(String(k[2])),
-      low:    parseFloat(String(k[3])),
-      close:  parseFloat(String(k[4])),
-      volume: parseFloat(String(k[5])),
-    }));
-    return sanitizeCandles(parsed);
   } catch {
     return [];
   }
 }
 
-async function fetchTicker24h(symbol: string): Promise<{ price: number; change: number; changePct: number }> {
+/**
+ * Fetch 24-hour ticker from Binance perpetual futures.
+ */
+async function fetchTicker24h(
+  symbol: string,
+): Promise<{ price: number; change: number; changePct: number }> {
   try {
-    const res = await fetch(`${BASE_URL}/api/binance/ticker?symbol=${symbol}`);
-    if (!res.ok) throw new Error("ticker failed");
+    const url = `${FAPI_BASE}/ticker/24hr?symbol=${symbol}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    if (!data.lastPrice) throw new Error("Invalid ticker");
+    if (!data.lastPrice) throw new Error("Bad shape");
     return {
       price:     parseFloat(data.lastPrice),
       change:    parseFloat(data.priceChange),
@@ -128,235 +123,170 @@ async function fetchTicker24h(symbol: string): Promise<{ price: number; change: 
   }
 }
 
-const SYMBOL_MOCK_PRICES: Record<string, number> = {
-  BTCUSDT:  84000,
-  ETHUSDT:  1600,
-  BNBUSDT:   590,
-  SOLUSDT:   130,
-  XRPUSDT:   2.1,
-  DOGEUSDT:  0.17,
-  XAUTUSDT: 3100,
-};
+// ── Hook ───────────────────────────────────────────────────────────────────
 
 export function useBinancePrice(symbol = "BTCUSDT"): BinancePriceData {
-  const MOCK_PRICE = SYMBOL_MOCK_PRICES[symbol] ?? 67000;
-  const [price, setPrice] = useState(MOCK_PRICE);
-  const [priceChange, setPriceChange] = useState(0);
+  const [price, setPrice]                       = useState(0);
+  const [priceChange, setPriceChange]           = useState(0);
   const [priceChangePercent, setPriceChangePercent] = useState(0);
-  const [candles, setCandles] = useState<CandleData[]>(() =>
-    generateMockCandles(MOCK_PRICE, 60, "5m")
-  );
-  const [connected, setConnected] = useState(false);
-  const [interval, setIntervalState] = useState("5m");
-  const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const mockUpdateRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const activeSymbolRef = useRef(symbol);
+  const [candles, setCandles]                   = useState<CandleData[]>([]);
+  const [connected, setConnected]               = useState(false);
+  const [interval, setIntervalState]            = useState("5m");
+
+  const wsRef             = useRef<WebSocket | null>(null);
+  const reconnectRef      = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activeSymbolRef   = useRef(symbol);
   const activeIntervalRef = useRef(interval);
-  const isMockDataRef = useRef(true);
+  // true while candles come from the REST load (not yet updated by WS)
+  const loadedRef         = useRef(false);
 
-  const stopAll = () => {
-    if (reconnectTimerRef.current) {
-      clearTimeout(reconnectTimerRef.current);
-      reconnectTimerRef.current = null;
-    }
-    if (mockUpdateRef.current) {
-      clearInterval(mockUpdateRef.current);
-      mockUpdateRef.current = null;
-    }
+  // ── helpers ────────────────────────────────────────────────────────────
+
+  const stopWs = () => {
+    if (reconnectRef.current) { clearTimeout(reconnectRef.current); reconnectRef.current = null; }
     if (wsRef.current) {
-      wsRef.current.onclose = null;
-      wsRef.current.onerror = null;
-      wsRef.current.onmessage = null;
-      wsRef.current.onopen = null;
-      wsRef.current.close();
+      const ws = wsRef.current;
       wsRef.current = null;
+      ws.onopen = ws.onclose = ws.onerror = ws.onmessage = null;
+      ws.close();
     }
   };
 
-  const startMockUpdates = (baseP: number, _intv: string) => {
-    if (mockUpdateRef.current) clearInterval(mockUpdateRef.current);
-    let p = baseP;
-    mockUpdateRef.current = setInterval(() => {
-      const change = (Math.random() - 0.48) * p * 0.0008;
-      p = p + change;
-      // Batch price + candle update together so they never diverge
-      setPrice(p);
-      setCandles((prev) => {
-        if (prev.length === 0) return prev;
-        const updated = [...prev];
-        const last = updated[updated.length - 1];
-        updated[updated.length - 1] = {
-          ...last,
-          close: p,
-          high: Math.max(last.high, p),
-          low:  Math.min(last.low,  p),
-        };
-        return updated;
-      });
-    }, 2000);
-  };
+  // ── WebSocket ──────────────────────────────────────────────────────────
 
-  const connectWs = (sym: string, intv: string, fallbackPrice: number) => {
-    if (wsRef.current) {
-      wsRef.current.onclose = null;
-      wsRef.current.close();
-      wsRef.current = null;
-    }
+  const connectWs = (sym: string, intv: string) => {
+    stopWs();
+    const iv     = normaliseInterval(intv);
+    const stream = `${sym.toLowerCase()}@kline_${iv}`;
+
+    let ws: WebSocket;
     try {
-      const stream = `${sym.toLowerCase()}@kline_${intv}`;
-      const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${stream}`);
-      wsRef.current = ws;
-
-      let opened = false;
-      const timeout = setTimeout(() => {
-        if (!opened) {
-          ws.onclose = null;
-          ws.close();
-          if (activeSymbolRef.current === sym && activeIntervalRef.current === intv) {
-            startMockUpdates(fallbackPrice, intv);
-          }
-        }
-      }, 5000);
-
-      ws.onopen = () => {
-        opened = true;
-        clearTimeout(timeout);
-        setConnected(true);
-        if (mockUpdateRef.current) {
-          clearInterval(mockUpdateRef.current);
-          mockUpdateRef.current = null;
-        }
-      };
-
-      ws.onclose = () => {
-        clearTimeout(timeout);
-        setConnected(false);
-        if (activeSymbolRef.current === sym && activeIntervalRef.current === intv) {
-          reconnectTimerRef.current = setTimeout(() => {
-            if (activeSymbolRef.current === sym && activeIntervalRef.current === intv) {
-              connectWs(sym, intv, fallbackPrice);
-            }
-          }, 5000);
-        }
-      };
-
-      ws.onerror = () => {
-        ws.onclose = null;
-        ws.close();
-        if (activeSymbolRef.current === sym && activeIntervalRef.current === intv) {
-          startMockUpdates(fallbackPrice, intv);
-        }
-      };
-
-      ws.onmessage = (event) => {
-        if (activeSymbolRef.current !== sym) return;
-        try {
-          const msg = JSON.parse(event.data);
-          if (!msg.k) return;
-          const k = msg.k;
-
-          const newCandle: CandleData = {
-            time:   Number(k.t),
-            open:   parseFloat(k.o),
-            high:   parseFloat(k.h),
-            low:    parseFloat(k.l),
-            close:  parseFloat(k.c),
-            volume: parseFloat(k.v),
-          };
-
-          // Ignore malformed candles from the stream
-          if (!isValidCandle(newCandle)) return;
-
-          // Batch price + candle update in the same state flush
-          setPrice(newCandle.close);
-
-          setCandles((prev) => {
-            const updated = [...prev];
-            const lastIdx = updated.length - 1;
-
-            if (lastIdx >= 0 && updated[lastIdx].time === newCandle.time) {
-              // Normal: update the current forming candle in-place
-              updated[lastIdx] = newCandle;
-              isMockDataRef.current = false;
-              return updated;
-            }
-
-            if (isMockDataRef.current || lastIdx < 0) {
-              // Still on mock data — replace with fresh interval-aligned mock candles
-              // and slot in the real kline as the last entry
-              const fresh = generateMockCandles(newCandle.close, 60, intv);
-              fresh[fresh.length - 1] = newCandle;
-              isMockDataRef.current = false;
-              return fresh;
-            }
-
-            // Real historical data is present and a new candle period has started
-            // Deduplicate and keep sorted
-            const merged = sanitizeCandles([...updated, newCandle]);
-            if (merged.length > 80) merged.splice(0, merged.length - 80);
-            return merged;
-          });
-        } catch {
-          /* ignore malformed messages */
-        }
-      };
+      ws = new WebSocket(`${FSTREAM_WS}/${stream}`);
     } catch {
-      if (activeSymbolRef.current === sym) {
-        startMockUpdates(fallbackPrice, intv);
-      }
+      return;
     }
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      if (activeSymbolRef.current !== sym || activeIntervalRef.current !== intv) {
+        ws.close(); return;
+      }
+      setConnected(true);
+    };
+
+    ws.onclose = () => {
+      setConnected(false);
+      if (activeSymbolRef.current === sym && activeIntervalRef.current === intv) {
+        reconnectRef.current = setTimeout(() => {
+          if (activeSymbolRef.current === sym && activeIntervalRef.current === intv) {
+            connectWs(sym, intv);
+          }
+        }, 5000);
+      }
+    };
+
+    ws.onerror = () => {
+      ws.onclose = null;
+      ws.close();
+      setConnected(false);
+    };
+
+    ws.onmessage = (event) => {
+      if (activeSymbolRef.current !== sym || activeIntervalRef.current !== intv) return;
+      try {
+        const msg = JSON.parse(event.data as string);
+        if (!msg.k) return;
+        const k = msg.k;
+
+        const candle: CandleData = {
+          time:   Number(k.t),
+          open:   parseFloat(k.o),
+          high:   parseFloat(k.h),
+          low:    parseFloat(k.l),
+          close:  parseFloat(k.c),
+          volume: parseFloat(k.v),
+        };
+        if (!isValidCandle(candle)) return;
+
+        // Always update the displayed price with the live candle close
+        setPrice(candle.close);
+
+        setCandles((prev) => {
+          // If we have no candles yet (REST still loading), just seed with this candle
+          if (prev.length === 0) return [candle];
+
+          const lastIdx = prev.length - 1;
+          const last    = prev[lastIdx];
+
+          if (last.time === candle.time) {
+            // Same period → update in place
+            const updated = [...prev];
+            updated[lastIdx] = candle;
+            return updated;
+          }
+
+          if (candle.time > last.time) {
+            // New period started → append and cap at 120 candles
+            const updated = [...prev, candle];
+            return updated.length > 120 ? updated.slice(-120) : updated;
+          }
+
+          // Out-of-order / stale message → ignore
+          return prev;
+        });
+
+        loadedRef.current = true;
+      } catch { /* ignore */ }
+    };
   };
+
+  // ── Main effect (re-runs on symbol or interval change) ─────────────────
 
   useEffect(() => {
     let mounted = true;
-    activeSymbolRef.current = symbol;
+    activeSymbolRef.current   = symbol;
     activeIntervalRef.current = interval;
-    isMockDataRef.current = true;
+    loadedRef.current         = false;
 
-    const mockPrice = SYMBOL_MOCK_PRICES[symbol] ?? 67000;
-    setPrice(mockPrice);
+    // Reset state immediately so stale candles don't flash
+    setCandles([]);
+    setPrice(0);
     setPriceChange(0);
     setPriceChangePercent(0);
-    setCandles(generateMockCandles(mockPrice, 60, interval));
     setConnected(false);
+    stopWs();
 
-    stopAll();
-
-    const init = async () => {
+    (async () => {
+      // Fire REST calls in parallel
       const [ticker, klines] = await Promise.all([
         fetchTicker24h(symbol),
-        fetchKlines(symbol, interval),
+        fetchKlines(symbol, interval, 100),
       ]);
       if (!mounted) return;
 
-      let usedPrice = mockPrice;
-      if (ticker.price > 0 && isFinite(ticker.price)) {
-        usedPrice = ticker.price;
+      // Update ticker info
+      if (ticker.price > 0) {
         setPrice(ticker.price);
         setPriceChange(ticker.change);
         setPriceChangePercent(ticker.changePct);
       }
 
+      // Seed chart with real historical klines
       if (klines.length > 0) {
-        isMockDataRef.current = false;
         setCandles(klines);
-        // Use the last kline's close as the reference price for WS
-        usedPrice = klines[klines.length - 1].close;
-      } else {
-        // REST failed — keep mock data aligned to real price so WS can match
-        setCandles(generateMockCandles(usedPrice, 60, interval));
-        // isMockDataRef stays true so WS handler replaces on first message
+        // Ensure price reflects the latest kline close if ticker failed
+        if (ticker.price <= 0) setPrice(klines[klines.length - 1].close);
       }
 
-      connectWs(symbol, interval, usedPrice);
-    };
+      loadedRef.current = true;
 
-    init();
+      // Open the real-time WebSocket
+      if (mounted) connectWs(symbol, interval);
+    })();
 
     return () => {
       mounted = false;
-      stopAll();
+      stopWs();
     };
   }, [symbol, interval]);
 

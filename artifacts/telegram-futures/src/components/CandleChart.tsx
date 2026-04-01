@@ -10,12 +10,12 @@ export function CandleChart({ candles, currentPrice }: CandleChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    if (!canvasRef.current || candles.length < 2) return;
     const canvas = canvasRef.current;
+    if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const dpr = window.devicePixelRatio || 1;
+    const dpr  = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
     if (rect.width === 0 || rect.height === 0) return;
 
@@ -23,120 +23,121 @@ export function CandleChart({ candles, currentPrice }: CandleChartProps) {
     canvas.height = rect.height * dpr;
     ctx.scale(dpr, dpr);
 
-    const W = rect.width;
-    const H = rect.height;
+    const W  = rect.width;
+    const H  = rect.height;
+    ctx.clearRect(0, 0, W, H);
+
+    // ── Loading skeleton ───────────────────────────────────────────────────
+    if (candles.length < 2) {
+      ctx.fillStyle = "rgba(0,0,0,0.06)";
+      const barW = 8, barGap = 5, barY = H * 0.3;
+      for (let i = 0; i < Math.floor(W / (barW + barGap)); i++) {
+        const bH = H * (0.2 + Math.sin(i * 0.6) * 0.15 + 0.15);
+        ctx.beginPath();
+        ctx.roundRect?.(i * (barW + barGap) + 4, barY + (H * 0.4 - bH), barW, bH, 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = "rgba(0,0,0,0.2)";
+      ctx.font = "11px -apple-system, Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("Loading chart…", W / 2, H / 2 + 4);
+      return;
+    }
+
     const PRICE_LABEL_W = 58;
     const chartW = W - PRICE_LABEL_W;
     const TOP_PAD = 14;
     const BOT_PAD = 8;
     const chartH = H - TOP_PAD - BOT_PAD;
 
-    ctx.clearRect(0, 0, W, H);
+    // Use the live currentPrice to update the last candle so the endpoint
+    // always matches the real-time ticker — only when price is valid.
+    const liveClose =
+      currentPrice > 0 && isFinite(currentPrice) ? currentPrice : candles[candles.length - 1].close;
 
-    // Take up to 70 candles, sorted by time, filter out invalid entries
-    const rawVisible = candles
-      .filter((c) => c.time > 0 && c.close > 0 && isFinite(c.close))
-      .sort((a, b) => a.time - b.time)
-      .slice(-70);
-
-    if (rawVisible.length < 2) return;
-
-    // Update the last candle's close to currentPrice if it's valid and more recent
-    const visible: CandleData[] = rawVisible.map((c, i) => {
-      if (i === rawVisible.length - 1 && currentPrice > 0 && isFinite(currentPrice)) {
-        return {
-          ...c,
-          close: currentPrice,
-          high: Math.max(c.high, currentPrice),
-          low:  Math.min(c.low,  currentPrice),
-        };
-      }
-      return c;
+    const pts = candles.map((c, i) => {
+      const closePrice = i === candles.length - 1 ? liveClose : c.close;
+      return { close: closePrice };
     });
 
-    // Y-scale based on close prices only (no extra clipping)
-    const closePrices = visible.map((c) => c.close);
-    const rawMax = Math.max(...closePrices);
-    const rawMin = Math.min(...closePrices);
-    const padding = (rawMax - rawMin) * 0.18 || rawMax * 0.002;
-    const maxP = rawMax + padding;
-    const minP = rawMin - padding;
-    const priceRange = maxP - minP || 1;
+    // Y-scale based on close prices only
+    const closes  = pts.map((p) => p.close);
+    const rawMax  = Math.max(...closes);
+    const rawMin  = Math.min(...closes);
+    const pad     = (rawMax - rawMin) * 0.15 || rawMax * 0.002;
+    const maxP    = rawMax + pad;
+    const minP    = rawMin - pad;
+    const range   = maxP - minP || 1;
 
-    const toX = (i: number) => (i / (visible.length - 1)) * chartW;
-    const toY = (p: number) => TOP_PAD + ((maxP - p) / priceRange) * chartH;
+    const toX = (i: number) => (i / (candles.length - 1)) * chartW;
+    const toY = (p: number) => TOP_PAD + ((maxP - p) / range) * chartH;
 
-    // Horizontal grid lines + price labels
+    // ── Horizontal grid lines + price labels ──────────────────────────────
     const gridLevels = 4;
     for (let i = 0; i <= gridLevels; i++) {
       const frac = i / gridLevels;
-      const y = TOP_PAD + frac * chartH;
-      const p = maxP - frac * priceRange;
+      const y    = TOP_PAD + frac * chartH;
+      const p    = maxP - frac * range;
 
       ctx.strokeStyle = "rgba(0,0,0,0.05)";
-      ctx.lineWidth = 0.5;
+      ctx.lineWidth   = 0.5;
       ctx.setLineDash([]);
       ctx.beginPath();
       ctx.moveTo(0, y);
       ctx.lineTo(chartW, y);
       ctx.stroke();
 
-      ctx.fillStyle = "rgba(0,0,0,0.32)";
-      ctx.font = `9px -apple-system, Inter, sans-serif`;
-      ctx.textAlign = "left";
+      ctx.fillStyle  = "rgba(0,0,0,0.30)";
+      ctx.font       = "9px -apple-system, Inter, sans-serif";
+      ctx.textAlign  = "left";
       ctx.fillText(
         p >= 1000
           ? p.toLocaleString("en-US", { maximumFractionDigits: 0 })
           : p.toFixed(p < 1 ? 4 : 2),
         chartW + 4,
-        y + 3.5
+        y + 3.5,
       );
     }
 
-    // Build points
-    const pts = visible.map((c, i) => ({ x: toX(i), y: toY(c.close) }));
+    // ── Build screen coordinates ──────────────────────────────────────────
+    const screenPts = pts.map((p, i) => ({ x: toX(i), y: toY(p.close) }));
 
-    // Draw path using straight line segments — this is the correct approach for
-    // financial charts and prevents the "straight vertical spike" artifact that
-    // cubic Bezier control points cause on large price moves.
+    // ── Path builder (straight line segments — correct for finance charts) ─
     const buildPath = () => {
       ctx.beginPath();
-      ctx.moveTo(pts[0].x, pts[0].y);
-      for (let i = 1; i < pts.length; i++) {
-        ctx.lineTo(pts[i].x, pts[i].y);
+      ctx.moveTo(screenPts[0].x, screenPts[0].y);
+      for (let i = 1; i < screenPts.length; i++) {
+        ctx.lineTo(screenPts[i].x, screenPts[i].y);
       }
     };
 
-    // Gradient fill under line
+    // ── Gradient fill ─────────────────────────────────────────────────────
     const gradient = ctx.createLinearGradient(0, TOP_PAD, 0, TOP_PAD + chartH);
-    gradient.addColorStop(0,    "rgba(249,115,22,0.18)");
-    gradient.addColorStop(0.65, "rgba(249,115,22,0.04)");
+    gradient.addColorStop(0,    "rgba(249,115,22,0.20)");
+    gradient.addColorStop(0.65, "rgba(249,115,22,0.05)");
     gradient.addColorStop(1,    "rgba(249,115,22,0)");
 
     buildPath();
-    ctx.lineTo(pts[pts.length - 1].x, TOP_PAD + chartH);
-    ctx.lineTo(pts[0].x, TOP_PAD + chartH);
+    ctx.lineTo(screenPts[screenPts.length - 1].x, TOP_PAD + chartH);
+    ctx.lineTo(screenPts[0].x, TOP_PAD + chartH);
     ctx.closePath();
     ctx.fillStyle = gradient;
     ctx.fill();
 
-    // Main line
+    // ── Main line ─────────────────────────────────────────────────────────
     buildPath();
     ctx.strokeStyle = "#f97316";
-    ctx.lineWidth = 1.8;
+    ctx.lineWidth   = 1.8;
     ctx.setLineDash([]);
-    ctx.lineJoin = "round";
-    ctx.lineCap  = "round";
+    ctx.lineJoin    = "round";
+    ctx.lineCap     = "round";
     ctx.stroke();
 
-    // Current price dashed horizontal line
-    const livePrice = currentPrice > 0 && isFinite(currentPrice)
-      ? currentPrice
-      : closePrices[closePrices.length - 1];
-    const py = toY(livePrice);
+    // ── Live price dashed horizontal line ─────────────────────────────────
+    const py = toY(liveClose);
     if (py >= TOP_PAD - 2 && py <= TOP_PAD + chartH + 2) {
       ctx.strokeStyle = "rgba(239,83,80,0.7)";
-      ctx.lineWidth = 0.8;
+      ctx.lineWidth   = 0.8;
       ctx.setLineDash([3, 3]);
       ctx.beginPath();
       ctx.moveTo(0, py);
@@ -145,46 +146,43 @@ export function CandleChart({ candles, currentPrice }: CandleChartProps) {
       ctx.setLineDash([]);
 
       // Price tag pill
-      ctx.fillStyle = "#ef5350";
-      const tagW = 54;
-      const tagH = 14;
+      const tagW = 54, tagH = 14;
       const tagX = chartW + 2;
       const tagY = py - tagH / 2;
+      ctx.fillStyle = "#ef5350";
       ctx.beginPath();
-      if (ctx.roundRect) {
-        ctx.roundRect(tagX, tagY, tagW, tagH, 2);
-      } else {
-        ctx.rect(tagX, tagY, tagW, tagH);
-      }
+      if (ctx.roundRect) ctx.roundRect(tagX, tagY, tagW, tagH, 2);
+      else ctx.rect(tagX, tagY, tagW, tagH);
       ctx.fill();
-      ctx.fillStyle = "white";
-      ctx.font = `bold 8.5px -apple-system, Inter, sans-serif`;
-      ctx.textAlign = "center";
+
+      ctx.fillStyle  = "white";
+      ctx.font       = "bold 8.5px -apple-system, Inter, sans-serif";
+      ctx.textAlign  = "center";
       ctx.fillText(
-        livePrice >= 1000
-          ? livePrice.toLocaleString("en-US", { maximumFractionDigits: 1 })
-          : livePrice.toFixed(livePrice < 1 ? 4 : 2),
+        liveClose >= 1000
+          ? liveClose.toLocaleString("en-US", { maximumFractionDigits: 1 })
+          : liveClose.toFixed(liveClose < 1 ? 4 : 2),
         tagX + tagW / 2,
-        py + 3.5
+        py + 3.5,
       );
     }
 
-    // Glowing dot at the live price endpoint
-    const lastPt = pts[pts.length - 1];
-    const glowGrad = ctx.createRadialGradient(lastPt.x, lastPt.y, 0, lastPt.x, lastPt.y, 8);
-    glowGrad.addColorStop(0,   "rgba(249,115,22,0.35)");
-    glowGrad.addColorStop(1,   "rgba(249,115,22,0)");
+    // ── Glowing dot at the live endpoint ──────────────────────────────────
+    const last = screenPts[screenPts.length - 1];
+    const glow = ctx.createRadialGradient(last.x, last.y, 0, last.x, last.y, 8);
+    glow.addColorStop(0, "rgba(249,115,22,0.40)");
+    glow.addColorStop(1, "rgba(249,115,22,0)");
     ctx.beginPath();
-    ctx.arc(lastPt.x, lastPt.y, 8, 0, Math.PI * 2);
-    ctx.fillStyle = glowGrad;
+    ctx.arc(last.x, last.y, 8, 0, Math.PI * 2);
+    ctx.fillStyle = glow;
     ctx.fill();
-    // Inner dot
+
     ctx.beginPath();
-    ctx.arc(lastPt.x, lastPt.y, 3.5, 0, Math.PI * 2);
-    ctx.fillStyle = "#f97316";
+    ctx.arc(last.x, last.y, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle   = "#f97316";
     ctx.fill();
     ctx.strokeStyle = "white";
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth   = 1.5;
     ctx.setLineDash([]);
     ctx.stroke();
   }, [candles, currentPrice]);
