@@ -4,6 +4,9 @@ import {
   type Position,
   type ClosedTrade,
   calcLiqPrice,
+  computeDynamicLiqPrice,
+  computeRiskPercent,
+  computeWalletBalance,
   calcEffectivePosition,
   calcMaxMarginForBalance,
   getMaxNotional,
@@ -253,7 +256,7 @@ function SlTpModal({
 
 // ── Position Card ─────────────────────────────────────────────────
 function PositionCard({
-  pos, currentPrice, onClose, onEditSlTp, getPnl, pairStepSize,
+  pos, currentPrice, onClose, onEditSlTp, getPnl, pairStepSize, futuresBalance, allPositions,
 }: {
   pos: Position;
   currentPrice: number;
@@ -261,11 +264,28 @@ function PositionCard({
   onEditSlTp: () => void;
   getPnl: (p: Position, price: number) => number;
   pairStepSize: number;
+  futuresBalance: number;
+  allPositions: Position[];
 }) {
   const pnl     = getPnl(pos, currentPrice);
   const pnlPct  = pos.margin > 0 ? (pnl / pos.margin) * 100 : 0;
   const profit  = pnl >= 0;
   const qty     = pos.quantity;
+
+  const liqPrice = computeDynamicLiqPrice(pos, futuresBalance, allPositions);
+  const risk     = computeRiskPercent(pos, currentPrice, liqPrice);
+
+  const riskColor =
+    risk === null  ? ""
+    : risk >= 60   ? "text-red-500"
+    : risk >= 25   ? "text-orange-500"
+    : "text-green-600";
+
+  const riskBarColor =
+    risk === null  ? "bg-gray-300"
+    : risk >= 60   ? "bg-red-500"
+    : risk >= 25   ? "bg-orange-400"
+    : "bg-green-500";
 
   return (
     <div className="mx-1 mb-3 rounded-2xl border border-[#D4AF37] p-4 shadow-sm panel-silver">
@@ -309,7 +329,7 @@ function PositionCard({
         <div>
           <p className="text-[10px] text-[#888888] mb-0.5">Liq. Price</p>
           <p className="text-xs font-semibold text-[#C9A227]">
-            {pos.liquidationPrice > 0 ? `$${fmt(pos.liquidationPrice, 1)}` : "No Liq."}
+            {liqPrice > 0 ? `$${fmt(liqPrice, 1)}` : "No Liq."}
           </p>
         </div>
         <div className="col-span-2 text-right">
@@ -319,6 +339,24 @@ function PositionCard({
           </p>
         </div>
       </div>
+
+      {/* Risk indicator */}
+      {risk !== null && (
+        <div className="mb-3">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] text-[#888888]">Liquidation Risk</span>
+            <span className={`text-[10px] font-bold ${riskColor}`}>
+              {risk.toFixed(1)}%
+            </span>
+          </div>
+          <div className="h-1.5 rounded-full bg-[#E0DDD0] overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-300 ${riskBarColor}`}
+              style={{ width: `${risk}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       <div className="flex items-center justify-between pt-2.5 border-t border-[#D8D0A8]">
         <div className="flex items-center gap-4">
@@ -402,6 +440,116 @@ function HistoryCard({ trade }: { trade: ClosedTrade }) {
   );
 }
 
+// ── Transfer Modal ────────────────────────────────────────────────
+function TransferModal({
+  spotBalance,
+  futuresBalance,
+  onTransferToFutures,
+  onTransferFromFutures,
+  onClose,
+}: {
+  spotBalance: number;
+  futuresBalance: number;
+  onTransferToFutures: (amount: number) => { success: boolean; message: string };
+  onTransferFromFutures: (amount: number) => { success: boolean; message: string };
+  onClose: () => void;
+}) {
+  const [direction, setDirection] = useState<"toFutures" | "fromFutures">("toFutures");
+  const [amountInput, setAmountInput] = useState("");
+  const [feedback, setFeedback] = useState<{ msg: string; ok: boolean } | null>(null);
+
+  const maxAmount = direction === "toFutures" ? spotBalance : futuresBalance;
+  const amount = parseFloat(amountInput) || 0;
+
+  const handleTransfer = () => {
+    if (amount <= 0) { setFeedback({ msg: "Enter an amount greater than 0", ok: false }); return; }
+    const result = direction === "toFutures"
+      ? onTransferToFutures(amount)
+      : onTransferFromFutures(amount);
+    if (result.success) {
+      setFeedback({ msg: result.message, ok: true });
+      setAmountInput("");
+      setTimeout(onClose, 1200);
+    } else {
+      setFeedback({ msg: result.message, ok: false });
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
+      <div className="w-full max-w-md rounded-t-3xl panel-card border-t border-[#D4AF37] p-5 pb-8 shadow-2xl">
+        <div className="flex items-center justify-between mb-5">
+          <span className="text-base font-bold text-[#1A1A1A]">Transfer</span>
+          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-full bg-[#E0DDD0] text-[#666]">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Direction selector */}
+        <div className="flex rounded-xl border border-[#C8C0A0] p-1 mb-5 bg-[#E8E4D0]">
+          <button
+            onClick={() => { setDirection("toFutures"); setAmountInput(""); setFeedback(null); }}
+            className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${direction === "toFutures" ? "btn-3d-gold" : "text-[#888888]"}`}>
+            Portfolio → Futures
+          </button>
+          <button
+            onClick={() => { setDirection("fromFutures"); setAmountInput(""); setFeedback(null); }}
+            className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${direction === "fromFutures" ? "btn-3d-gold" : "text-[#888888]"}`}>
+            Futures → Portfolio
+          </button>
+        </div>
+
+        {/* Balance rows */}
+        <div className="space-y-2 mb-4">
+          <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-[#F5F3EA] border border-[#E0DDD0]">
+            <span className="text-xs text-[#888888]">Portfolio (Spot)</span>
+            <span className="text-sm font-semibold text-[#333333]">${fmt(spotBalance, 2)} USDT</span>
+          </div>
+          <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-[#F5F3EA] border border-[#E0DDD0]">
+            <span className="text-xs text-[#888888]">Futures</span>
+            <span className="text-sm font-semibold text-[#333333]">${fmt(futuresBalance, 2)} USDT</span>
+          </div>
+        </div>
+
+        {/* Amount input */}
+        <div className="rounded-xl border border-[#C8C0A0] flex items-center px-4 py-3 mb-2 bg-[#F5F3EA]">
+          <span className="text-sm text-[#888888] mr-3 flex-shrink-0">Amount</span>
+          <input
+            type="number"
+            value={amountInput}
+            onChange={(e) => { setAmountInput(e.target.value); setFeedback(null); }}
+            className="flex-1 text-right text-sm font-medium text-[#333333] bg-transparent outline-none"
+            placeholder="0.00" min="0" step="0.01"
+          />
+          <span className="text-sm text-[#888888] ml-2 flex-shrink-0">USDT</span>
+        </div>
+
+        <div className="flex items-center justify-end mb-4">
+          <button
+            onClick={() => setAmountInput(maxAmount.toFixed(2))}
+            className="text-xs font-semibold text-[#C9A227] hover:text-[#A07800]">
+            Max ${fmt(maxAmount, 2)}
+          </button>
+        </div>
+
+        {feedback && (
+          <div className={`text-xs text-center mb-3 font-medium ${feedback.ok ? "text-green-600" : "text-red-500"}`}>
+            {feedback.msg}
+          </div>
+        )}
+
+        <button
+          onClick={handleTransfer}
+          className="w-full py-3 rounded-xl text-sm font-bold btn-3d-gold transition-all active:scale-[0.98]">
+          Confirm Transfer
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────
 export function FuturesPage() {
   const [selectedPair, setSelectedPair] = useState<TradingPair>(TRADING_PAIRS[0]);
@@ -412,6 +560,7 @@ export function FuturesPage() {
     balance, positions, pendingOrders, history,
     openPosition, placeLimitOrder, cancelPendingOrder, checkPendingOrders, checkLiquidations,
     closePosition, updateSlTp, getPnl,
+    spotUsdtBalance, transferToFutures, transferFromFutures,
   } = useTrading();
 
   const [orderType, setOrderType] = useState<OrderType>("limit");
@@ -424,10 +573,11 @@ export function FuturesPage() {
   const [entrySl, setEntrySl] = useState("");
   const [entryTp, setEntryTp] = useState("");
 
-  const [activeTab, setActiveTab]     = useState<TabType>("position");
+  const [activeTab, setActiveTab]       = useState<TabType>("position");
   const [showLevModal, setShowLevModal] = useState(false);
-  const [editingPos, setEditingPos]   = useState<Position | null>(null);
-  const [toast, setToast]             = useState<{ msg: string; ok: boolean } | null>(null);
+  const [editingPos, setEditingPos]     = useState<Position | null>(null);
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [toast, setToast]               = useState<{ msg: string; ok: boolean } | null>(null);
 
   const priceDisplay = fmtPrice(price, selectedPair.priceDec);
 
@@ -451,9 +601,12 @@ export function FuturesPage() {
 
   function liqPreview(tradeSide: "long" | "short"): string {
     if (effectiveNotional <= 0 || entryPrice <= 0) return "--";
-    const walletBalance = balance - effectiveFee;
-    const liq = calcLiqPrice(tradeSide, entryPrice, effectiveNotional, effectiveMargin, "Cross", walletBalance);
-    if (tradeSide === "long" && liq <= 0) return "No Liq.";
+    // W after opening = (balance - totalCost) + (existingMargins + newMargin)
+    //                 = balance - effectiveFee + existingMargins
+    const existingMargins = positions.reduce((s, p) => s + p.margin, 0);
+    const W = balance - effectiveFee + existingMargins;
+    const liq = calcLiqPrice(tradeSide, entryPrice, effectiveNotional, effectiveMargin, "Cross", W);
+    if (liq <= 0) return "No Liq.";
     return "$" + fmt(liq, 1);
   }
 
@@ -534,7 +687,7 @@ export function FuturesPage() {
 
     if (orderType === "market" || isLimitImmediateFill) {
       const fillPrice = orderType === "market" ? price : entryPrice;
-      const result = openPosition(tradeSide, rawMargin, fillPrice, leverage, selectedPair.stepSize, "Cross", sl, tp, balance);
+      const result = openPosition(tradeSide, rawMargin, fillPrice, leverage, selectedPair.stepSize, "Cross", sl, tp, balance, positions);
       if (result.success) {
         setMarginInput(""); setSliderValue(0);
         setEntrySl(""); setEntryTp("");
@@ -571,6 +724,25 @@ export function FuturesPage() {
         <SlTpModal pos={editingPos}
           onSave={(sl, tp) => updateSlTp(editingPos.id, sl, tp)}
           onClose={() => setEditingPos(null)} />
+      )}
+
+      {/* Transfer modal */}
+      {showTransferModal && (
+        <TransferModal
+          spotBalance={spotUsdtBalance}
+          futuresBalance={balance}
+          onTransferToFutures={(amount) => {
+            const result = transferToFutures(amount);
+            if (result.success) showToast(result.message, true);
+            return result;
+          }}
+          onTransferFromFutures={(amount) => {
+            const result = transferFromFutures(amount);
+            if (result.success) showToast(result.message, true);
+            return result;
+          }}
+          onClose={() => setShowTransferModal(false)}
+        />
       )}
 
       {/* Pair picker modal */}
@@ -672,7 +844,14 @@ export function FuturesPage() {
           {/* Available */}
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm text-[#777777]">Available</span>
-            <span className="text-sm font-semibold text-[#333333]">${fmt(balance, 2)} USDT</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-[#333333]">${fmt(balance, 2)} USDT</span>
+              <button
+                onClick={() => setShowTransferModal(true)}
+                className="text-[10px] font-bold px-2 py-0.5 rounded-full btn-3d-gold leading-tight">
+                Transfer
+              </button>
+            </div>
           </div>
 
           {/* Margin input */}
@@ -857,7 +1036,9 @@ export function FuturesPage() {
                     onClose={() => closePosition(pos.id, price)}
                     onEditSlTp={() => setEditingPos(pos)}
                     getPnl={getPnl}
-                    pairStepSize={selectedPair.stepSize} />
+                    pairStepSize={selectedPair.stepSize}
+                    futuresBalance={balance}
+                    allPositions={positions} />
                 ))
               }
             </div>

@@ -1,19 +1,19 @@
 import { useState, useCallback } from "react";
 
-export const TAKER_FEE = 0.0004; // 0.04% — market orders & closing
-export const MAKER_FEE = 0.0002; // 0.02% — limit orders
+export const TAKER_FEE = 0.0004; // 0.04%
+export const MAKER_FEE = 0.0002; // 0.02%
 
 export interface Position {
   id: string;
   side: "long" | "short";
-  quantity: number;        // base asset qty (e.g. BTC)
-  notional: number;        // = quantity * entryPrice
-  margin: number;          // initial margin = notional / leverage
-  openingFee: number;      // fee paid at open
+  quantity: number;
+  notional: number;
+  margin: number;
+  openingFee: number;
   entryPrice: number;
   leverage: number;
   marginMode: "Cross" | "Isolated";
-  liquidationPrice: number;
+  liquidationPrice: number; // stored at open; display uses computeDynamicLiqPrice
   sl?: number;
   tp?: number;
   openTime: number;
@@ -41,7 +41,7 @@ export interface ClosedTrade {
   rawPnl: number;
   openingFee: number;
   closingFee: number;
-  pnl: number;       // net PnL = rawPnl - openingFee - closingFee
+  pnl: number;
   margin: number;
   leverage: number;
   openTime: number;
@@ -50,7 +50,6 @@ export interface ClosedTrade {
 
 export const INITIAL_BALANCE = 10_000;
 
-// Binance-style max notional per leverage tier
 export const LEVERAGE_MAX_NOTIONAL: Record<number, number> = {
   100:   500_000,
    50: 2_000_000,
@@ -58,7 +57,6 @@ export const LEVERAGE_MAX_NOTIONAL: Record<number, number> = {
    10:10_000_000,
 };
 
-// Maintenance Margin Rate tiers (Binance BTC perpetual)
 const NOTIONAL_MMR_TIERS: { upTo: number; mmr: number; mmAmount: number }[] = [
   { upTo:    50_000, mmr: 0.004,  mmAmount:       0 },
   { upTo:   250_000, mmr: 0.005,  mmAmount:      50 },
@@ -82,16 +80,6 @@ export function getMaxNotional(leverage: number): number {
   return LEVERAGE_MAX_NOTIONAL[leverage] ?? 500_000;
 }
 
-/**
- * Calculate effective position size with lot size rounding.
- * Returns all position metrics including fees.
- *
- * @param requestedMargin  - User-input margin amount
- * @param leverage         - Selected leverage
- * @param entryPrice       - Entry price (needed for qty calculation)
- * @param stepSize         - Min lot size for the asset (e.g. 0.001 BTC)
- * @param feeRate          - Fee rate (TAKER_FEE for market, MAKER_FEE for limit)
- */
 export function calcEffectivePosition(
   requestedMargin: number,
   leverage: number,
@@ -113,13 +101,10 @@ export function calcEffectivePosition(
 
   if (entryPrice > 0 && stepSize > 0) {
     const desiredQty = desiredNotional / entryPrice;
-    // Round DOWN to minimum lot size — this causes the small balance remainder
     quantity = Math.floor(desiredQty / stepSize) * stepSize;
-    // Clamp to 8 decimal places to avoid floating point drift
     quantity = parseFloat(quantity.toFixed(8));
     notional = quantity * entryPrice;
   } else {
-    // Fallback (no price info yet)
     notional = desiredNotional;
     quantity = entryPrice > 0 ? notional / entryPrice : 0;
   }
@@ -131,10 +116,6 @@ export function calcEffectivePosition(
   return { quantity, notional, margin, openingFee, totalCost };
 }
 
-/**
- * Calculate max margin the user can enter such that totalCost ≤ available balance.
- * Returns the margin value rounded down to step-size precision.
- */
 export function calcMaxMarginForBalance(
   availableBalance: number,
   leverage: number,
@@ -143,9 +124,6 @@ export function calcMaxMarginForBalance(
   feeRate: number = TAKER_FEE
 ): number {
   if (availableBalance <= 0 || entryPrice <= 0) return 0;
-  // cost = margin + margin * leverage * feeRate
-  // cost = margin * (1 + leverage * feeRate)
-  // margin = cost / (1 + leverage * feeRate)
   const maxCost = availableBalance;
   const rawMargin = maxCost / (1 + leverage * feeRate);
   const { margin } = calcEffectivePosition(rawMargin, leverage, entryPrice, stepSize, feeRate);
@@ -153,39 +131,84 @@ export function calcMaxMarginForBalance(
 }
 
 /**
- * Liquidation price using Binance's isolated-margin formula.
+ * Cross-margin liquidation price (Binance formula, derived from first principles).
  *
- * Liq condition: margin - openingFee + unrealizedPnL ≤ notional * mmr + mmAmount
+ * Liq condition: walletBalance + unrealizedPnL ≤ notional × mmr + mmAmount
  *
- * Long  liq = entryPrice × (1 − 1/leverage + mmr + mmAmount/notional)
- * Short liq = entryPrice × (1 + 1/leverage − mmr − mmAmount/notional)
+ *   Long:  liqPrice = entryPrice × (1 + mmr + (mmAmount − W) / notional)
+ *   Short: liqPrice = entryPrice × (1 − mmr + (W − mmAmount) / notional)
  *
- * This produces realistic liq prices that scale correctly with leverage:
- *   100x → ~1 % from entry, 50x → ~2 %, 10x → ~10 %, etc.
+ * where W = walletBalance = freeBalance + sum(all locked margins).
  *
- * The walletBalance parameter is kept for API compatibility but is not used.
+ * Effect:
+ *  • More balance  → W increases → (mmAmount − W) more negative → liqPrice falls  → further from entry  ✓
+ *  • Less balance  → W decreases → (mmAmount − W) less negative → liqPrice rises   → closer to entry     ✓
+ *  • If W is very large (W > notional × (1+mmr)) → liqPrice ≤ 0 → show "No Liq." ✓
  */
 export function calcLiqPrice(
   side: "long" | "short",
   entryPrice: number,
   notional: number,
-  margin: number,
+  _margin: number,
   _marginMode: "Cross" | "Isolated",
-  _walletBalance: number
+  walletBalance: number
 ): number {
-  if (notional <= 0 || entryPrice <= 0 || margin <= 0) return 0;
-
+  if (notional <= 0 || entryPrice <= 0 || walletBalance <= 0) return 0;
   const { mmr, mmAmount } = getMmrTier(notional);
-  const leverage = notional / margin;           // e.g. 10 000 / 100 = 100
 
   if (side === "long") {
-    // Price must fall this far before maintenance margin is breached
-    const liq = entryPrice * (1 - 1 / leverage + mmr + mmAmount / notional);
+    const liq = entryPrice * (1 + mmr + (mmAmount - walletBalance) / notional);
     return Math.max(liq, 0);
   } else {
-    // Price must rise this far before maintenance margin is breached
-    const liq = entryPrice * (1 + 1 / leverage - mmr - mmAmount / notional);
+    const liq = entryPrice * (1 - mmr + (walletBalance - mmAmount) / notional);
     return Math.max(liq, 0);
+  }
+}
+
+/**
+ * Compute the current cross-margin wallet balance.
+ * W = free futures balance + all locked position margins.
+ */
+export function computeWalletBalance(freeBalance: number, positions: Position[]): number {
+  const totalMargins = positions.reduce((sum, p) => sum + p.margin, 0);
+  return freeBalance + totalMargins;
+}
+
+/**
+ * Compute the live liquidation price for a position given current account state.
+ * This should be used for display and liquidation checks — NOT the stored static value.
+ */
+export function computeDynamicLiqPrice(
+  pos: Position,
+  freeBalance: number,
+  allPositions: Position[]
+): number {
+  const W = computeWalletBalance(freeBalance, allPositions);
+  return calcLiqPrice(pos.side, pos.entryPrice, pos.notional, pos.margin, "Cross", W);
+}
+
+/**
+ * Risk percentage: how much of the distance to liquidation has been consumed.
+ * 0 % = safe (at or above entry for long), 100 % = at liquidation price.
+ * Returns null if no liquidation price (fully backed).
+ */
+export function computeRiskPercent(
+  pos: Position,
+  currentPrice: number,
+  dynamicLiqPrice: number
+): number | null {
+  if (dynamicLiqPrice <= 0) return null;
+
+  if (pos.side === "long") {
+    const total = pos.entryPrice - dynamicLiqPrice;
+    if (total <= 0) return null;
+    const consumed = pos.entryPrice - currentPrice;
+    return Math.min(Math.max((consumed / total) * 100, 0), 100);
+  } else {
+    const total = dynamicLiqPrice - pos.entryPrice;
+    if (total <= 0) return null;
+    const consumed = currentPrice - pos.entryPrice;
+    return Math.min(Math.max((consumed / total) * 100, 0), 100);
   }
 }
 
@@ -195,12 +218,6 @@ export function useTradingStore() {
   const [pendingOrders, setPendingOrders] = useState<PendingOrder[]>([]);
   const [history, setHistory] = useState<ClosedTrade[]>([]);
 
-  /**
-   * Internal: execute a position open.
-   * Deducts totalCost (margin + openingFee) from balance.
-   * Uses (balance - openingFee) as wallet balance for liq price calculation
-   * since in cross margin the margin remains as collateral.
-   */
   const _executeOpen = useCallback(
     (
       side: "long" | "short",
@@ -211,9 +228,11 @@ export function useTradingStore() {
       feeRate: number,
       sl?: number,
       tp?: number,
-      currentBalance?: number
+      currentBalance?: number,
+      currentPositions?: Position[]
     ): { success: boolean; message: string } => {
       const avail = currentBalance ?? INITIAL_BALANCE;
+      const existingPositions = currentPositions ?? [];
 
       if (requestedMargin <= 0) return { success: false, message: "Enter a margin amount greater than 0" };
       if (price <= 0) return { success: false, message: "Invalid entry price" };
@@ -224,11 +243,12 @@ export function useTradingStore() {
       if (quantity <= 0 || notional <= 0) return { success: false, message: "Order size too small for minimum lot" };
       if (totalCost > avail) return { success: false, message: `Insufficient balance. Need $${totalCost.toFixed(2)}` };
 
-      // Wallet balance for liq formula = free cash after fee + locked margin
-      // = (avail - totalCost) + margin = avail - openingFee
-      const walletBalanceForLiq = avail - openingFee;
+      // W after opening = (avail − totalCost) + (existingMargins + newMargin)
+      //                 = avail − openingFee + existingMargins
+      const existingMargins = existingPositions.reduce((s, p) => s + p.margin, 0);
+      const W = (avail - totalCost) + existingMargins + margin;
 
-      const liquidationPrice = calcLiqPrice(side, price, notional, margin, "Cross", walletBalanceForLiq);
+      const liquidationPrice = calcLiqPrice(side, price, notional, margin, "Cross", W);
 
       const pos: Position = {
         id: Date.now().toString() + Math.random().toString(36).slice(2, 6),
@@ -246,7 +266,6 @@ export function useTradingStore() {
         openTime: Date.now(),
       };
 
-      // Deduct total cost (margin locked + fee consumed)
       setBalance((b) => parseFloat((b - totalCost).toFixed(5)));
       setPositions((prev) => [...prev, pos]);
       return { success: true, message: "Position opened" };
@@ -254,10 +273,6 @@ export function useTradingStore() {
     []
   );
 
-  /**
-   * Open a market order — executes immediately at current price.
-   * Uses TAKER_FEE.
-   */
   const openPosition = useCallback(
     (
       side: "long" | "short",
@@ -268,20 +283,14 @@ export function useTradingStore() {
       _marginMode: "Cross" | "Isolated",
       sl?: number,
       tp?: number,
-      currentBalance?: number
+      currentBalance?: number,
+      currentPositions?: Position[]
     ): { success: boolean; message: string } => {
-      return _executeOpen(side, requestedMargin, price, leverage, stepSize, TAKER_FEE, sl, tp, currentBalance);
+      return _executeOpen(side, requestedMargin, price, leverage, stepSize, TAKER_FEE, sl, tp, currentBalance, currentPositions);
     },
     [_executeOpen]
   );
 
-  /**
-   * Place a limit order — queued, filled when price crosses limit.
-   * Uses MAKER_FEE (limit orders are typically maker orders).
-   *
-   * Long  limit: fill when marketPrice ≤ limitPrice
-   * Short limit: fill when marketPrice ≥ limitPrice
-   */
   const placeLimitOrder = useCallback(
     (
       side: "long" | "short",
@@ -323,9 +332,6 @@ export function useTradingStore() {
     setPendingOrders((prev) => prev.filter((o) => o.id !== orderId));
   }, []);
 
-  /**
-   * Called on every price tick. Fills triggered limit orders.
-   */
   const checkPendingOrders = useCallback(
     (marketPrice: number, currentBalance: number) => {
       setPendingOrders((prev) => {
@@ -339,7 +345,6 @@ export function useTradingStore() {
             order.side === "long"
               ? marketPrice <= order.limitPrice
               : marketPrice >= order.limitPrice;
-
           if (shouldFill) toFill.push(order);
           else remaining.push(order);
         }
@@ -353,8 +358,8 @@ export function useTradingStore() {
 
           if (quantity <= 0 || totalCost > runningBalance) continue;
 
-          const walletBalanceForLiq = runningBalance - openingFee;
-          const liquidationPrice = calcLiqPrice(order.side, order.limitPrice, notional, margin, "Cross", walletBalanceForLiq);
+          const W = runningBalance - openingFee;
+          const liquidationPrice = calcLiqPrice(order.side, order.limitPrice, notional, margin, "Cross", W);
 
           const pos: Position = {
             id: order.id + "_filled",
@@ -383,31 +388,21 @@ export function useTradingStore() {
     []
   );
 
-  /**
-   * Close a position at current market price.
-   * Calculates closing fee (taker) on the closing notional.
-   * Net PnL = raw PnL - closing fee (opening fee was already paid).
-   * Returns: margin + raw PnL - closing fee (capped at 0 minimum).
-   */
   const closePosition = useCallback((positionId: string, currentPrice: number) => {
     setPositions((prev) => {
       const pos = prev.find((p) => p.id === positionId);
       if (!pos) return prev;
 
-      // Raw PnL = price change * quantity
       const rawPnl =
         pos.side === "long"
           ? (currentPrice - pos.entryPrice) * pos.quantity
           : (pos.entryPrice - currentPrice) * pos.quantity;
 
-      // Closing notional = qty * closePrice (not entry notional)
       const closingNotional = pos.quantity * currentPrice;
       const closingFee = closingNotional * TAKER_FEE;
-
       const netPnl = rawPnl - closingFee;
-
-      // Balance gets back: margin + netPnl (minimum 0 — can't get back more than 0 if margin wiped)
       const returned = pos.margin + netPnl;
+
       setBalance((b) => parseFloat((b + Math.max(returned, 0)).toFixed(5)));
 
       setHistory((h) => [
@@ -435,15 +430,19 @@ export function useTradingStore() {
   }, []);
 
   /**
-   * Check if any open position should be liquidated or SL/TP triggered.
-   * Returns position IDs to be closed, and the reason.
+   * Check liquidations using DYNAMIC liq price (based on current wallet balance).
+   * This means balance transfers instantly update liq-trigger thresholds.
    */
   const checkLiquidations = useCallback(
     (marketPrice: number): { id: string; reason: "liquidation" | "sl" | "tp" }[] => {
       const result: { id: string; reason: "liquidation" | "sl" | "tp" }[] = [];
+      const W = computeWalletBalance(balance, positions);
+
       for (const pos of positions) {
+        const liqPrice = calcLiqPrice(pos.side, pos.entryPrice, pos.notional, pos.margin, "Cross", W);
+
         if (pos.side === "long") {
-          if (pos.liquidationPrice > 0 && marketPrice <= pos.liquidationPrice) {
+          if (liqPrice > 0 && marketPrice <= liqPrice) {
             result.push({ id: pos.id, reason: "liquidation" });
           } else if (pos.sl && marketPrice <= pos.sl) {
             result.push({ id: pos.id, reason: "sl" });
@@ -451,7 +450,7 @@ export function useTradingStore() {
             result.push({ id: pos.id, reason: "tp" });
           }
         } else {
-          if (pos.liquidationPrice > 0 && marketPrice >= pos.liquidationPrice) {
+          if (liqPrice > 0 && marketPrice >= liqPrice) {
             result.push({ id: pos.id, reason: "liquidation" });
           } else if (pos.sl && marketPrice >= pos.sl) {
             result.push({ id: pos.id, reason: "sl" });
@@ -462,7 +461,7 @@ export function useTradingStore() {
       }
       return result;
     },
-    [positions]
+    [positions, balance]
   );
 
   const updateSlTp = useCallback((positionId: string, sl?: number, tp?: number) => {
@@ -475,9 +474,6 @@ export function useTradingStore() {
     );
   }, []);
 
-  /**
-   * Unrealized PnL for an open position (gross, before closing fee).
-   */
   const getPnl = useCallback((pos: Position, currentPrice: number): number => {
     return pos.side === "long"
       ? (currentPrice - pos.entryPrice) * pos.quantity
