@@ -21,7 +21,7 @@ function fmtUsd(n: number, dec = 2) {
 }
 
 export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
-  const { balance, positions, history, getPnl, bnbBalance, xautBalance } = useTrading();
+  const { balance, positions, history, getPnl, bnbBalance, xautBalance, spotUsdtBalance } = useTrading();
   const { price: btcPrice } = useBinancePrice("BTCUSDT");
   const { price: bnbPrice } = useBinancePrice("BNBUSDT");
   const { price: xautPrice } = useBinancePrice("XAUTUSDT");
@@ -40,7 +40,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
   const todayPnl = unrealizedPnl + todayRealizedPnl;
   const bnbValueUsdt = bnbBalance * (bnbPrice > 0 ? bnbPrice : 600);
   const xautValueUsdt = xautBalance * (xautPrice > 0 ? xautPrice : 2620);
-  const totalBalance = balance + unrealizedPnl + bnbValueUsdt + xautValueUsdt;
+  const totalBalance = spotUsdtBalance + balance + unrealizedPnl + bnbValueUsdt + xautValueUsdt;
   const todayPct = totalBalance > 0 ? (todayPnl / (totalBalance - todayPnl)) * 100 : 0;
   const pnlPositive = todayPnl >= 0;
 
@@ -174,7 +174,23 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
         <div>
           <p className="text-xs font-semibold text-[#888888] uppercase tracking-wide mb-2">Assets</p>
           <div className="space-y-2">
-            {/* USDT */}
+            {/* USDT — Portfolio (Spot) */}
+            <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3.5 flex items-center gap-3">
+              <img src={COIN_ICONS.USDT} alt="USDT" className="w-10 h-10 rounded-full flex-shrink-0"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-bold text-[#1A1A1A]">USDT</span>
+                  <span className="text-sm font-bold text-[#1A1A1A]">${fmtUsd(spotUsdtBalance)}</span>
+                </div>
+                <div className="flex items-center justify-between mt-0.5">
+                  <span className="text-[11px] text-[#888888]">Portfolio (Spot)</span>
+                  <span className="text-[11px] text-[#888888]">{fmtUsd(spotUsdtBalance)} USDT</span>
+                </div>
+              </div>
+            </div>
+
+            {/* USDT — Futures */}
             <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3.5 flex items-center gap-3">
               <img src={COIN_ICONS.USDT} alt="USDT" className="w-10 h-10 rounded-full flex-shrink-0"
                 onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
@@ -184,7 +200,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                   <span className="text-sm font-bold text-[#1A1A1A]">${fmtUsd(balance)}</span>
                 </div>
                 <div className="flex items-center justify-between mt-0.5">
-                  <span className="text-[11px] text-[#888888]">Tether USD</span>
+                  <span className="text-[11px] text-[#888888]">Futures</span>
                   <span className="text-[11px] text-[#888888]">{fmtUsd(balance)} USDT</span>
                 </div>
               </div>
