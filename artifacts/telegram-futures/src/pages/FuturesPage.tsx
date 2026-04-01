@@ -2,9 +2,13 @@ import { useState, useCallback, useEffect } from "react";
 import { useBinancePrice, type CandleData } from "../hooks/useBinancePrice";
 import {
   type Position,
+  type ClosedTrade,
   calcLiqPrice,
   calcEffectivePosition,
+  calcMaxMarginForBalance,
   getMaxNotional,
+  TAKER_FEE,
+  MAKER_FEE,
 } from "../hooks/useTradingStore";
 import { useTrading } from "../contexts/TradingContext";
 import { CandleChart } from "../components/CandleChart";
@@ -12,7 +16,7 @@ import { CandleChart } from "../components/CandleChart";
 type OrderType = "limit" | "market";
 type TabType = "position" | "orders" | "history";
 
-const LEVERAGE_OPTIONS = [50, 100, 200];
+const LEVERAGE_OPTIONS = [10, 25, 50, 75, 100];
 const SLIDER_MARKS = [0, 25, 50, 75, 100];
 
 const INTERVALS = [
@@ -31,38 +35,39 @@ interface TradingPair {
   icon: string;
   fallback: number;
   priceDec: number;
+  stepSize: number;   // minimum lot size for this asset
 }
 
 const TRADING_PAIRS: TradingPair[] = [
   {
     symbol: "BTCUSDT", label: "BTC/USDT", base: "BTC",
     icon: IPFS + "bafkreih4mag7tt75x3lxxcgg6tx5wsitcdypqti3fvmdq6kyypcb5fieoy",
-    fallback: 67000, priceDec: 0,
+    fallback: 67000, priceDec: 0, stepSize: 0.001,
   },
   {
     symbol: "ETHUSDT", label: "ETH/USDT", base: "ETH",
     icon: IPFS + "bafkreid26dhrj4oqunpcirvrvwg3j7ccjrttlrgkfxwriehy2owwsrljcm",
-    fallback: 3500, priceDec: 2,
+    fallback: 3500, priceDec: 2, stepSize: 0.01,
   },
   {
     symbol: "BNBUSDT", label: "BNB/USDT", base: "BNB",
     icon: IPFS + "bafkreieg2zkdn3muod7uir7q77lee37cmisxoqqym3sjsm6smfn5wkq2da",
-    fallback: 600, priceDec: 2,
+    fallback: 600, priceDec: 2, stepSize: 0.01,
   },
   {
     symbol: "SOLUSDT", label: "SOL/USDT", base: "SOL",
     icon: IPFS + "bafkreihfoippppifivpnf6cc5ixwn7lxcw2wz2rrtwazdb4qpa4dabqyvq",
-    fallback: 180, priceDec: 2,
+    fallback: 180, priceDec: 2, stepSize: 0.1,
   },
   {
     symbol: "XRPUSDT", label: "XRP/USDT", base: "XRP",
     icon: IPFS + "bafkreid4facbu3tnnzgzwng4q4ub37jd5ozjplymp4n546jgeerol2bqju",
-    fallback: 0.55, priceDec: 4,
+    fallback: 0.55, priceDec: 4, stepSize: 1,
   },
   {
     symbol: "DOGEUSDT", label: "DOGE/USDT", base: "DOGE",
     icon: IPFS + "bafybeih5opbcbecdjyznzohjlsczvoh7hbtbpx7k5ozmgfuz5hmhwgmndu",
-    fallback: 0.16, priceDec: 5,
+    fallback: 0.16, priceDec: 5, stepSize: 1,
   },
 ];
 
@@ -79,6 +84,11 @@ function fmtCompact(n: number): string {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(3) + "M";
   if (n >= 1_000) return (n / 1_000).toFixed(2) + "K";
   return fmt(n, 2);
+}
+
+function fmtQty(qty: number, stepSize: number): string {
+  const dec = stepSize < 0.01 ? 3 : stepSize < 1 ? 2 : 0;
+  return qty.toFixed(dec);
 }
 
 // ── Mini Sparkline ─────────────────────────────────────────────────
@@ -253,17 +263,22 @@ function SlTpModal({
 
 // ── Position Card ─────────────────────────────────────────────────
 function PositionCard({
-  pos, currentPrice, onClose, onEditSlTp, getPnl,
+  pos, currentPrice, onClose, onEditSlTp, getPnl, pairStepSize,
 }: {
   pos: Position;
   currentPrice: number;
   onClose: () => void;
   onEditSlTp: () => void;
   getPnl: (p: Position, price: number) => number;
+  pairStepSize: number;
 }) {
-  const pnl    = getPnl(pos, currentPrice);
-  const pnlPct = (pnl / pos.margin) * 100;
-  const profit = pnl >= 0;
+  const pnl     = getPnl(pos, currentPrice);
+  const pnlPct  = pos.margin > 0 ? (pnl / pos.margin) * 100 : 0;
+  const profit  = pnl >= 0;
+  const qty     = pos.quantity;
+
+  // Estimated closing fee
+  const estimatedClosingFee = qty * currentPrice * TAKER_FEE;
 
   return (
     <div className="mx-1 mb-3 rounded-2xl border border-[#D4AF37] p-4 shadow-sm panel-silver">
@@ -282,10 +297,19 @@ function PositionCard({
           Close
         </button>
       </div>
+
+      {/* Qty row */}
+      <div className="flex items-center justify-between mb-2.5">
+        <span className="text-[10px] text-[#888888]">Size</span>
+        <span className="text-xs font-semibold text-[#333333]">
+          {fmtQty(qty, pairStepSize)} ({fmtCompact(pos.notional)} USDT)
+        </span>
+      </div>
+
       <div className="grid grid-cols-3 gap-y-3 mb-3">
         <div>
-          <p className="text-[10px] text-[#888888] mb-0.5">Max (Pos.)</p>
-          <p className="text-xs font-semibold text-[#333333]">${fmtCompact(pos.notional)}</p>
+          <p className="text-[10px] text-[#888888] mb-0.5">Margin</p>
+          <p className="text-xs font-semibold text-[#333333]">${fmt(pos.margin, 2)}</p>
         </div>
         <div className="text-center">
           <p className="text-[10px] text-[#888888] mb-0.5">Entry Price</p>
@@ -296,8 +320,8 @@ function PositionCard({
           <p className="text-xs font-semibold text-[#333333]">${fmt(currentPrice, 1)}</p>
         </div>
         <div>
-          <p className="text-[10px] text-[#888888] mb-0.5">Cost</p>
-          <p className="text-xs font-semibold text-[#333333]">${fmt(pos.margin, 5)}</p>
+          <p className="text-[10px] text-[#888888] mb-0.5">Open Fee</p>
+          <p className="text-xs font-semibold text-[#C9A227]">-${fmt(pos.openingFee, 4)}</p>
         </div>
         <div className="text-center">
           <p className="text-[10px] text-[#888888] mb-0.5">Liq. Price</p>
@@ -306,12 +330,19 @@ function PositionCard({
           </p>
         </div>
         <div className="text-right">
-          <p className="text-[10px] text-[#888888] mb-0.5">PnL</p>
+          <p className="text-[10px] text-[#888888] mb-0.5">Unrealized PnL</p>
           <p className={`text-xs font-bold ${profit ? "text-green-600" : "text-red-500"}`}>
             {profit ? "+" : ""}${fmt(pnl)} ({profit ? "+" : ""}{pnlPct.toFixed(2)}%)
           </p>
         </div>
       </div>
+
+      {/* Est. closing fee notice */}
+      <div className="flex items-center justify-between mb-2.5 px-0.5">
+        <span className="text-[10px] text-[#AAAAAA]">Est. close fee</span>
+        <span className="text-[10px] text-[#AAAAAA]">-${fmt(estimatedClosingFee, 4)} (0.04%)</span>
+      </div>
+
       <div className="flex items-center justify-between pt-2.5 border-t border-[#D8D0A8]">
         <div className="flex items-center gap-4">
           <div>
@@ -336,6 +367,64 @@ function PositionCard({
   );
 }
 
+// ── History Card ──────────────────────────────────────────────────
+function HistoryCard({ trade }: { trade: ClosedTrade }) {
+  const profit = trade.pnl >= 0;
+  const roe = trade.margin > 0 ? (trade.pnl / trade.margin) * 100 : 0;
+  const totalFees = trade.openingFee + trade.closingFee;
+
+  return (
+    <div className="mx-1 mb-3 rounded-xl border border-[#D8D0A8] p-3 bg-[#EEECE0]">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+            trade.side === "long" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-500"
+          }`}>
+            {trade.side === "long" ? "Long" : "Short"}
+          </span>
+          <span className="text-xs text-[#888888]">{trade.leverage}x</span>
+        </div>
+        <div className="text-right">
+          <span className={`text-sm font-bold ${profit ? "text-green-600" : "text-red-500"}`}>
+            {profit ? "+" : ""}${fmt(trade.pnl)}
+          </span>
+          <span className={`ml-1.5 text-xs font-medium ${profit ? "text-green-500" : "text-red-400"}`}>
+            ({profit ? "+" : ""}{roe.toFixed(2)}%)
+          </span>
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-y-2">
+        <div>
+          <p className="text-[10px] text-[#888888]">Notional</p>
+          <p className="text-xs font-medium text-[#333333]">${fmtCompact(trade.notional)}</p>
+        </div>
+        <div className="text-center">
+          <p className="text-[10px] text-[#888888]">Entry</p>
+          <p className="text-xs font-medium text-[#333333]">${fmt(trade.entryPrice, 1)}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-[10px] text-[#888888]">Close</p>
+          <p className="text-xs font-medium text-[#333333]">${fmt(trade.closePrice, 1)}</p>
+        </div>
+        <div>
+          <p className="text-[10px] text-[#888888]">Margin</p>
+          <p className="text-xs font-medium text-[#333333]">${fmt(trade.margin, 2)}</p>
+        </div>
+        <div className="text-center">
+          <p className="text-[10px] text-[#888888]">Raw PnL</p>
+          <p className={`text-xs font-medium ${trade.rawPnl >= 0 ? "text-green-500" : "text-red-400"}`}>
+            {trade.rawPnl >= 0 ? "+" : ""}${fmt(trade.rawPnl, 2)}
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="text-[10px] text-[#888888]">Total Fees</p>
+          <p className="text-xs font-medium text-[#C9A227]">-${fmt(totalFees, 4)}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────
 export function FuturesPage() {
   const [selectedPair, setSelectedPair] = useState<TradingPair>(TRADING_PAIRS[0]);
@@ -344,7 +433,7 @@ export function FuturesPage() {
   const { price, priceChangePercent, candles, interval, setInterval } = useBinancePrice(selectedPair.symbol);
   const {
     balance, positions, pendingOrders, history,
-    openPosition, placeLimitOrder, cancelPendingOrder, checkPendingOrders,
+    openPosition, placeLimitOrder, cancelPendingOrder, checkPendingOrders, checkLiquidations,
     closePosition, updateSlTp, getPnl,
   } = useTrading();
 
@@ -369,19 +458,24 @@ export function FuturesPage() {
     ? price
     : (parseFloat(limitPriceInput) > 0 ? parseFloat(limitPriceInput) : price);
 
+  const feeRate = orderType === "market" ? TAKER_FEE : MAKER_FEE;
+
   const rawMargin = parseFloat(marginInput) || 0;
 
-  const { notional: effectiveNotional, margin: effectiveCost } =
-    rawMargin > 0 && leverage > 0
-      ? calcEffectivePosition(rawMargin, leverage)
-      : { notional: 0, margin: 0 };
+  const effectivePos =
+    rawMargin > 0 && leverage > 0 && entryPrice > 0
+      ? calcEffectivePosition(rawMargin, leverage, entryPrice, selectedPair.stepSize, feeRate)
+      : { quantity: 0, notional: 0, margin: 0, openingFee: 0, totalCost: 0 };
+
+  const { quantity: effectiveQty, notional: effectiveNotional, margin: effectiveMargin, openingFee: effectiveFee, totalCost: effectiveCost } = effectivePos;
 
   const tierMax = getMaxNotional(leverage);
   const isCapped = rawMargin > 0 && (rawMargin * leverage) > tierMax;
 
   function liqPreview(tradeSide: "long" | "short"): string {
     if (effectiveNotional <= 0 || entryPrice <= 0) return "--";
-    const liq = calcLiqPrice(tradeSide, entryPrice, effectiveNotional, effectiveCost, "Cross", balance);
+    const walletBalance = balance - effectiveFee;
+    const liq = calcLiqPrice(tradeSide, entryPrice, effectiveNotional, effectiveMargin, "Cross", walletBalance);
     if (tradeSide === "long" && liq <= 0) return "No Liq.";
     return "$" + fmt(liq, 1);
   }
@@ -394,9 +488,22 @@ export function FuturesPage() {
     setTimeout(() => setToast(null), 2800);
   };
 
+  // Check pending orders + liquidations on every price tick
   useEffect(() => {
     if (price > 0 && pendingOrders.length > 0) {
       checkPendingOrders(price, balance);
+    }
+  }, [price]);
+
+  useEffect(() => {
+    if (price > 0 && positions.length > 0) {
+      const triggered = checkLiquidations(price);
+      for (const { id, reason } of triggered) {
+        closePosition(id, price);
+        if (reason === "liquidation") showToast("Position liquidated!", false);
+        else if (reason === "sl") showToast("Stop Loss triggered", false);
+        else showToast("Take Profit triggered ✓", true);
+      }
     }
   }, [price]);
 
@@ -404,14 +511,36 @@ export function FuturesPage() {
     const clean = v.replace(/[^0-9.]/g, "");
     setMarginInput(clean);
     const num = parseFloat(clean) || 0;
-    setSliderValue(balance > 0 ? Math.min(Math.round((num / balance) * 100), 100) : 0);
-  }, [balance]);
+    if (balance > 0 && entryPrice > 0) {
+      // Compute slider position based on totalCost / balance
+      const fRate = orderType === "market" ? TAKER_FEE : MAKER_FEE;
+      const { totalCost } = calcEffectivePosition(num, leverage, entryPrice, selectedPair.stepSize, fRate);
+      setSliderValue(Math.min(Math.round((totalCost / balance) * 100), 100));
+    } else {
+      setSliderValue(balance > 0 ? Math.min(Math.round((num / balance) * 100), 100) : 0);
+    }
+  }, [balance, entryPrice, leverage, orderType, selectedPair.stepSize]);
 
   const handleSliderChange = useCallback((pct: number) => {
     setSliderValue(pct);
-    const m = (balance * pct) / 100;
-    setMarginInput(m > 0 ? m.toFixed(5) : "");
-  }, [balance]);
+    if (pct <= 0 || balance <= 0) {
+      setMarginInput("");
+      return;
+    }
+
+    const fRate = orderType === "market" ? TAKER_FEE : MAKER_FEE;
+    const totalCostTarget = (balance * pct) / 100;
+
+    if (entryPrice > 0 && selectedPair.stepSize > 0) {
+      // Compute max margin using lot-size-aware formula
+      const maxMargin = calcMaxMarginForBalance(totalCostTarget, leverage, entryPrice, selectedPair.stepSize, fRate);
+      setMarginInput(maxMargin > 0 ? maxMargin.toFixed(5) : "");
+    } else {
+      // Fallback: no price yet
+      const rawM = totalCostTarget / (1 + leverage * fRate);
+      setMarginInput(rawM > 0 ? rawM.toFixed(5) : "");
+    }
+  }, [balance, leverage, entryPrice, orderType, selectedPair.stepSize]);
 
   const handleSubmit = (tradeSide: "long" | "short") => {
     if (price <= 0) return showToast("Price not loaded yet", false);
@@ -428,7 +557,7 @@ export function FuturesPage() {
 
     if (orderType === "market" || isLimitImmediateFill) {
       const fillPrice = orderType === "market" ? price : entryPrice;
-      const result = openPosition(tradeSide, rawMargin, fillPrice, leverage, "Cross", sl, tp, balance);
+      const result = openPosition(tradeSide, rawMargin, fillPrice, leverage, selectedPair.stepSize, "Cross", sl, tp, balance);
       if (result.success) {
         setMarginInput(""); setSliderValue(0);
         setEntrySl(""); setEntryTp("");
@@ -438,7 +567,7 @@ export function FuturesPage() {
         showToast(result.message, false);
       }
     } else {
-      const result = placeLimitOrder(tradeSide, rawMargin, entryPrice, leverage, sl, tp, balance);
+      const result = placeLimitOrder(tradeSide, rawMargin, entryPrice, leverage, selectedPair.stepSize, sl, tp, balance);
       if (result.success) {
         setMarginInput(""); setSliderValue(0);
         setEntrySl(""); setEntryTp("");
@@ -565,8 +694,8 @@ export function FuturesPage() {
 
           {/* Available */}
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm text-[#777777]">Avail.</span>
-            <span className="text-sm font-semibold text-[#333333]">${fmt(balance, 5)} USDT</span>
+            <span className="text-sm text-[#777777]">Available</span>
+            <span className="text-sm font-semibold text-[#333333]">${fmt(balance, 2)} USDT</span>
           </div>
 
           {/* Margin input */}
@@ -577,10 +706,32 @@ export function FuturesPage() {
               value={marginInput}
               onChange={(e) => handleMarginChange(e.target.value)}
               className="flex-1 text-right text-sm font-medium text-[#333333] bg-transparent outline-none"
-              placeholder="0.00000" min="0" step="0.00001"
+              placeholder="0.00" min="0" step="0.01"
             />
             <span className="text-sm text-[#888888] ml-2 flex-shrink-0">USDT</span>
           </div>
+
+          {/* Fee info row */}
+          {effectiveNotional > 0 && (
+            <div className="flex items-center justify-between mb-1 px-1">
+              <span className="text-[10px] text-[#AAAAAA]">
+                Fee ({orderType === "market" ? "0.04%" : "0.02%"})
+              </span>
+              <span className="text-[10px] text-[#C9A227] font-medium">
+                -{fmt(effectiveFee, 4)} USDT
+              </span>
+            </div>
+          )}
+
+          {/* Cost row */}
+          {effectiveNotional > 0 && (
+            <div className="flex items-center justify-between mb-2 px-1">
+              <span className="text-[10px] text-[#888888] font-medium">Total Cost</span>
+              <span className="text-[10px] text-[#333333] font-semibold">
+                {fmt(effectiveCost, 4)} USDT
+              </span>
+            </div>
+          )}
 
           {/* Tier cap notice */}
           {isCapped && (
@@ -590,7 +741,7 @@ export function FuturesPage() {
               </span>
             </div>
           )}
-          {!isCapped && <div className="mb-2" />}
+          {!isCapped && effectiveNotional <= 0 && <div className="mb-2" />}
 
           {/* Limit price input */}
           {orderType === "limit" && (
@@ -676,7 +827,7 @@ export function FuturesPage() {
               <div className="font-bold">Open Long</div>
               {effectiveNotional > 0 && (
                 <div className="text-xs text-green-100 font-normal mt-0.5">
-                  Max {fmtCompact(effectiveNotional)} · Cost {fmt(effectiveCost, 2)} · Liq {longLiqPreview}
+                  {fmtQty(effectiveQty, selectedPair.stepSize)} {selectedPair.base} · ${fmtCompact(effectiveNotional)} · Cost ${fmt(effectiveCost, 2)} · Liq {longLiqPreview}
                 </div>
               )}
             </button>
@@ -686,7 +837,7 @@ export function FuturesPage() {
               <div className="font-bold">Open Short</div>
               {effectiveNotional > 0 && (
                 <div className="text-xs text-red-100 font-normal mt-0.5">
-                  Max {fmtCompact(effectiveNotional)} · Cost {fmt(effectiveCost, 2)} · Liq {shortLiqPreview}
+                  {fmtQty(effectiveQty, selectedPair.stepSize)} {selectedPair.base} · ${fmtCompact(effectiveNotional)} · Cost ${fmt(effectiveCost, 2)} · Liq {shortLiqPreview}
                 </div>
               )}
             </button>
@@ -728,7 +879,8 @@ export function FuturesPage() {
                   <PositionCard key={pos.id} pos={pos} currentPrice={price}
                     onClose={() => closePosition(pos.id, price)}
                     onEditSlTp={() => setEditingPos(pos)}
-                    getPnl={getPnl} />
+                    getPnl={getPnl}
+                    pairStepSize={selectedPair.stepSize} />
                 ))
               }
             </div>
@@ -738,55 +890,70 @@ export function FuturesPage() {
             <div className="p-2">
               {pendingOrders.length === 0
                 ? <p className="py-8 text-center text-sm text-[#AAAAAA]">No pending orders</p>
-                : pendingOrders.map((order) => (
-                  <div key={order.id} className="mx-1 mb-3 rounded-2xl border border-[#D4AF37] p-4 shadow-sm panel-silver">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                          order.side === "long" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-500"
-                        }`}>
-                          {order.side === "long" ? "Long" : "Short"}
-                        </span>
-                        <span className="text-xs text-[#666666] font-medium">{order.leverage}x</span>
-                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#F5E280] text-[#8B6914]">Pending</span>
+                : pendingOrders.map((order) => {
+                  const previewPos = calcEffectivePosition(order.requestedMargin, order.leverage, order.limitPrice, order.stepSize, MAKER_FEE);
+                  return (
+                    <div key={order.id} className="mx-1 mb-3 rounded-2xl border border-[#D4AF37] p-4 shadow-sm panel-silver">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                            order.side === "long" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-500"
+                          }`}>
+                            {order.side === "long" ? "Long" : "Short"}
+                          </span>
+                          <span className="text-xs text-[#666666] font-medium">{order.leverage}x</span>
+                          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#F5E280] text-[#8B6914]">Pending</span>
+                        </div>
+                        <button onClick={() => cancelPendingOrder(order.id)}
+                          className="text-xs font-medium px-3 py-1 rounded-full transition-all btn-3d-silver">
+                          Cancel
+                        </button>
                       </div>
-                      <button onClick={() => cancelPendingOrder(order.id)}
-                        className="text-xs font-medium px-3 py-1 rounded-full transition-all btn-3d-silver">
-                        Cancel
-                      </button>
+                      <div className="grid grid-cols-3 gap-y-2">
+                        <div>
+                          <p className="text-[10px] text-[#888888]">Type</p>
+                          <p className="text-xs font-semibold text-[#333333]">Limit</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[10px] text-[#888888]">Limit Price</p>
+                          <p className="text-xs font-semibold text-[#C9A227]">${fmt(order.limitPrice, 1)}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] text-[#888888]">Mark Price</p>
+                          <p className="text-xs font-semibold text-[#333333]">${fmt(price, 1)}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-[#888888]">Margin</p>
+                          <p className="text-xs font-semibold text-[#333333]">${fmt(previewPos.margin, 2)}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[10px] text-[#888888]">Open Fee</p>
+                          <p className="text-xs font-semibold text-[#C9A227]">-${fmt(previewPos.openingFee, 4)}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] text-[#888888]">Total Cost</p>
+                          <p className="text-xs font-semibold text-[#333333]">${fmt(previewPos.totalCost, 4)}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-[#888888]">SL</p>
+                          <p className={`text-xs font-medium ${order.sl ? "text-red-500" : "text-[#AAAAAA]"}`}>
+                            {order.sl ? `$${fmt(order.sl, 1)}` : "--"}
+                          </p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[10px] text-[#888888]">TP</p>
+                          <p className={`text-xs font-medium ${order.tp ? "text-green-600" : "text-[#AAAAAA]"}`}>
+                            {order.tp ? `$${fmt(order.tp, 1)}` : "--"}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] text-[#888888]">Notional</p>
+                          <p className="text-xs font-medium text-[#333333]">${fmtCompact(previewPos.notional)}</p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-y-2">
-                      <div>
-                        <p className="text-[10px] text-[#888888]">Type</p>
-                        <p className="text-xs font-semibold text-[#333333]">Limit</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-[10px] text-[#888888]">Limit Price</p>
-                        <p className="text-xs font-semibold text-[#C9A227]">${fmt(order.limitPrice, 1)}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[10px] text-[#888888]">Mark Price</p>
-                        <p className="text-xs font-semibold text-[#333333]">${fmt(price, 1)}</p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-[#888888]">Margin</p>
-                        <p className="text-xs font-semibold text-[#333333]">${fmt(order.requestedMargin, 5)}</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-[10px] text-[#888888]">SL</p>
-                        <p className={`text-xs font-medium ${order.sl ? "text-red-500" : "text-[#AAAAAA]"}`}>
-                          {order.sl ? `$${fmt(order.sl, 1)}` : "--"}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[10px] text-[#888888]">TP</p>
-                        <p className={`text-xs font-medium ${order.tp ? "text-green-600" : "text-[#AAAAAA]"}`}>
-                          {order.tp ? `$${fmt(order.tp, 1)}` : "--"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               }
             </div>
           )}
@@ -795,54 +962,7 @@ export function FuturesPage() {
             <div className="p-2">
               {history.length === 0
                 ? <p className="py-8 text-center text-sm text-[#AAAAAA]">No history</p>
-                : history.map((trade) => {
-                  const profit = trade.pnl >= 0;
-                  return (
-                    <div key={trade.id} className="mx-1 mb-3 rounded-xl border border-[#D8D0A8] p-3 bg-[#EEECE0]">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                            trade.side === "long" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-500"
-                          }`}>
-                            {trade.side === "long" ? "Long" : "Short"}
-                          </span>
-                          <span className="text-xs text-[#888888]">{trade.leverage}x</span>
-                        </div>
-                        <span className={`text-sm font-bold ${profit ? "text-green-600" : "text-red-500"}`}>
-                          {profit ? "+" : ""}${fmt(trade.pnl)}
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-3 gap-y-2">
-                        <div>
-                          <p className="text-[10px] text-[#888888]">Max (Pos.)</p>
-                          <p className="text-xs font-medium text-[#333333]">${fmtCompact(trade.notional)}</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-[10px] text-[#888888]">Entry</p>
-                          <p className="text-xs font-medium text-[#333333]">${fmt(trade.entryPrice, 1)}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-[10px] text-[#888888]">Close</p>
-                          <p className="text-xs font-medium text-[#333333]">${fmt(trade.closePrice, 1)}</p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-[#888888]">Cost</p>
-                          <p className="text-xs font-medium text-[#333333]">${fmt(trade.margin, 2)}</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-[10px] text-[#888888]">Leverage</p>
-                          <p className="text-xs font-medium text-[#333333]">{trade.leverage}x</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-[10px] text-[#888888]">PnL%</p>
-                          <p className={`text-xs font-bold ${profit ? "text-green-600" : "text-red-500"}`}>
-                            {profit ? "+" : ""}{((trade.pnl / trade.margin) * 100).toFixed(2)}%
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
+                : history.map((trade) => <HistoryCard key={trade.id} trade={trade} />)
               }
             </div>
           )}
@@ -862,10 +982,10 @@ export function FuturesPage() {
                 </svg>
               </button>
             </div>
-            <div className="flex gap-2 mb-4">
+            <div className="flex gap-2 mb-4 flex-wrap">
               {LEVERAGE_OPTIONS.map((lev) => (
                 <button key={lev} onClick={() => { setLeverage(lev); setShowLevModal(false); setMarginInput(""); setSliderValue(0); }}
-                  className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${
+                  className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all min-w-[52px] ${
                     leverage === lev ? "btn-3d-gold" : "btn-3d-silver"
                   }`}>
                   {lev}x
@@ -883,6 +1003,9 @@ export function FuturesPage() {
                 </div>
               ))}
             </div>
+            <p className="text-[10px] text-[#AAAAAA] mt-3 text-center">
+              Higher leverage = higher risk. Use responsibly.
+            </p>
           </div>
         </div>
       )}
