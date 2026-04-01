@@ -96,14 +96,35 @@ const SYMBOL_MOCK_PRICES: Record<string, number> = {
 export function useBinancePrice(symbol = "BTCUSDT"): BinancePriceData {
   const MOCK_PRICE = SYMBOL_MOCK_PRICES[symbol] ?? 67000;
   const [price, setPrice] = useState(MOCK_PRICE);
-  const [priceChange, setPriceChange] = useState(-120);
-  const [priceChangePercent, setPriceChangePercent] = useState(-0.18);
+  const [priceChange, setPriceChange] = useState(0);
+  const [priceChangePercent, setPriceChangePercent] = useState(0);
   const [candles, setCandles] = useState<CandleData[]>(() => generateMockCandles(MOCK_PRICE, 60, 300000));
   const [connected, setConnected] = useState(false);
   const [interval, setIntervalState] = useState("5m");
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mockUpdateRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const activeSymbolRef = useRef(symbol);
+  const activeIntervalRef = useRef(interval);
+
+  const stopAll = () => {
+    if (reconnectTimerRef.current) {
+      clearTimeout(reconnectTimerRef.current);
+      reconnectTimerRef.current = null;
+    }
+    if (mockUpdateRef.current) {
+      clearInterval(mockUpdateRef.current);
+      mockUpdateRef.current = null;
+    }
+    if (wsRef.current) {
+      wsRef.current.onclose = null;
+      wsRef.current.onerror = null;
+      wsRef.current.onmessage = null;
+      wsRef.current.onopen = null;
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+  };
 
   const startMockUpdates = (baseP: number) => {
     if (mockUpdateRef.current) clearInterval(mockUpdateRef.current);
@@ -129,6 +150,7 @@ export function useBinancePrice(symbol = "BTCUSDT"): BinancePriceData {
 
   const connectWs = (sym: string, intv: string, fallbackPrice: number) => {
     if (wsRef.current) {
+      wsRef.current.onclose = null;
       wsRef.current.close();
       wsRef.current = null;
     }
@@ -140,8 +162,11 @@ export function useBinancePrice(symbol = "BTCUSDT"): BinancePriceData {
       let opened = false;
       const timeout = setTimeout(() => {
         if (!opened) {
+          ws.onclose = null;
           ws.close();
-          startMockUpdates(fallbackPrice);
+          if (activeSymbolRef.current === sym && activeIntervalRef.current === intv) {
+            startMockUpdates(fallbackPrice);
+          }
         }
       }, 5000);
 
@@ -157,12 +182,23 @@ export function useBinancePrice(symbol = "BTCUSDT"): BinancePriceData {
       ws.onclose = () => {
         clearTimeout(timeout);
         setConnected(false);
-        reconnectTimerRef.current = setTimeout(() => connectWs(sym, intv, fallbackPrice), 5000);
+        if (activeSymbolRef.current === sym && activeIntervalRef.current === intv) {
+          reconnectTimerRef.current = setTimeout(() => {
+            if (activeSymbolRef.current === sym && activeIntervalRef.current === intv) {
+              connectWs(sym, intv, fallbackPrice);
+            }
+          }, 5000);
+        }
       };
       ws.onerror = () => {
+        ws.onclose = null;
         ws.close();
+        if (activeSymbolRef.current === sym && activeIntervalRef.current === intv) {
+          startMockUpdates(fallbackPrice);
+        }
       };
       ws.onmessage = (event) => {
+        if (activeSymbolRef.current !== sym) return;
         try {
           const msg = JSON.parse(event.data);
           if (msg.k) {
@@ -193,12 +229,25 @@ export function useBinancePrice(symbol = "BTCUSDT"): BinancePriceData {
         }
       };
     } catch {
-      startMockUpdates(fallbackPrice);
+      if (activeSymbolRef.current === sym) {
+        startMockUpdates(fallbackPrice);
+      }
     }
   };
 
   useEffect(() => {
     let mounted = true;
+    activeSymbolRef.current = symbol;
+    activeIntervalRef.current = interval;
+
+    const mockPrice = SYMBOL_MOCK_PRICES[symbol] ?? 67000;
+    setPrice(mockPrice);
+    setPriceChange(0);
+    setPriceChangePercent(0);
+    setCandles(generateMockCandles(mockPrice, 60, 300000));
+    setConnected(false);
+
+    stopAll();
 
     const init = async () => {
       const [ticker, klines] = await Promise.all([
@@ -207,7 +256,7 @@ export function useBinancePrice(symbol = "BTCUSDT"): BinancePriceData {
       ]);
       if (!mounted) return;
 
-      let usedPrice = MOCK_PRICE;
+      let usedPrice = mockPrice;
       if (ticker.price > 0) {
         usedPrice = ticker.price;
         setPrice(ticker.price);
@@ -227,9 +276,7 @@ export function useBinancePrice(symbol = "BTCUSDT"): BinancePriceData {
 
     return () => {
       mounted = false;
-      if (wsRef.current) wsRef.current.close();
-      if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
-      if (mockUpdateRef.current) clearInterval(mockUpdateRef.current);
+      stopAll();
     };
   }, [symbol, interval]);
 

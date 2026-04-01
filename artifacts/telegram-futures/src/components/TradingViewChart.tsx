@@ -10,9 +10,15 @@ const INTERVAL_MAP: Record<string, string> = {
 
 interface TradingViewChartProps {
   interval: string;
+  symbol?: string;
 }
 
-export function TradingViewChart({ interval }: TradingViewChartProps) {
+function toTradingViewSymbol(symbol: string): string {
+  const base = symbol.replace("USDT", "");
+  return `BINANCE:${base}USDT.P`;
+}
+
+export function TradingViewChart({ interval, symbol = "BTCUSDT" }: TradingViewChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -31,7 +37,7 @@ export function TradingViewChart({ interval }: TradingViewChartProps) {
     script.async = true;
     script.innerHTML = JSON.stringify({
       autosize: true,
-      symbol: "BINANCE:BTCUSDT.P",
+      symbol: toTradingViewSymbol(symbol),
       interval: INTERVAL_MAP[interval] ?? "1",
       timezone: "Etc/UTC",
       theme: "light",

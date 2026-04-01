@@ -4,8 +4,8 @@ import { useBinancePrice } from "../hooks/useBinancePrice";
 
 const IPFS = "https://gold-defensive-cattle-30.mypinata.cloud/ipfs/";
 const COIN_ICONS: Record<string, string> = {
-  USDT: IPFS + "bafkreibn4y6llleughtp5pgu37lve7mymvcffpo5i2h6iw4t4iwo6z5ocu",
-  XAUT: IPFS + "bafkreihi5zcqhan34bdvusmv3wgabbd53uyab27ufzngf6lrhfdpfoltym",
+  USDT: "https://gold-defensive-cattle-30.mypinata.cloud/ipfs/bafkreiar6ik6oswrb7ncslxa2aeopdg7ifn252akbcpvd572v7u34dzcqq",
+  XAUT: "https://gold-defensive-cattle-30.mypinata.cloud/ipfs/bafkreiccstl7irrcrvusudyp26zjudtisjc44dz34o3molmxzuwfaizo5m",
   BNB:  IPFS + "bafkreieg2zkdn3muod7uir7q77lee37cmisxoqqym3sjsm6smfn5wkq2da",
 };
 
