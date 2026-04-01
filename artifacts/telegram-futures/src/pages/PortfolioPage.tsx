@@ -14,9 +14,10 @@ function fmtUsd(n: number, dec = 2) {
 }
 
 export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
-  const { balance, positions, history, getPnl, bnbBalance } = useTrading();
+  const { balance, positions, history, getPnl, bnbBalance, xautBalance } = useTrading();
   const { price: btcPrice } = useBinancePrice("BTCUSDT");
   const { price: bnbPrice } = useBinancePrice("BNBUSDT");
+  const { price: xautPrice } = useBinancePrice("XAUTUSDT");
 
   const unrealizedPnl = useMemo(() => {
     if (btcPrice <= 0) return 0;
@@ -31,7 +32,8 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
 
   const todayPnl = unrealizedPnl + todayRealizedPnl;
   const bnbValueUsdt = bnbBalance * (bnbPrice > 0 ? bnbPrice : 600);
-  const totalBalance = balance + unrealizedPnl + bnbValueUsdt;
+  const xautValueUsdt = xautBalance * (xautPrice > 0 ? xautPrice : 2620);
+  const totalBalance = balance + unrealizedPnl + bnbValueUsdt + xautValueUsdt;
   const todayPct = totalBalance > 0 ? (todayPnl / (totalBalance - todayPnl)) * 100 : 0;
   const pnlPositive = todayPnl >= 0;
 
@@ -82,7 +84,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
         <span className="font-bold text-[#1A1A1A] text-base">Portfolio</span>
         <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full bg-green-500" />
-          <span className="text-[10px] text-[#666666]">BEP-20</span>
+          <span className="text-[10px] text-[#666666]">MAINNET</span>
         </div>
       </div>
 
@@ -178,6 +180,23 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                 <div className="flex items-center justify-between mt-0.5">
                   <span className="text-[11px] text-[#888888]">Tether USD</span>
                   <span className="text-[11px] text-[#888888]">{fmtUsd(balance)} USDT</span>
+                </div>
+              </div>
+            </div>
+
+            {/* XAUT */}
+            <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3.5 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-[#1A0F00] text-xs btn-3d-gold">
+                XAU
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-bold text-[#1A1A1A]">XAUT</span>
+                  <span className="text-sm font-bold text-[#1A1A1A]">${fmtUsd(xautValueUsdt)}</span>
+                </div>
+                <div className="flex items-center justify-between mt-0.5">
+                  <span className="text-[11px] text-[#888888]">Tether Gold</span>
+                  <span className="text-[11px] text-[#888888]">{xautBalance.toFixed(6)} XAUT</span>
                 </div>
               </div>
             </div>
