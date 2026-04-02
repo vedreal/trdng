@@ -1,5 +1,10 @@
 import { useState, useRef } from "react";
 import { useTrading } from "../contexts/TradingContext";
+import {
+  IconArrowLeft, IconCheck, IconCircleX, IconSend2, IconLink,
+  IconUsers, IconMail, IconGift, IconShieldCheck, IconCopy,
+  IconAlertTriangle, IconClockHour3,
+} from "@tabler/icons-react";
 
 const GIVEAWAY_LS_KEY = "giveaway_futures_v1";
 const REFERRAL_COUNT_KEY = "referral_count";
@@ -59,20 +64,20 @@ function taskBadge(status: TaskStatus | boolean, pendingLabel = "Pending") {
   if (status === true || status === "done") {
     return (
       <span className="flex items-center gap-1 bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
-        <Ico d={I.check} size={9} color="#16a34a" sw={3} /> Verified
+        <IconCheck size={9} color="#16a34a" stroke={3} /> Verified
       </span>
     );
   }
   if (status === "error") {
     return (
       <span className="flex items-center gap-1 bg-red-100 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
-        <Ico d={I.xcircle} size={9} color="#dc2626" sw={2.5} /> Insufficient
+        <IconCircleX size={9} color="#dc2626" stroke={2.5} /> Insufficient
       </span>
     );
   }
   return (
     <span className="flex items-center gap-1 bg-[#F0EAD0] text-[#8B6300] text-[10px] font-bold px-2 py-0.5 rounded-full">
-      <Ico d={I.clock} size={9} color="#8B6300" sw={2} /> {pendingLabel}
+      <IconClockHour3 size={9} color="#8B6300" stroke={2} /> {pendingLabel}
     </span>
   );
 }
@@ -151,7 +156,7 @@ export function FuturesGiveawayPage({ onBack }: Props) {
         <div className="fixed top-4 left-1/2 z-[70] flex items-start gap-3 px-4 py-3.5 rounded-2xl shadow-2xl"
           style={{ transform: "translateX(-50%)", background: "linear-gradient(135deg,#22c55e,#15803d)", boxShadow: "0 8px 32px rgba(22,163,74,0.45)", minWidth: 290, maxWidth: 340 }}>
           <div className="w-9 h-9 rounded-full bg-[rgba(255,255,255,0.2)] flex items-center justify-center flex-shrink-0 mt-0.5">
-            <Ico d={I.check} size={18} color="white" sw={2.5} />
+            <IconCheck size={18} color="white" stroke={2.5} />
           </div>
           <div>
             <p className="text-white font-bold text-sm leading-tight">Participation Successful!</p>
@@ -166,7 +171,7 @@ export function FuturesGiveawayPage({ onBack }: Props) {
       <div className="relative flex items-center px-4 py-3 panel-header border-b border-[#C8B040] flex-shrink-0">
         <button onClick={onBack}
           className="absolute left-4 w-8 h-8 flex items-center justify-center rounded-xl bg-[rgba(0,0,0,0.06)] active:bg-[rgba(0,0,0,0.12)]">
-          <Ico d={I.back} size={17} color="#1A1A1A" sw={2} />
+          <IconArrowLeft size={17} color="#1A1A1A" stroke={2} />
         </button>
         <span className="w-full text-center font-bold text-[#1A1A1A] text-base">Futures Giveaway</span>
       </div>
@@ -191,7 +196,7 @@ export function FuturesGiveawayPage({ onBack }: Props) {
             <div className="flex items-center gap-3 mb-3">
               <div className="w-12 h-12 rounded-full border-2 border-[#D4AF37] flex items-center justify-center flex-shrink-0"
                 style={{ background: "rgba(212,175,55,0.15)" }}>
-                <Ico d={I.gift} size={22} color="#D4AF37" sw={1.8} />
+                <IconGift size={22} color="#D4AF37" stroke={1.8} />
               </div>
               <div>
                 <p className="text-white font-bold text-lg leading-tight">30 USDT</p>
@@ -235,7 +240,7 @@ export function FuturesGiveawayPage({ onBack }: Props) {
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg flex items-center justify-center"
                     style={{ background: gs.telegram === "done" ? "#dcfce7" : "#EFF6FF" }}>
-                    <Ico d={I.send} size={13} color={gs.telegram === "done" ? "#16a34a" : "#3b82f6"} sw={2} />
+                    <IconSend2 size={13} color={gs.telegram === "done" ? "#16a34a" : "#3b82f6"} stroke={2} />
                   </div>
                   <p className="text-[#1A1A1A] text-xs font-bold">Subscribe Telegram Channel</p>
                 </div>
@@ -267,7 +272,7 @@ export function FuturesGiveawayPage({ onBack }: Props) {
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg flex items-center justify-center"
                     style={{ background: gs.xDone ? "#dcfce7" : "#F5F5F5" }}>
-                    <Ico d={I.link} size={13} color={gs.xDone ? "#16a34a" : "#1A1A1A"} sw={2} />
+                    <IconLink size={13} color={gs.xDone ? "#16a34a" : "#1A1A1A"} stroke={2} />
                   </div>
                   <p className="text-[#1A1A1A] text-xs font-bold">Post on X (Twitter)</p>
                 </div>
@@ -293,7 +298,7 @@ export function FuturesGiveawayPage({ onBack }: Props) {
                 </div>
               ) : (
                 <div className="bg-green-50 border border-green-200 rounded-xl px-3 py-2 flex items-center gap-2">
-                  <Ico d={I.check} size={11} color="#16a34a" sw={3} />
+                  <IconCheck size={11} color="#16a34a" stroke={3} />
                   <p className="text-green-700 text-[11px] font-semibold truncate">{gs.xLink}</p>
                 </div>
               )}
@@ -305,7 +310,7 @@ export function FuturesGiveawayPage({ onBack }: Props) {
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg flex items-center justify-center"
                     style={{ background: gs.emailDone ? "#dcfce7" : "#FFF8E8" }}>
-                    <Ico d={I.mail} size={13} color={gs.emailDone ? "#16a34a" : "#D4AF37"} sw={2} />
+                    <IconMail size={13} color={gs.emailDone ? "#16a34a" : "#D4AF37"} stroke={2} />
                   </div>
                   <p className="text-[#1A1A1A] text-xs font-bold">Submit Email Address</p>
                 </div>
@@ -331,7 +336,7 @@ export function FuturesGiveawayPage({ onBack }: Props) {
                 </div>
               ) : (
                 <div className="bg-green-50 border border-green-200 rounded-xl px-3 py-2 flex items-center gap-2">
-                  <Ico d={I.check} size={11} color="#16a34a" sw={3} />
+                  <IconCheck size={11} color="#16a34a" stroke={3} />
                   <p className="text-green-700 text-[11px] font-semibold">{gs.email}</p>
                 </div>
               )}
@@ -359,14 +364,14 @@ export function FuturesGiveawayPage({ onBack }: Props) {
                 <p className="flex-1 text-[10px] text-[#555555] truncate font-mono">{REFERRAL_LINK}</p>
                 <button onClick={handleCopyLink}
                   className="flex-shrink-0 flex items-center gap-1 text-[#C9A520] text-[10px] font-bold">
-                  <Ico d={I.copy} size={12} color="#C9A520" sw={2} />
+                  <IconCopy size={12} color="#C9A520" stroke={2} />
                   {copied ? "Copied!" : "Copy"}
                 </button>
               </div>
 
               {gs.referral === "error" && (
                 <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2 mb-3">
-                  <Ico d={I.alert} size={12} color="#dc2626" sw={2} />
+                  <IconAlertTriangle size={12} color="#dc2626" stroke={2} />
                   <p className="text-red-600 text-[11px] leading-snug">
                     You currently have <span className="font-bold">{gs.referralCount} referral{gs.referralCount !== 1 ? "s" : ""}</span>. Minimum 2 required to qualify.
                   </p>
@@ -393,7 +398,7 @@ export function FuturesGiveawayPage({ onBack }: Props) {
               <div className="rounded-xl border border-[#bbf7d0] bg-green-50 px-4 py-3">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
-                    <Ico d={I.check} size={18} color="white" sw={2.5} />
+                    <IconCheck size={18} color="white" stroke={2.5} />
                   </div>
                   <div>
                     <p className="text-green-800 font-bold text-sm">Already Participated</p>
@@ -407,7 +412,7 @@ export function FuturesGiveawayPage({ onBack }: Props) {
               <div className="space-y-2.5">
                 {!allDone && (
                   <div className="flex items-center gap-2 bg-[#FFF8E8] border border-[#E8C84A] rounded-xl px-3 py-2.5">
-                    <Ico d={I.alert} size={13} color="#C9A520" sw={2} />
+                    <IconAlertTriangle size={13} color="#C9A520" stroke={2} />
                     <p className="text-[#8B6300] text-[11px] font-medium">Complete all tasks above to enable participation.</p>
                   </div>
                 )}
@@ -434,7 +439,7 @@ export function FuturesGiveawayPage({ onBack }: Props) {
         {/* ── Terms & Conditions ── */}
         <div className="panel-silver rounded-2xl border border-[#DDD5B0] px-4 py-4">
           <div className="flex items-center gap-2 mb-3">
-            <Ico d={I.shield} size={14} color="#8B6300" sw={2} />
+            <IconShieldCheck size={14} color="#8B6300" stroke={2} />
             <p className="text-[#1A1A1A] text-xs font-bold">Bonus Terms & Conditions</p>
           </div>
           <div className="space-y-2">

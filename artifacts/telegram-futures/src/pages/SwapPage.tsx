@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useTrading } from "../contexts/TradingContext";
+import { IconChevronLeft, IconArrowRight, IconArrowsUpDown, IconCheck } from "@tabler/icons-react";
 
 interface SwapPageProps {
   onBack: () => void;
@@ -69,17 +70,13 @@ export function SwapPage({ onBack, bnbPrice }: SwapPageProps) {
       <div className="flex flex-col h-full page-bg">
         <div className="flex items-center px-4 py-3 panel-header border-b border-[#C8B040] flex-shrink-0">
           <button onClick={onBack} className="mr-3 text-[#888888]">
-            <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
+            <IconChevronLeft size={22} stroke={2.5} />
           </button>
           <span className="font-bold text-[#1A1A1A] text-base">Swap</span>
         </div>
         <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
           <div className="w-20 h-20 rounded-full btn-3d-gold flex items-center justify-center mb-5">
-            <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
+            <IconCheck size={32} stroke={2.5} />
           </div>
           <h2 className="text-xl font-bold text-[#1A1A1A] mb-2">Swap Successful!</h2>
           <p className="text-sm text-[#666666] mb-6">Your swap has been executed</p>
@@ -121,9 +118,7 @@ export function SwapPage({ onBack, bnbPrice }: SwapPageProps) {
       )}
       <div className="flex items-center px-4 py-3 panel-header border-b border-[#C8B040] flex-shrink-0">
         <button onClick={onBack} className="mr-3 text-[#888888]">
-          <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
+          <IconChevronLeft size={22} stroke={2.5} />
         </button>
         <span className="font-bold text-[#1A1A1A] text-base">Swap</span>
         <span className="ml-auto text-xs font-medium px-2 py-0.5 rounded-full bg-[#F5E280] text-[#8B6914]">Fee 0.1%</span>
@@ -133,9 +128,7 @@ export function SwapPage({ onBack, bnbPrice }: SwapPageProps) {
         {/* Rate info */}
         <div className="flex items-center justify-center gap-2 py-2">
           <span className="text-xs text-[#888888]">1 BNB</span>
-          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#C9A227" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-          </svg>
+          <IconArrowRight size={16} stroke={2} color="#C9A227" />
           <span className="text-xs font-semibold text-[#C9A227]">${bnbPrice > 0 ? bnbPrice.toFixed(2) : "---"} USDT</span>
         </div>
 
@@ -171,9 +164,7 @@ export function SwapPage({ onBack, bnbPrice }: SwapPageProps) {
         <div className="flex justify-center">
           <button onClick={handleSwitch}
             className="w-10 h-10 rounded-full btn-3d-gold flex items-center justify-center">
-            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" />
-            </svg>
+            <IconArrowsUpDown size={18} stroke={2.5} />
           </button>
         </div>
 

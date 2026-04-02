@@ -1,5 +1,10 @@
 import { useState, useRef } from "react";
 import { useTrading } from "../contexts/TradingContext";
+import {
+  IconArrowLeft, IconCheck, IconShieldCheck, IconTrendingUp,
+  IconTrophy, IconBolt, IconInfoCircle, IconAlertTriangle,
+  IconLock, IconUserCheck, IconChartBar,
+} from "@tabler/icons-react";
 
 const CHALLENGE_JOINED_KEY  = "futures_challenge_joined_v1";
 const CHALLENGE_VOLUME_KEY  = "futures_challenge_volume_v1";
@@ -112,7 +117,7 @@ export function FuturesChallengePage({ onBack }: Props) {
         <div className="fixed top-4 left-1/2 z-[70] flex items-start gap-3 px-4 py-3.5 rounded-2xl shadow-2xl"
           style={{ transform: "translateX(-50%)", background: "linear-gradient(135deg,#22c55e,#15803d)", boxShadow: "0 8px 32px rgba(22,163,74,0.45)", minWidth: 290, maxWidth: 340 }}>
           <div className="w-9 h-9 rounded-full bg-[rgba(255,255,255,0.2)] flex items-center justify-center flex-shrink-0 mt-0.5">
-            <Ico d={I.check} size={18} color="white" sw={2.5} />
+            <IconCheck size={18} color="white" stroke={2.5} />
           </div>
           <div>
             <p className="text-white font-bold text-sm leading-tight">Success</p>
@@ -125,7 +130,7 @@ export function FuturesChallengePage({ onBack }: Props) {
       <div className="relative flex items-center px-4 py-3 panel-header border-b border-[#C8B040] flex-shrink-0">
         <button onClick={onBack}
           className="absolute left-4 w-8 h-8 flex items-center justify-center rounded-xl bg-[rgba(0,0,0,0.06)] active:bg-[rgba(0,0,0,0.12)]">
-          <Ico d={I.back} size={17} color="#1A1A1A" sw={2} />
+          <IconArrowLeft size={17} color="#1A1A1A" stroke={2} />
         </button>
         <span className="w-full text-center font-bold text-[#1A1A1A] text-base">Futures Challenge</span>
       </div>
@@ -150,7 +155,7 @@ export function FuturesChallengePage({ onBack }: Props) {
             <div className="flex items-center gap-3 mb-3">
               <div className="w-12 h-12 rounded-full border-2 border-[#D4AF37] flex items-center justify-center flex-shrink-0"
                 style={{ background: "rgba(212,175,55,0.15)" }}>
-                <Ico d={I.trending} size={22} color="#D4AF37" sw={1.8} />
+                <IconTrendingUp size={22} color="#D4AF37" stroke={1.8} />
               </div>
               <div>
                 <p className="text-white font-bold text-lg leading-tight">Up to $50 USDT</p>
@@ -191,7 +196,7 @@ export function FuturesChallengePage({ onBack }: Props) {
             </div>
             {joined && (
               <div className="flex items-center gap-1.5 bg-[#F0F9FF] border border-[#BAE6FD] rounded-full px-2.5 py-1">
-                <Ico d={I.userCheck} size={11} color="#0284C7" sw={2} />
+                <IconUserCheck size={11} color="#0284C7" stroke={2} />
                 <span className="text-[#0284C7] text-[10px] font-bold">Joined</span>
               </div>
             )}
@@ -202,7 +207,7 @@ export function FuturesChallengePage({ onBack }: Props) {
             <div className="px-4 pt-4 pb-3 border-b border-[#EEE8CC]">
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-1.5">
-                  <Ico d={I.barChart} size={13} color="#8B6300" sw={2} />
+                  <IconChartBar size={13} color="#8B6300" stroke={2} />
                   <p className="text-[#1A1A1A] text-xs font-bold">Current Volume</p>
                 </div>
                 <p className="text-[#1A1A1A] font-bold text-sm">${fmtVol(volume)} <span className="text-[#888888] font-normal text-[10px]">USDT</span></p>
@@ -266,11 +271,11 @@ export function FuturesChallengePage({ onBack }: Props) {
                     {/* Status badge */}
                     {isClaimed ? (
                       <span className="flex items-center gap-1 bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                        <Ico d={I.check} size={9} color="#16a34a" sw={3} /> Claimed
+                        <IconCheck size={9} color="#16a34a" stroke={3} /> Claimed
                       </span>
                     ) : isClaimable ? (
                       <span className="flex items-center gap-1 bg-[#FFF8E8] text-[#C9A520] text-[10px] font-bold px-2 py-0.5 rounded-full border border-[#E8C84A]">
-                        <Ico d={I.zap} size={9} color="#C9A520" sw={2.5} /> Ready
+                        <IconBolt size={9} color="#C9A520" stroke={2.5} /> Ready
                       </span>
                     ) : (
                       <span className="text-[#CCCCCC] text-[10px] font-semibold">
@@ -327,7 +332,7 @@ export function FuturesChallengePage({ onBack }: Props) {
           <div className="px-4 py-4 border-t border-[#EEE8CC]">
             {joined ? (
               <div className="flex items-start gap-2 bg-[#FFF8E8] border border-[#E8C84A] rounded-xl px-3 py-2.5">
-                <Ico d={I.info} size={13} color="#C9A520" sw={2} />
+                <IconInfoCircle size={13} color="#C9A520" stroke={2} />
                 <p className="text-[#8B6300] text-[11px] leading-snug font-medium">
                   Your Futures trading volume using real balance is being tracked automatically. Open a position in the Futures tab to accumulate volume.
                 </p>
@@ -335,7 +340,7 @@ export function FuturesChallengePage({ onBack }: Props) {
             ) : (
               <div className="space-y-2.5">
                 <div className="flex items-center gap-2 bg-[#FFF8E8] border border-[#E8C84A] rounded-xl px-3 py-2.5">
-                  <Ico d={I.alert} size={13} color="#C9A520" sw={2} />
+                  <IconAlertTriangle size={13} color="#C9A520" stroke={2} />
                   <p className="text-[#8B6300] text-[11px] font-medium">Join the event first to start tracking your trading volume.</p>
                 </div>
                 <button
@@ -348,7 +353,7 @@ export function FuturesChallengePage({ onBack }: Props) {
                   }}
                 >
                   <div className="flex items-center justify-center gap-2">
-                    <Ico d={I.zap} size={16} color="#3A2000" sw={2} />
+                    <IconBolt size={16} color="#3A2000" stroke={2} />
                     Join Futures Challenge
                   </div>
                 </button>
@@ -360,7 +365,7 @@ export function FuturesChallengePage({ onBack }: Props) {
         {/* ── Terms & Conditions ── */}
         <div className="panel-silver rounded-2xl border border-[#DDD5B0] px-4 py-4">
           <div className="flex items-center gap-2 mb-3">
-            <Ico d={I.shield} size={14} color="#8B6300" sw={2} />
+            <IconShieldCheck size={14} color="#8B6300" stroke={2} />
             <p className="text-[#1A1A1A] text-xs font-bold">Terms & Conditions</p>
           </div>
           <div className="space-y-2.5">

@@ -23,9 +23,7 @@ function TxIcon({ type }: { type: WalletTransaction["type"] }) {
     return (
       <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-white"
         style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)" }}>
-        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16" />
-        </svg>
+        <IconArrowBarToDown size={18} stroke={2.5} />
       </div>
     );
   }
@@ -33,9 +31,7 @@ function TxIcon({ type }: { type: WalletTransaction["type"] }) {
     return (
       <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-white"
         style={{ background: "linear-gradient(135deg, #ef4444, #dc2626)" }}>
-        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 20V8m0 0l-4 4m4-4l4 4M4 4h16" />
-        </svg>
+        <IconArrowBarUp size={18} stroke={2.5} />
       </div>
     );
   }
@@ -43,18 +39,14 @@ function TxIcon({ type }: { type: WalletTransaction["type"] }) {
     return (
       <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-[#8B6300]"
         style={{ background: "linear-gradient(135deg, #E8C84A, #D4AF37)" }}>
-        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v13m0-13C10.832 5.477 9.246 5 7.5 5A5.5 5.5 0 002 10.5c0 3.038 2.5 5 5.5 5 2.5 0 4.5-1 5.5-2.5m0 0c1-1.5 3-2.5 5.5-2.5 3 0 5.5 1.962 5.5 5A5.5 5.5 0 0116.5 21c-1.746 0-3.332-.477-4.5-1.5" />
-        </svg>
+        <IconGift size={18} stroke={2.5} />
       </div>
     );
   }
   return (
     <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-[#8B6300]"
       style={{ background: "linear-gradient(135deg, #E8C84A, #D4AF37)" }}>
-      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" />
-      </svg>
+      <IconArrowsRightLeft size={18} stroke={2.5} />
     </div>
   );
 }
@@ -151,9 +143,7 @@ export function HistoryPage({ onBack }: HistoryPageProps) {
       {/* Header */}
       <div className="flex items-center px-4 py-3 panel-header border-b border-[#C8B040] flex-shrink-0">
         <button onClick={onBack} className="mr-3 text-[#888888]">
-          <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
+          <IconChevronLeft size={22} stroke={2.5} />
         </button>
         <span className="font-bold text-[#1A1A1A] text-base">Transaction History</span>
         {walletHistory.length > 0 && (
@@ -182,10 +172,7 @@ export function HistoryPage({ onBack }: HistoryPageProps) {
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center py-20">
             <div className="w-16 h-16 rounded-full btn-3d-silver flex items-center justify-center mb-4">
-              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#AAAAAA" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
+              <IconFileText size={28} stroke={1.5} color="#AAAAAA" />
             </div>
             <p className="text-sm font-semibold text-[#888888]">No transactions yet</p>
             <p className="text-xs text-[#AAAAAA] mt-1">Your Receive, Send, and Swap<br />history will appear here</p>

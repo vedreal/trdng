@@ -1,3 +1,10 @@
+import {
+  IconWallet,
+  IconChartCandlestick,
+  IconCoins,
+  IconUserCircle,
+} from "@tabler/icons-react";
+
 type NavPage = "portfolio" | "futures" | "earn" | "profile";
 
 interface BottomNavProps {
@@ -10,42 +17,22 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
     {
       id: "portfolio",
       label: "Portfolio",
-      icon: (
-        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <rect x="2" y="7" width="20" height="14" rx="2" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 12v4m-2-2h4" />
-        </svg>
-      ),
+      icon: <IconWallet size={22} stroke={1.8} />,
     },
     {
       id: "futures",
       label: "Futures",
-      icon: (
-        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-        </svg>
-      ),
+      icon: <IconChartCandlestick size={22} stroke={1.8} />,
     },
     {
       id: "earn",
       label: "Earn",
-      icon: (
-        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <rect x="3" y="8" width="18" height="10" rx="2" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 6h.01M17 6h.01" />
-        </svg>
-      ),
+      icon: <IconCoins size={22} stroke={1.8} />,
     },
     {
       id: "profile",
       label: "Profile",
-      icon: (
-        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <circle cx="12" cy="8" r="4" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-        </svg>
-      ),
+      icon: <IconUserCircle size={22} stroke={1.8} />,
     },
   ];
 

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTrading } from "../contexts/TradingContext";
+import { IconChevronLeft, IconChevronDown } from "@tabler/icons-react";
 
 const DEPOSIT_ADDRESS = "0x742d35Cc6634C0532925a3b8D4C9A7C9f8A1B2E";
 
@@ -50,9 +51,7 @@ export function ReceivePage({ onBack }: ReceivePageProps) {
       {/* Header */}
       <div className="flex items-center px-4 py-3 panel-header border-b border-[#C8B040] flex-shrink-0">
         <button onClick={onBack} className="mr-3 text-[#888888]">
-          <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
+          <IconChevronLeft size={22} stroke={2.5} />
         </button>
         <span className="font-bold text-[#1A1A1A] text-base">Receive / Deposit</span>
       </div>
@@ -73,9 +72,7 @@ export function ReceivePage({ onBack }: ReceivePageProps) {
               <option value="BNB">BNB — BNB Chain</option>
             </select>
             <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#C9A227]">
-              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
+              <IconChevronDown size={16} stroke={2.5} />
             </div>
           </div>
         </div>

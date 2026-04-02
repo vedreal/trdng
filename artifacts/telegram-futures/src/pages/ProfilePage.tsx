@@ -1,4 +1,10 @@
 import { useState, useEffect } from "react";
+import {
+  IconArrowLeft, IconChevronRight, IconShieldLock, IconUsers,
+  IconHeadset, IconCopy, IconCheck, IconPhone, IconMail,
+  IconAlertTriangle, IconCalendarEvent, IconUser, IconLink,
+  IconInfoCircle, IconSend2, IconLock,
+} from "@tabler/icons-react";
 
 // ── localStorage keys ─────────────────────────────────────────────
 const LS_JOIN_DATE     = "profile_join_date_v1";
@@ -55,36 +61,7 @@ function InitialsAvatar({ name, size = 72 }: { name: string; size?: number }) {
   );
 }
 
-// ── Icon helper ───────────────────────────────────────────────────
-function Ico({ d, size = 18, color = "currentColor", sw = 2, fill = "none" }: {
-  d: string | string[]; size?: number; color?: string; sw?: number; fill?: string;
-}) {
-  const paths = Array.isArray(d) ? d : [d];
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
-      {paths.map((p, i) => <path key={i} d={p} />)}
-    </svg>
-  );
-}
 
-const I = {
-  back:      "M19 12H5M12 5l-7 7 7 7",
-  chevron:   "M9 18l6-6-6-6",
-  shield:    "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
-  users:     ["M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2", "M23 21v-2a4 4 0 00-3-3.87", "M16 3.13a4 4 0 010 7.75", "M9 7a4 4 0 100 8 4 4 0 000-8z"],
-  headset:   ["M3 18v-6a9 9 0 0118 0v6", "M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"],
-  copy:      ["M8 17H5a2 2 0 01-2-2V5a2 2 0 012-2h8a2 2 0 012 2v3", "M21 21H11a2 2 0 01-2-2v-8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2z"],
-  check:     "M5 13l4 4L19 7",
-  phone:     ["M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"],
-  mail:      ["M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z", "M22 6l-10 7L2 6"],
-  alert:     "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z",
-  calendar:  "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z",
-  user:      ["M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2", "M12 11a4 4 0 100-8 4 4 0 000 8z"],
-  link:      ["M15 7h3a5 5 0 010 10h-3m-6 0H6A5 5 0 016 7h3", "M8 12h8"],
-  info:      "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
-  send:      "M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z",
-  lock:      ["M5 11V7a7 7 0 0114 0v4", "M3 11h18v11H3z", "M12 16v2"],
-};
 
 // ── Security state ────────────────────────────────────────────────
 interface SecurityData { phone: string; email: string; savedAt: string; }
@@ -134,7 +111,7 @@ function SecurityPage({ onBack }: { onBack: () => void }) {
         <div className="fixed top-4 left-1/2 z-[70] flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl"
           style={{ transform: "translateX(-50%)", background: "linear-gradient(135deg,#22c55e,#15803d)", boxShadow: "0 8px 32px rgba(22,163,74,0.45)", minWidth: 280 }}>
           <div className="w-8 h-8 rounded-full bg-[rgba(255,255,255,0.2)] flex items-center justify-center flex-shrink-0">
-            <Ico d={I.check} size={16} color="white" sw={2.5} />
+            <IconCheck size={16} color="white" stroke={2.5} />
           </div>
           <p className="text-white font-bold text-sm">Security data saved successfully.</p>
         </div>
@@ -142,7 +119,7 @@ function SecurityPage({ onBack }: { onBack: () => void }) {
 
       <div className="relative flex items-center px-4 py-3 panel-header border-b border-[#C8B040] flex-shrink-0">
         <button onClick={onBack} className="absolute left-4 w-8 h-8 flex items-center justify-center rounded-xl bg-[rgba(0,0,0,0.06)] active:bg-[rgba(0,0,0,0.12)]">
-          <Ico d={I.back} size={17} color="#1A1A1A" sw={2} />
+          <IconArrowLeft size={17} color="#1A1A1A" stroke={2} />
         </button>
         <span className="w-full text-center font-bold text-[#1A1A1A] text-base">Security Backup</span>
       </div>
@@ -157,7 +134,7 @@ function SecurityPage({ onBack }: { onBack: () => void }) {
           <div className="px-5 py-5 relative flex items-center gap-4">
             <div className="w-12 h-12 rounded-full border-2 border-[#D4AF37] flex items-center justify-center flex-shrink-0"
               style={{ background: "rgba(212,175,55,0.15)" }}>
-              <Ico d={I.shield} size={22} color="#D4AF37" sw={1.8} />
+              <IconShieldLock size={22} color="#D4AF37" stroke={1.8} />
             </div>
             <div>
               <p className="text-white font-bold text-base leading-tight">Account Security Backup</p>
@@ -171,7 +148,7 @@ function SecurityPage({ onBack }: { onBack: () => void }) {
         {/* Warning notice */}
         <div className="flex items-start gap-3 bg-[#FFF8E8] border border-[#E8C84A] rounded-2xl px-4 py-3">
           <div className="flex-shrink-0 mt-0.5">
-            <Ico d={I.alert} size={20} color="#C9A520" sw={2} />
+            <IconAlertTriangle size={20} color="#C9A520" stroke={2} />
           </div>
           <p className="text-[#7A5000] text-[11px] leading-relaxed">
             <span className="font-bold">Important:</span> Security data cannot be edited once submitted. Please ensure all information is accurate before saving. This data is stored locally on your device and is used solely for account recovery purposes.
@@ -192,12 +169,12 @@ function SecurityPage({ onBack }: { onBack: () => void }) {
             {/* Phone */}
             <div>
               <div className="flex items-center gap-2 mb-1.5">
-                <Ico d={I.phone} size={13} color="#8B6300" sw={2} />
+                <IconPhone size={13} color="#8B6300" stroke={2} />
                 <p className="text-[#1A1A1A] text-xs font-bold">Phone Number</p>
               </div>
               {saved ? (
                 <div className="flex items-center gap-2 bg-[#F7F3E8] border border-[#DDD5B0] rounded-xl px-3 py-2.5">
-                  <Ico d={I.lock} size={12} color="#AAAAAA" sw={2} />
+                  <IconLock size={12} color="#AAAAAA" stroke={2} />
                   <p className="text-[#1A1A1A] text-sm font-medium flex-1">{saved.phone}</p>
                   <span className="text-[10px] text-[#AAAAAA] font-medium">Locked</span>
                 </div>
@@ -215,12 +192,12 @@ function SecurityPage({ onBack }: { onBack: () => void }) {
             {/* Email */}
             <div>
               <div className="flex items-center gap-2 mb-1.5">
-                <Ico d={I.mail} size={13} color="#8B6300" sw={2} />
+                <IconMail size={13} color="#8B6300" stroke={2} />
                 <p className="text-[#1A1A1A] text-xs font-bold">Email Address</p>
               </div>
               {saved ? (
                 <div className="flex items-center gap-2 bg-[#F7F3E8] border border-[#DDD5B0] rounded-xl px-3 py-2.5">
-                  <Ico d={I.lock} size={12} color="#AAAAAA" sw={2} />
+                  <IconLock size={12} color="#AAAAAA" stroke={2} />
                   <p className="text-[#1A1A1A] text-sm font-medium flex-1">{saved.email}</p>
                   <span className="text-[10px] text-[#AAAAAA] font-medium">Locked</span>
                 </div>
@@ -241,7 +218,7 @@ function SecurityPage({ onBack }: { onBack: () => void }) {
             <div className="px-4 pb-4">
               {!canSubmit && (phone || email) && (
                 <div className="flex items-center gap-2 mb-3 bg-[#FFF8E8] border border-[#E8C84A] rounded-xl px-3 py-2">
-                  <Ico d={I.info} size={12} color="#C9A520" sw={2} />
+                  <IconInfoCircle size={12} color="#C9A520" stroke={2} />
                   <p className="text-[#8B6300] text-[11px]">Please enter a valid phone number and email address.</p>
                 </div>
               )}
@@ -256,7 +233,7 @@ function SecurityPage({ onBack }: { onBack: () => void }) {
                 }}
               >
                 <div className="flex items-center justify-center gap-2">
-                  <Ico d={I.shield} size={15} color={canSubmit ? "#3A2000" : "#AAAAAA"} sw={2} />
+                  <IconShieldLock size={15} color={canSubmit ? "#3A2000" : "#AAAAAA"} stroke={2} />
                   Save Security Backup
                 </div>
               </button>
@@ -267,7 +244,7 @@ function SecurityPage({ onBack }: { onBack: () => void }) {
             <div className="px-4 pb-4">
               <div className="rounded-xl border border-[#bbf7d0] bg-green-50 px-4 py-3 flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
-                  <Ico d={I.check} size={15} color="white" sw={2.5} />
+                  <IconCheck size={15} color="white" stroke={2.5} />
                 </div>
                 <div>
                   <p className="text-green-800 font-bold text-xs">Security backup is active</p>
@@ -302,7 +279,7 @@ function ReferralPage({ onBack, userId }: { onBack: () => void; userId: number }
     <div className="flex flex-col h-full page-bg overflow-hidden">
       <div className="relative flex items-center px-4 py-3 panel-header border-b border-[#C8B040] flex-shrink-0">
         <button onClick={onBack} className="absolute left-4 w-8 h-8 flex items-center justify-center rounded-xl bg-[rgba(0,0,0,0.06)] active:bg-[rgba(0,0,0,0.12)]">
-          <Ico d={I.back} size={17} color="#1A1A1A" sw={2} />
+          <IconArrowLeft size={17} color="#1A1A1A" stroke={2} />
         </button>
         <span className="w-full text-center font-bold text-[#1A1A1A] text-base">Referral</span>
       </div>
@@ -317,7 +294,7 @@ function ReferralPage({ onBack, userId }: { onBack: () => void; userId: number }
           <div className="px-5 py-5 relative flex items-center gap-4">
             <div className="w-12 h-12 rounded-full border-2 border-[#D4AF37] flex items-center justify-center flex-shrink-0"
               style={{ background: "rgba(212,175,55,0.15)" }}>
-              <Ico d={I.users} size={22} color="#D4AF37" sw={1.8} />
+              <IconUsers size={22} color="#D4AF37" stroke={1.8} />
             </div>
             <div>
               <p className="text-white font-bold text-base leading-tight">Invite Friends</p>
@@ -332,7 +309,7 @@ function ReferralPage({ onBack, userId }: { onBack: () => void; userId: number }
         <div className="panel-silver rounded-2xl border border-[#DDD5B0] overflow-hidden">
           <div className="px-4 pt-4 pb-3 border-b border-[#EEE8CC]">
             <div className="flex items-center gap-2">
-              <Ico d={I.link} size={13} color="#8B6300" sw={2} />
+              <IconLink size={13} color="#8B6300" stroke={2} />
               <p className="font-bold text-[#1A1A1A] text-sm">Your Referral Link</p>
             </div>
           </div>
@@ -352,8 +329,8 @@ function ReferralPage({ onBack, userId }: { onBack: () => void; userId: number }
             >
               <div className="flex items-center justify-center gap-2">
                 {copied
-                  ? <><Ico d={I.check} size={15} color="#16a34a" sw={2.5} /> Link Copied!</>
-                  : <><Ico d={I.copy}  size={15} color="#3A2000" sw={2}   /> Copy Referral Link</>
+                  ? <><IconCheck size={15} color="#16a34a" stroke={2.5} /> Link Copied!</>
+                  : <><IconCopy size={15} color="#3A2000" stroke={2} /> Copy Referral Link</>
                 }
               </div>
             </button>
@@ -364,7 +341,7 @@ function ReferralPage({ onBack, userId }: { onBack: () => void; userId: number }
         <div className="panel-silver rounded-2xl border border-[#DDD5B0] overflow-hidden">
           <div className="px-4 pt-4 pb-3 border-b border-[#EEE8CC] flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Ico d={I.users} size={13} color="#8B6300" sw={2} />
+              <IconUsers size={13} color="#8B6300" stroke={2} />
               <p className="font-bold text-[#1A1A1A] text-sm">Referred Users</p>
             </div>
             <span className="bg-[#F0EAD0] text-[#8B6300] text-[10px] font-bold px-2 py-0.5 rounded-full border border-[#D4AF37]">
@@ -375,7 +352,7 @@ function ReferralPage({ onBack, userId }: { onBack: () => void; userId: number }
           {referrals.length === 0 ? (
             <div className="px-4 py-8 flex flex-col items-center gap-2">
               <div className="w-12 h-12 rounded-full bg-[#F5F5F5] flex items-center justify-center">
-                <Ico d={I.users} size={22} color="#CCCCCC" sw={1.8} />
+                <IconUsers size={22} color="#CCCCCC" stroke={1.8} />
               </div>
               <p className="text-[#BBBBBB] text-xs font-medium text-center">No referrals yet.<br />Share your link to invite friends.</p>
             </div>
@@ -392,7 +369,7 @@ function ReferralPage({ onBack, userId }: { onBack: () => void; userId: number }
                     <p className="text-[#AAAAAA] text-[10px] mt-0.5">Joined {fmtDate(r.joinedAt)}</p>
                   </div>
                   <span className="flex items-center gap-1 bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                    <Ico d={I.check} size={9} color="#16a34a" sw={3} /> Verified
+                    <IconCheck size={9} color="#16a34a" stroke={3} /> Verified
                   </span>
                 </div>
               ))}
@@ -431,7 +408,7 @@ export function ProfilePage() {
   const menuItems = [
     {
       id:      "security",
-      icon:    I.shield,
+      icon: IconShieldLock,
       iconColor: "#5C3A00",
       iconBg:  "linear-gradient(to bottom, rgba(255,255,255,0.97) 0%, rgba(255,242,170,0.92) 100%)",
       iconBorder: "transparent",
@@ -444,7 +421,7 @@ export function ProfilePage() {
     },
     {
       id:      "referral",
-      icon:    I.users,
+      icon: IconUsers,
       iconColor: "#5C3A00",
       iconBg:  "linear-gradient(to bottom, rgba(255,255,255,0.97) 0%, rgba(255,242,170,0.92) 100%)",
       iconBorder: "transparent",
@@ -488,7 +465,7 @@ export function ProfilePage() {
                 <p className="text-white font-bold text-lg leading-tight truncate">{displayName}</p>
                 <p className="text-[#D4AF37] text-sm font-medium mt-0.5">{handle}</p>
                 <div className="flex items-center gap-1.5 mt-2">
-                  <Ico d={I.calendar} size={11} color="rgba(255,255,255,0.45)" sw={2} />
+                  <IconCalendarEvent size={11} color="rgba(255,255,255,0.45)" stroke={2} />
                   <p className="text-[rgba(255,255,255,0.45)] text-[11px]">
                     Member since {fmtDate(joinDate)}
                   </p>
@@ -517,7 +494,7 @@ export function ProfilePage() {
               <div className="px-4 py-3.5 flex items-center gap-3">
                 <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
                   style={{ background: item.iconBg, boxShadow: (item as any).iconShadow ?? "0 2px 0 rgba(0,0,0,0.12), 0 3px 8px rgba(0,0,0,0.1)" }}>
-                  <Ico d={item.icon} size={19} color={item.iconColor} sw={1.8} />
+                  <item.icon size={19} color={item.iconColor} stroke={1.8} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[#1A1A1A] font-bold text-sm">{item.title}</p>
@@ -533,7 +510,7 @@ export function ProfilePage() {
                       {item.badge}
                     </span>
                   )}
-                  <Ico d={I.chevron} size={15} color="#CCCCCC" sw={2} />
+                  <IconChevronRight size={15} color="#CCCCCC" stroke={2} />
                 </div>
               </div>
             </button>
@@ -552,14 +529,14 @@ export function ProfilePage() {
               background: "linear-gradient(to bottom, rgba(255,255,255,0.97) 0%, rgba(255,242,170,0.92) 100%)",
               boxShadow: "0 3px 0 rgba(0,0,0,0.18), 0 5px 14px rgba(0,0,0,0.15), 0 1px 0 rgba(255,255,255,0.8) inset",
             }}>
-            <Ico d={I.headset} size={19} color="#5C3A00" sw={1.8} />
+            <IconHeadset size={19} color="#5C3A00" stroke={1.8} />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[#1A1A1A] font-bold text-sm">Support</p>
             <p className="text-[#888888] text-[11px] mt-0.5">Contact our team via Telegram</p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <Ico d={I.send} size={15} color="#D4AF37" sw={1.8} />
+            <IconSend2 size={15} color="#D4AF37" stroke={1.8} />
           </div>
         </a>
 
