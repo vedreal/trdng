@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTrading } from "../contexts/TradingContext";
 import { FuturesGiveawayPage } from "./FuturesGiveawayPage";
+import { FuturesChallengePage } from "./FuturesChallengePage";
 
 const GIVEAWAY_LS_KEY = "giveaway_futures_v1";
 
@@ -198,12 +199,15 @@ function Day7Box({ reward, state }: { reward: number; state: DayState }) {
 export function EarnPage() {
   const { setXautBalance, addWalletTx } = useTrading();
 
-  const [view, setView]           = useState<"main" | "giveaway">("main");
+  const [view, setView]           = useState<"main" | "giveaway" | "challenge">("main");
   const [ciState, setCiState]     = useState<CIState>(loadCIState);
   const [toast, setToast]         = useState<{ amount: number } | null>(null);
 
   if (view === "giveaway") {
     return <FuturesGiveawayPage onBack={() => setView("main")} />;
+  }
+  if (view === "challenge") {
+    return <FuturesChallengePage onBack={() => setView("main")} />;
   }
 
   const today     = todayStr();
@@ -485,6 +489,62 @@ export function EarnPage() {
                 <div className="flex items-center gap-1.5">
                   <span className="text-[#D4AF37] font-bold text-xs">30 USDT</span>
                   <span className="text-[rgba(255,255,255,0.4)] text-[10px]">Futures Bonus</span>
+                </div>
+              </div>
+            </div>
+          </button>
+
+          {/* Futures Challenge Event Card */}
+          <button
+            onClick={() => setView("challenge")}
+            className="w-full text-left rounded-2xl overflow-hidden active:scale-[0.985] transition-transform mt-3"
+            style={{
+              background: "linear-gradient(135deg,#1A1F3A 0%,#0F1628 55%,#1C2818 100%)",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.28)",
+            }}
+          >
+            <div className="relative px-4 pt-4 pb-3">
+              <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full opacity-15 pointer-events-none"
+                style={{ background: "radial-gradient(circle,#D4AF37,transparent)" }} />
+
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 border border-[rgba(212,175,55,0.35)]"
+                    style={{ background: "rgba(212,175,55,0.12)" }}>
+                    <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#D4AF37" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M23 6l-9.5 9.5-5-5L1 18" /><path d="M17 6h6v6" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="bg-green-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full tracking-wide">ACTIVE</span>
+                      <span className="text-[rgba(255,255,255,0.35)] text-[10px]">Limited Time</span>
+                    </div>
+                    <p className="text-white font-bold text-sm leading-tight">Futures Challenge</p>
+                    <p className="text-[rgba(255,255,255,0.55)] text-[11px] mt-1 leading-snug">
+                      Trade Futures with real balance and earn up to <span className="text-[#D4AF37] font-semibold">$50 Futures Bonus</span> based on your volume.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex-shrink-0 mt-1">
+                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.4)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 18l6-6-6-6" />
+                  </svg>
+                </div>
+              </div>
+
+              <div className="mt-3 pt-3 border-t border-[rgba(255,255,255,0.07)] flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.35)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  </svg>
+                  <span className="text-[rgba(255,255,255,0.4)] text-[10px]">
+                    {localStorage.getItem("futures_challenge_joined_v1") === "1" ? "Already Joined" : "Real Balance Required"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[#D4AF37] font-bold text-xs">50 USDT</span>
+                  <span className="text-[rgba(255,255,255,0.4)] text-[10px]">Max Bonus</span>
                 </div>
               </div>
             </div>
