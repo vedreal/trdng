@@ -397,8 +397,16 @@ export function ProfilePage() {
   const [, forceUpdate] = useState(0);
   useEffect(() => { forceUpdate((n) => n + 1); }, [view]);
 
-  if (view === "security") return <SecurityPage onBack={() => setView("main")} />;
-  if (view === "referral") return <ReferralPage onBack={() => setView("main")} userId={user.id} />;
+  if (view === "security") return (
+    <div key="security" className="page-enter h-full">
+      <SecurityPage onBack={() => setView("main")} />
+    </div>
+  );
+  if (view === "referral") return (
+    <div key="referral" className="page-enter h-full">
+      <ReferralPage onBack={() => setView("main")} userId={user.id} />
+    </div>
+  );
 
   const displayName  = [user.first_name, user.last_name].filter(Boolean).join(" ");
   const handle       = user.username ? `@${user.username}` : `ID: ${user.id}`;
@@ -435,7 +443,7 @@ export function ProfilePage() {
   ];
 
   return (
-    <div className="flex flex-col h-full page-bg overflow-y-auto pb-28">
+    <div key="profile-main" className="page-enter flex flex-col h-full page-bg overflow-y-auto pb-28">
 
       {/* Header */}
       <div className="relative flex items-center justify-center px-4 py-3 panel-header border-b border-[#C8B040] flex-shrink-0">

@@ -154,10 +154,18 @@ export function EarnPage() {
   const [toast, setToast]         = useState<{ amount: number } | null>(null);
 
   if (view === "giveaway") {
-    return <FuturesGiveawayPage onBack={() => setView("main")} />;
+    return (
+      <div key="giveaway" className="page-enter h-full">
+        <FuturesGiveawayPage onBack={() => setView("main")} />
+      </div>
+    );
   }
   if (view === "challenge") {
-    return <FuturesChallengePage onBack={() => setView("main")} />;
+    return (
+      <div key="challenge" className="page-enter h-full">
+        <FuturesChallengePage onBack={() => setView("main")} />
+      </div>
+    );
   }
 
   const today     = todayStr();
@@ -193,7 +201,7 @@ export function EarnPage() {
   };
 
   return (
-    <div className="flex flex-col h-full page-bg overflow-y-auto pb-28">
+    <div key="earn-main" className="page-enter flex flex-col h-full page-bg overflow-y-auto pb-28">
 
       {/* ── Floating Toast ── */}
       {toast && (
