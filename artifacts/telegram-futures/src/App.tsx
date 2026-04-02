@@ -37,7 +37,7 @@ function AppContent() {
 
   return (
     <div className="relative w-full max-w-md mx-auto overflow-hidden" style={{ height: "100dvh", background: '#DCDCDC' }}>
-      <div className={`h-full overflow-hidden ${showBottomNav ? "pb-28" : ""}`}>
+      <div className={`h-full overflow-hidden ${showBottomNav ? "pb-32" : ""}`}>
         {subRoute === "receive" && <ReceivePage onBack={handleBack} />}
         {subRoute === "send"    && <SendPage onBack={handleBack} bnbPrice={bnbPrice} />}
         {subRoute === "swap"    && <SwapPage onBack={handleBack} bnbPrice={bnbPrice} />}
