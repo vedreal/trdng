@@ -64,7 +64,7 @@ function TransferModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 modal-enter" onClick={onClose}>
-      <div className="w-full max-w-md rounded-t-3xl panel-card border-t border-[#D4AF37] p-5 pb-8 shadow-2xl"
+      <div className="w-full max-w-md rounded-t-3xl panel-card border-t border-[#D4AF37] p-5 pb-28 shadow-2xl"
         onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-5">
           <span className="text-base font-bold text-[#1A1A1A]">Transfer</span>

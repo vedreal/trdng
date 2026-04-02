@@ -167,7 +167,7 @@ function PairPickerModal({ selectedSymbol, onSelect, onClose }: {
             <IconX size={20} stroke={2.5} />
           </button>
         </div>
-        <div className="overflow-y-auto" style={{ maxHeight: "65vh" }}>
+        <div className="overflow-y-auto" style={{ maxHeight: "55vh", paddingBottom: "96px" }}>
           {TRADING_PAIRS.map((pair, idx) => (
             <div key={pair.symbol}>
               {idx > 0 && <div className="border-t border-[#EEEAD8] mx-4" />}
@@ -197,7 +197,7 @@ function SlTpModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end modal-enter" onClick={onClose}>
-      <div className="w-full rounded-t-2xl p-5 max-w-md mx-auto panel-silver border-t border-[#D4AF37]"
+      <div className="w-full rounded-t-2xl p-5 pb-28 max-w-md mx-auto panel-silver border-t border-[#D4AF37]"
         onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <span className="font-semibold text-[#1A1A1A]">Edit SL / TP</span>
@@ -443,7 +443,7 @@ function CloseModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 modal-enter">
-      <div className="w-full max-w-md rounded-t-3xl panel-card border-t border-[#D4AF37] p-5 pb-8 shadow-2xl">
+      <div className="w-full max-w-md rounded-t-3xl panel-card border-t border-[#D4AF37] p-5 pb-28 shadow-2xl">
         <div className="flex items-center justify-between mb-4">
           <span className="text-base font-bold text-[#1A1A1A]">Close Position</span>
           <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-full bg-[#E0DDD0] text-[#666]">
@@ -547,7 +547,7 @@ function TransferModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 modal-enter">
-      <div className="w-full max-w-md rounded-t-3xl panel-card border-t border-[#D4AF37] p-5 pb-8 shadow-2xl">
+      <div className="w-full max-w-md rounded-t-3xl panel-card border-t border-[#D4AF37] p-5 pb-28 shadow-2xl">
         <div className="flex items-center justify-between mb-5">
           <span className="text-base font-bold text-[#1A1A1A]">Transfer</span>
           <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-full bg-[#E0DDD0] text-[#666]">
@@ -1219,7 +1219,7 @@ export function FuturesPage() {
       {/* Leverage modal */}
       {showLevModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end modal-enter" onClick={() => setShowLevModal(false)}>
-          <div className="w-full rounded-t-2xl p-5 max-w-md mx-auto panel-silver border-t border-[#D4AF37]"
+          <div className="w-full rounded-t-2xl p-5 pb-28 max-w-md mx-auto panel-silver border-t border-[#D4AF37]"
             onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <span className="font-semibold text-[#1A1A1A]">Select Leverage</span>
