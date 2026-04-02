@@ -4,7 +4,7 @@ import { FuturesGiveawayPage } from "./FuturesGiveawayPage";
 import { FuturesChallengePage } from "./FuturesChallengePage";
 import {
   IconBolt, IconAlertTriangle, IconCheck, IconTrophy,
-  IconRotateCcw, IconInfoCircle, IconCalendar,
+  IconRotate2, IconInfoCircle, IconCalendar,
   IconGift, IconChevronRight, IconShieldCheck,
 } from "@tabler/icons-react";
 
@@ -344,7 +344,7 @@ export function EarnPage() {
                   <div className="flex items-center gap-2">
                     {streakBroken && ciState.lastCheckIn !== "" ? (
                       <>
-                        <IconRotateCcw size={15} color="#5C3A00" />
+                        <IconRotate2 size={15} color="#5C3A00" />
                         <span>Restart Streak</span>
                       </>
                     ) : (
