@@ -1,5 +1,9 @@
 import { useState } from "react";
 import { useTrading, type WalletTransaction } from "../contexts/TradingContext";
+import {
+  IconArrowBarToDown, IconArrowBarUp, IconGift,
+  IconArrowsRightLeft, IconChevronLeft, IconFileText,
+} from "@tabler/icons-react";
 
 interface HistoryPageProps {
   onBack: () => void;
