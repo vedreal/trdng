@@ -56,7 +56,6 @@ function TransferModal({
     if (result.success) {
       setFeedback({ msg: result.message, ok: true });
       setAmountInput("");
-      setTimeout(onClose, 1200);
     } else {
       setFeedback({ msg: result.message, ok: false });
     }

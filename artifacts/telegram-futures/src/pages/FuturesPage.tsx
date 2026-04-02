@@ -539,7 +539,6 @@ function TransferModal({
     if (result.success) {
       setFeedback({ msg: result.message, ok: true });
       setAmountInput("");
-      setTimeout(onClose, 1200);
     } else {
       setFeedback({ msg: result.message, ok: false });
     }
@@ -836,14 +835,10 @@ export function FuturesPage() {
           futuresBalance={balance}
           futuresBonus={futuresBonus}
           onTransferToFutures={(amount) => {
-            const result = transferToFutures(amount);
-            if (result.success) showToast(result.message, true);
-            return result;
+            return transferToFutures(amount);
           }}
           onTransferFromFutures={(amount) => {
-            const result = transferFromFutures(amount);
-            if (result.success) showToast(result.message, true);
-            return result;
+            return transferFromFutures(amount);
           }}
           onClose={() => setShowTransferModal(false)}
         />
