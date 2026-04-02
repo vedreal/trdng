@@ -2,6 +2,11 @@ import { useState } from "react";
 import { useTrading } from "../contexts/TradingContext";
 import { FuturesGiveawayPage } from "./FuturesGiveawayPage";
 import { FuturesChallengePage } from "./FuturesChallengePage";
+import {
+  IconBolt, IconAlertTriangle, IconCheck, IconTrophy,
+  IconRotateCcw, IconInfoCircle, IconCalendar,
+  IconGift, IconChevronRight, IconShieldCheck,
+} from "@tabler/icons-react";
 
 const GIVEAWAY_LS_KEY = "giveaway_futures_v1";
 
@@ -30,61 +35,6 @@ function fmtXaut(n: number): string {
 
 type DayState = "completed" | "current" | "upcoming";
 
-// ── SVG Icons ─────────────────────────────────────────────────────
-function IconZap({ size = 14, color = "currentColor" }: { size?: number; color?: string }) {
-  return (
-    <svg width={size} height={size} fill="none" viewBox="0 0 24 24" stroke={color} strokeWidth={2.2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-    </svg>
-  );
-}
-function IconAlertTriangle({ size = 14, color = "currentColor" }: { size?: number; color?: string }) {
-  return (
-    <svg width={size} height={size} fill="none" viewBox="0 0 24 24" stroke={color} strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round"
-        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-    </svg>
-  );
-}
-function IconCheck({ size = 14, color = "currentColor" }: { size?: number; color?: string }) {
-  return (
-    <svg width={size} height={size} fill="none" viewBox="0 0 24 24" stroke={color} strokeWidth={2.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-    </svg>
-  );
-}
-function IconTrophy({ size = 16, color = "currentColor" }: { size?: number; color?: string }) {
-  return (
-    <svg width={size} height={size} fill="none" viewBox="0 0 24 24" stroke={color} strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round"
-        d="M8 21h8m-4-4v4M6 3h12M6 3v6a6 6 0 0012 0V3M6 3H4a2 2 0 000 4h2m12-4h2a2 2 0 010 4h-2" />
-    </svg>
-  );
-}
-function IconRotateCcw({ size = 14, color = "currentColor" }: { size?: number; color?: string }) {
-  return (
-    <svg width={size} height={size} fill="none" viewBox="0 0 24 24" stroke={color} strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round"
-        d="M3 10h3.5a4.5 4.5 0 014.5-4.5h.5M3 10l3-3m-3 3l3 3M21 14h-3.5a4.5 4.5 0 01-4.5 4.5H13M21 14l-3 3m3-3l-3-3" />
-    </svg>
-  );
-}
-function IconInfo({ size = 13, color = "currentColor" }: { size?: number; color?: string }) {
-  return (
-    <svg width={size} height={size} fill="none" viewBox="0 0 24 24" stroke={color} strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round"
-        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-  );
-}
-function IconCalendar({ size = 20, color = "white" }: { size?: number; color?: string }) {
-  return (
-    <svg width={size} height={size} fill="none" viewBox="0 0 24 24" stroke={color} strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round"
-        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-    </svg>
-  );
-}
 
 // ── Day Box ───────────────────────────────────────────────────────
 function DayBox({ day, reward, state }: { day: number; reward: number; state: DayState }) {
@@ -309,7 +259,7 @@ export function EarnPage() {
               </div>
               {effectiveStreak > 0 && (
                 <div className="flex items-center gap-1.5 bg-[rgba(0,0,0,0.25)] rounded-full px-3 py-1.5 flex-shrink-0">
-                  <IconZap size={12} color="#FFE566" />
+                  <IconBolt size={12} color="#FFE566" />
                   <span className="text-white font-bold text-xs">{effectiveStreak} day{effectiveStreak > 1 ? "s" : ""}</span>
                 </div>
               )}
@@ -416,7 +366,7 @@ export function EarnPage() {
           {/* ── Section 4: How It Works ── */}
           <div className="px-5 py-4">
             <div className="flex items-center gap-2 mb-2">
-              <IconInfo size={13} color="rgba(255,255,255,0.7)" />
+              <IconInfoCircle size={13} color="rgba(255,255,255,0.7)" />
               <p className="text-[rgba(255,255,255,0.85)] text-xs font-bold tracking-wide uppercase">How It Works</p>
             </div>
             <ul className="space-y-1.5">
@@ -457,9 +407,7 @@ export function EarnPage() {
                 <div className="flex items-start gap-3">
                   <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 border border-[rgba(212,175,55,0.35)]"
                     style={{ background: "rgba(212,175,55,0.12)" }}>
-                    <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#D4AF37" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 12v10H4V12M2 7h20v5H2zM12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" />
-                    </svg>
+                    <IconGift size={22} color="#D4AF37" stroke={1.8} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
@@ -473,17 +421,13 @@ export function EarnPage() {
                   </div>
                 </div>
                 <div className="flex-shrink-0 mt-1">
-                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.4)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 18l6-6-6-6" />
-                  </svg>
+                  <IconChevronRight size={16} color="rgba(255,255,255,0.4)" stroke={2} />
                 </div>
               </div>
 
               <div className="mt-3 pt-3 border-t border-[rgba(255,255,255,0.07)] flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
-                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.35)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  </svg>
+                  <IconShieldCheck size={12} color="rgba(255,255,255,0.35)" stroke={2} />
                   <span className="text-[rgba(255,255,255,0.4)] text-[10px]">
                     {localStorage.getItem(GIVEAWAY_LS_KEY) === "1" ? "Already Participated" : "New Users Eligible"}
                   </span>
@@ -513,9 +457,7 @@ export function EarnPage() {
                 <div className="flex items-start gap-3">
                   <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 border border-[rgba(212,175,55,0.35)]"
                     style={{ background: "rgba(212,175,55,0.12)" }}>
-                    <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#D4AF37" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M23 6l-9.5 9.5-5-5L1 18" /><path d="M17 6h6v6" />
-                    </svg>
+                    <IconTrophy size={22} color="#D4AF37" stroke={1.8} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
@@ -529,17 +471,13 @@ export function EarnPage() {
                   </div>
                 </div>
                 <div className="flex-shrink-0 mt-1">
-                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.4)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 18l6-6-6-6" />
-                  </svg>
+                  <IconChevronRight size={16} color="rgba(255,255,255,0.4)" stroke={2} />
                 </div>
               </div>
 
               <div className="mt-3 pt-3 border-t border-[rgba(255,255,255,0.07)] flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
-                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="rgba(255,255,255,0.35)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  </svg>
+                  <IconShieldCheck size={12} color="rgba(255,255,255,0.35)" stroke={2} />
                   <span className="text-[rgba(255,255,255,0.4)] text-[10px]">
                     {localStorage.getItem("futures_challenge_joined_v1") === "1" ? "Already Joined" : "Real Balance Required"}
                   </span>

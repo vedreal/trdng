@@ -21,32 +21,6 @@ function getReferralCount(): number {
   return parseInt(localStorage.getItem(REFERRAL_COUNT_KEY) ?? "0", 10);
 }
 
-// ── Icons ──────────────────────────────────────────────────────────
-function Ico({ d, size = 18, color = "currentColor", sw = 2, fill = "none", linecap = "round", linejoin = "round" }: {
-  d: string | string[]; size?: number; color?: string; sw?: number; fill?: string; linecap?: "round" | "butt"; linejoin?: "round" | "miter";
-}) {
-  const paths = Array.isArray(d) ? d : [d];
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke={color} strokeWidth={sw} strokeLinecap={linecap} strokeLinejoin={linejoin}>
-      {paths.map((p, i) => <path key={i} strokeLinecap={linecap} strokeLinejoin={linejoin} d={p} />)}
-    </svg>
-  );
-}
-
-const I = {
-  back:    "M19 12H5M12 5l-7 7 7 7",
-  check:   "M5 13l4 4L19 7",
-  xcircle: ["M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2", "M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"],
-  send:    "M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z",
-  link:    ["M15 7h3a5 5 0 010 10h-3m-6 0H6A5 5 0 016 7h3", "M8 12h8"],
-  users:   ["M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2", "M23 21v-2a4 4 0 00-3-3.87", "M16 3.13a4 4 0 010 7.75", "M9 7a4 4 0 100 8 4 4 0 000-8z"],
-  mail:    ["M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z", "M22 6l-10 7L2 6"],
-  gift:    ["M20 12v10H4V12", "M2 7h20v5H2z", "M12 22V7", "M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z", "M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"],
-  shield:  "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
-  copy:    ["M8 17H5a2 2 0 01-2-2V5a2 2 0 012-2h8a2 2 0 012 2v3", "M21 21H11a2 2 0 01-2-2v-8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2z"],
-  alert:   "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z",
-  clock:   ["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "M12 6v6l4 2"],
-};
 
 type TaskStatus = "pending" | "done" | "error";
 
@@ -348,8 +322,8 @@ export function FuturesGiveawayPage({ onBack }: Props) {
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg flex items-center justify-center"
                     style={{ background: gs.referral === "done" ? "#dcfce7" : gs.referral === "error" ? "#fee2e2" : "#F0EAD0" }}>
-                    <Ico d={I.users} size={13}
-                      color={gs.referral === "done" ? "#16a34a" : gs.referral === "error" ? "#dc2626" : "#8B6300"} sw={2} />
+                    <IconUsers size={13}
+                      color={gs.referral === "done" ? "#16a34a" : gs.referral === "error" ? "#dc2626" : "#8B6300"} stroke={2} />
                   </div>
                   <p className="text-[#1A1A1A] text-xs font-bold">Invite 2 Friends</p>
                 </div>

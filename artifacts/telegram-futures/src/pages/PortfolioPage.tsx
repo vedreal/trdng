@@ -1,6 +1,11 @@
 import { useMemo, useState } from "react";
 import { useTrading } from "../contexts/TradingContext";
 import { useBinancePrice } from "../hooks/useBinancePrice";
+import {
+  IconX, IconArrowBarToDown, IconArrowBarToUp,
+  IconSwitchVertical, IconArrowsRightLeft,
+  IconClock, IconGift,
+} from "@tabler/icons-react";
 
 const IPFS = "https://gold-defensive-cattle-30.mypinata.cloud/ipfs/";
 const COIN_ICONS: Record<string, string> = {
@@ -64,9 +69,7 @@ function TransferModal({
         <div className="flex items-center justify-between mb-5">
           <span className="text-base font-bold text-[#1A1A1A]">Transfer</span>
           <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-full bg-[#E0DDD0] text-[#666]">
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <IconX size={14} stroke={2.5} />
           </button>
         </div>
 
@@ -213,41 +216,25 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
       id: "receive",
       label: "Receive",
       action: () => onNavigate("receive"),
-      icon: (
-        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16" />
-        </svg>
-      ),
+      icon: <IconArrowBarToDown size={20} stroke={2} />,
     },
     {
       id: "send",
       label: "Send",
       action: () => onNavigate("send"),
-      icon: (
-        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 20V8m0 0l-4 4m4-4l4 4M4 4h16" />
-        </svg>
-      ),
+      icon: <IconArrowBarToUp size={20} stroke={2} />,
     },
     {
       id: "swap",
       label: "Swap",
       action: () => onNavigate("swap"),
-      icon: (
-        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" />
-        </svg>
-      ),
+      icon: <IconSwitchVertical size={20} stroke={2} />,
     },
     {
       id: "transfer",
       label: "Transfer",
       action: () => setShowTransfer(true),
-      icon: (
-        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4M16 17H4m0 0l4 4m-4-4l4-4" />
-        </svg>
-      ),
+      icon: <IconArrowsRightLeft size={20} stroke={2} />,
     },
   ];
 
@@ -295,9 +282,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
             onClick={() => onNavigate("history")}
             className="absolute top-3 right-4 z-10 text-[rgba(255,255,255,0.7)] hover:text-white transition-colors active:scale-90"
             title="History">
-            <svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <IconClock size={26} stroke={2} />
           </button>
 
           {/* Balance content */}
@@ -501,9 +486,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-full flex items-center justify-center text-[#8B6300] text-xs font-bold flex-shrink-0"
                               style={{ background: "linear-gradient(135deg, #E8C84A, #D4AF37)" }}>
-                              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v13m0-13C10.832 5.477 9.246 5 7.5 5A5.5 5.5 0 002 10.5c0 3.038 2.5 5 5.5 5 2.5 0 4.5-1 5.5-2.5m0 0c1-1.5 3-2.5 5.5-2.5 3 0 5.5 1.962 5.5 5A5.5 5.5 0 0116.5 21c-1.746 0-3.332-.477-4.5-1.5" />
-                              </svg>
+                              <IconGift size={14} stroke={2.5} />
                             </div>
                             <div>
                               <p className="text-xs font-semibold text-[#333333]">Futures Bonus</p>
@@ -526,9 +509,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                         className="panel-silver border border-[#D8D0A8] rounded-xl px-4 py-3 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 bg-[#C9A227]">
-                            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4M16 17H4m0 0l4 4m-4-4l4-4" />
-                            </svg>
+                            <IconArrowsRightLeft size={14} stroke={2.5} />
                           </div>
                           <div>
                             <p className="text-xs font-semibold text-[#333333]">

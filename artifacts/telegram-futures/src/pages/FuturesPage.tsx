@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { IconX, IconChevronDown, IconChevronRight, IconPlus } from "@tabler/icons-react";
 import { useBinancePrice, type CandleData } from "../hooks/useBinancePrice";
 import {
   type Position,
@@ -163,9 +164,7 @@ function PairPickerModal({ selectedSymbol, onSelect, onClose }: {
         <div className="flex items-center justify-between px-4 py-3 border-b border-[#D8D0A8]">
           <span className="font-bold text-[#1A1A1A]">Select Trading Pair</span>
           <button onClick={onClose} className="text-[#888888]">
-            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <IconX size={20} stroke={2.5} />
           </button>
         </div>
         <div className="overflow-y-auto" style={{ maxHeight: "65vh" }}>
@@ -203,9 +202,7 @@ function SlTpModal({
         <div className="flex items-center justify-between mb-4">
           <span className="font-semibold text-[#1A1A1A]">Edit SL / TP</span>
           <button onClick={onClose} className="text-[#888888]">
-            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <IconX size={20} stroke={2.5} />
           </button>
         </div>
         <p className="text-xs text-[#888888] mb-3">
@@ -450,9 +447,7 @@ function CloseModal({
         <div className="flex items-center justify-between mb-4">
           <span className="text-base font-bold text-[#1A1A1A]">Close Position</span>
           <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-full bg-[#E0DDD0] text-[#666]">
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <IconX size={14} stroke={2.5} />
           </button>
         </div>
 
@@ -556,9 +551,7 @@ function TransferModal({
         <div className="flex items-center justify-between mb-5">
           <span className="text-base font-bold text-[#1A1A1A]">Transfer</span>
           <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-full bg-[#E0DDD0] text-[#666]">
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <IconX size={14} stroke={2.5} />
           </button>
         </div>
 
@@ -893,9 +886,7 @@ export function FuturesPage() {
           onClick={() => setShowPairPicker(true)}
         >
           <span className="text-sm font-semibold text-[#333333]">{selectedPair.label}</span>
-          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
+          <IconChevronDown size={12} stroke={2.5} />
         </button>
         <span className="ml-3 text-xl font-bold text-[#B8860B]">{priceDisplay}</span>
         <span className={`ml-auto text-sm font-medium ${priceChangePercent >= 0 ? "text-green-600" : "text-red-500"}`}>
@@ -933,9 +924,7 @@ export function FuturesPage() {
             <span className="text-xs text-[#888888] font-medium">Cross Margin</span>
             <button onClick={() => setShowLevModal(true)}
               className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs btn-3d-gold active:scale-[0.98] transition-all">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m-8-8h16" />
-              </svg>
+              <IconPlus size={10} stroke={2.5} />
               Leverage {leverage}x
             </button>
           </div>
@@ -1056,10 +1045,7 @@ export function FuturesPage() {
           {/* SL / TP toggle */}
           <button onClick={() => setShowSlTpEntry(!showSlTpEntry)}
             className="flex items-center gap-1.5 mb-3 text-xs text-[#B8860B] font-medium">
-            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round"
-                d={showSlTpEntry ? "M19 9l-7 7-7-7" : "M9 5l7 7-7 7"} />
-            </svg>
+            {showSlTpEntry ? <IconChevronDown size={12} stroke={2.5} /> : <IconChevronRight size={12} stroke={2.5} />}
             SL / TP
           </button>
 
@@ -1238,9 +1224,7 @@ export function FuturesPage() {
             <div className="flex items-center justify-between mb-4">
               <span className="font-semibold text-[#1A1A1A]">Select Leverage</span>
               <button onClick={() => setShowLevModal(false)} className="text-[#888888]">
-                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <IconX size={20} stroke={2.5} />
               </button>
             </div>
             <div className="flex gap-2 mb-4 flex-wrap">

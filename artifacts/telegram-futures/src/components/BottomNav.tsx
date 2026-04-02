@@ -1,6 +1,6 @@
 import {
   IconWallet,
-  IconChartCandlestick,
+  IconChartCandle,
   IconCoins,
   IconUserCircle,
 } from "@tabler/icons-react";
@@ -22,7 +22,7 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
     {
       id: "futures",
       label: "Futures",
-      icon: <IconChartCandlestick size={22} stroke={1.8} />,
+      icon: <IconChartCandle size={22} stroke={1.8} />,
     },
     {
       id: "earn",

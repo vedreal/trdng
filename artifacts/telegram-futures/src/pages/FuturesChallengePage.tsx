@@ -44,32 +44,6 @@ function fmtVol(n: number): string {
   return n.toFixed(0);
 }
 
-// ── Icon helper ──────────────────────────────────────────────────────
-function Ico({ d, size = 18, color = "currentColor", sw = 2, fill = "none", linecap = "round", linejoin = "round" }: {
-  d: string | string[]; size?: number; color?: string; sw?: number; fill?: string; linecap?: "round" | "butt"; linejoin?: "round" | "miter";
-}) {
-  const paths = Array.isArray(d) ? d : [d];
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke={color} strokeWidth={sw} strokeLinecap={linecap} strokeLinejoin={linejoin}>
-      {paths.map((p, i) => <path key={i} strokeLinecap={linecap} strokeLinejoin={linejoin} d={p} />)}
-    </svg>
-  );
-}
-
-const I = {
-  back:       "M19 12H5M12 5l-7 7 7 7",
-  check:      "M5 13l4 4L19 7",
-  shield:     "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
-  trending:   ["M23 6l-9.5 9.5-5-5L1 18", "M17 6h6v6"],
-  award:      ["M12 15c3.314 0 6-2.686 6-6s-2.686-6-6-6-6 2.686-6 6 2.686 6 6 6z", "M8.21 13.89L7 23l5-3 5 3-1.21-9.12"],
-  zap:        "M13 10V3L4 14h7v7l9-11h-7z",
-  info:       "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
-  lock:       ["M5 11V7a7 7 0 0114 0v4", "M3 11h18v11H3z", "M12 16v2"],
-  userCheck:  ["M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2", "M9 7a4 4 0 100 8 4 4 0 000-8z", "M17 11l2 2 4-4"],
-  barChart:   ["M18 20V10", "M12 20V4", "M6 20v-6"],
-  gift:       ["M20 12v10H4V12", "M2 7h20v5H2z", "M12 22V7", "M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z", "M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"],
-  alert:      "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z",
-};
 
 interface Props { onBack: () => void; }
 
@@ -254,10 +228,10 @@ export function FuturesChallengePage({ onBack }: Props) {
                         }}
                       >
                         {isClaimed
-                          ? <Ico d={I.check}  size={14} color="#16a34a" sw={2.5} />
+                          ? <IconCheck  size={14} color="#16a34a" stroke={2.5} />
                           : isReached
-                          ? <Ico d={I.award}  size={14} color="#D4AF37" sw={1.8} />
-                          : <Ico d={I.lock}   size={13} color="#BBBBBB" sw={1.8} />
+                          ? <IconTrophy size={14} color="#D4AF37" stroke={1.8} />
+                          : <IconLock   size={13} color="#BBBBBB" stroke={1.8} />
                         }
                       </div>
                       <div>
