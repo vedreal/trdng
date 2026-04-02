@@ -299,7 +299,7 @@ export function EarnPage() {
                 <div>
                   <p className="text-white font-bold text-base leading-tight">Daily Check-In</p>
                   <p className="text-[rgba(255,255,255,0.75)] text-[11px] mt-0.5">
-                    Check in daily to earn <span className="font-semibold text-white">XAUT</span> Gold rewards
+                    Check in daily to earn <span className="font-semibold text-white">XAUT</span> rewards
                   </p>
                 </div>
               </div>
@@ -462,7 +462,7 @@ export function EarnPage() {
                     </div>
                     <p className="text-white font-bold text-sm leading-tight">Futures Giveaway</p>
                     <p className="text-[rgba(255,255,255,0.55)] text-[11px] mt-1 leading-snug">
-                      Complete all tasks and receive a <span className="text-[#D4AF37] font-semibold">30 USDT Futures Bonus</span> for new users.
+                      Complete all tasks and receive a <span className="text-[#D4AF37] font-semibold">$30 Futures Bonus</span> for new users.
                     </p>
                   </div>
                 </div>
