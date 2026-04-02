@@ -54,7 +54,7 @@ export function ReceivePage({ onBack }: ReceivePageProps) {
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <span className="font-bold text-[#1A1A1A] text-base">Receive</span>
+        <span className="font-bold text-[#1A1A1A] text-base">Receive / Deposit</span>
       </div>
 
       <div className="px-4 py-5 space-y-4">
