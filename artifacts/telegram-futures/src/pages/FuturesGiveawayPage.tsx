@@ -17,12 +17,12 @@ function getReferralCount(): number {
 }
 
 // ── Icons ──────────────────────────────────────────────────────────
-function Ico({ d, size = 18, color = "currentColor", sw = 2, fill = "none", vb = "0 0 24 24", linecap = "round", linejoin = "round" }: {
-  d: string | string[]; size?: number; color?: string; sw?: number; fill?: string; vb?: string; linecap?: "round" | "butt"; linejoin?: "round" | "miter";
+function Ico({ d, size = 18, color = "currentColor", sw = 2, fill = "none", linecap = "round", linejoin = "round" }: {
+  d: string | string[]; size?: number; color?: string; sw?: number; fill?: string; linecap?: "round" | "butt"; linejoin?: "round" | "miter";
 }) {
   const paths = Array.isArray(d) ? d : [d];
   return (
-    <svg width={size} height={size} viewBox={vb} fill={fill} stroke={color} strokeWidth={sw} strokeLinecap={linecap} strokeLinejoin={linejoin}>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke={color} strokeWidth={sw} strokeLinecap={linecap} strokeLinejoin={linejoin}>
       {paths.map((p, i) => <path key={i} strokeLinecap={linecap} strokeLinejoin={linejoin} d={p} />)}
     </svg>
   );
@@ -31,7 +31,6 @@ function Ico({ d, size = 18, color = "currentColor", sw = 2, fill = "none", vb =
 const I = {
   back:    "M19 12H5M12 5l-7 7 7 7",
   check:   "M5 13l4 4L19 7",
-  circle:  "M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z",
   xcircle: ["M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2", "M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"],
   send:    "M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z",
   link:    ["M15 7h3a5 5 0 010 10h-3m-6 0H6A5 5 0 016 7h3", "M8 12h8"],
@@ -42,7 +41,6 @@ const I = {
   copy:    ["M8 17H5a2 2 0 01-2-2V5a2 2 0 012-2h8a2 2 0 012 2v3", "M21 21H11a2 2 0 01-2-2v-8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2z"],
   alert:   "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z",
   clock:   ["M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z", "M12 6v6l4 2"],
-  chevron: "M9 18l6-6-6-6",
 };
 
 type TaskStatus = "pending" | "done" | "error";
@@ -84,8 +82,8 @@ interface Props { onBack: () => void; }
 export function FuturesGiveawayPage({ onBack }: Props) {
   const { addFuturesBonus } = useTrading();
   const [participated, setParticipated] = useState(loadParticipated);
-  const [showToast, setShowToast] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [showToast, setShowToast]       = useState(false);
+  const [copied, setCopied]             = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [gs, setGs] = useState<GiveawayState>({
@@ -100,34 +98,32 @@ export function FuturesGiveawayPage({ onBack }: Props) {
 
   const REFERRAL_LINK = "https://t.me/CatrixTrading?start=ref_USER001";
 
-  const isXLinkValid = gs.xLink.trim().startsWith("http") && gs.xLink.trim().length > 15;
-  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(gs.email.trim());
+  const isXLinkValid  = gs.xLink.trim().startsWith("http") && gs.xLink.trim().length > 15;
+  const isEmailValid  = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(gs.email.trim());
   const allDone =
     gs.telegram === "done" &&
     gs.xDone && isXLinkValid &&
     gs.emailDone && isEmailValid &&
     gs.referral === "done";
 
-  const handleTelegramCheck = () => {
-    setGs((prev) => ({ ...prev, telegram: "done" }));
-  };
+  const handleTelegramCheck = () => setGs((p) => ({ ...p, telegram: "done" }));
 
   const handleXSubmit = () => {
     if (!isXLinkValid) return;
-    setGs((prev) => ({ ...prev, xDone: true }));
+    setGs((p) => ({ ...p, xDone: true }));
   };
 
   const handleEmailSubmit = () => {
     if (!isEmailValid) return;
-    setGs((prev) => ({ ...prev, emailDone: true }));
+    setGs((p) => ({ ...p, emailDone: true }));
   };
 
   const handleReferralCheck = () => {
     const count = getReferralCount();
     if (count >= 2) {
-      setGs((prev) => ({ ...prev, referral: "done", referralCount: count }));
+      setGs((p) => ({ ...p, referral: "done", referralCount: count }));
     } else {
-      setGs((prev) => ({ ...prev, referral: "error", referralCount: count }));
+      setGs((p) => ({ ...p, referral: "error", referralCount: count }));
     }
   };
 
@@ -150,7 +146,7 @@ export function FuturesGiveawayPage({ onBack }: Props) {
   return (
     <div className="flex flex-col h-full page-bg overflow-hidden">
 
-      {/* Toast */}
+      {/* ── Toast ── */}
       {showToast && (
         <div className="fixed top-4 left-1/2 z-[70] flex items-start gap-3 px-4 py-3.5 rounded-2xl shadow-2xl"
           style={{ transform: "translateX(-50%)", background: "linear-gradient(135deg,#22c55e,#15803d)", boxShadow: "0 8px 32px rgba(22,163,74,0.45)", minWidth: 290, maxWidth: 340 }}>
@@ -160,21 +156,22 @@ export function FuturesGiveawayPage({ onBack }: Props) {
           <div>
             <p className="text-white font-bold text-sm leading-tight">Participation Successful!</p>
             <p className="text-[rgba(255,255,255,0.85)] text-xs mt-1 leading-snug">
-              Your submission is under review. A <span className="font-bold">$30 Futures Bonus</span> will be credited within 24 hours.
+              Your submission is under review. A <span className="font-bold">30 USDT Futures Bonus</span> will be credited within 24 hours.
             </p>
           </div>
         </div>
       )}
 
-      {/* Header */}
+      {/* ── Header ── */}
       <div className="relative flex items-center px-4 py-3 panel-header border-b border-[#C8B040] flex-shrink-0">
-        <button onClick={onBack} className="absolute left-4 w-8 h-8 flex items-center justify-center rounded-xl bg-[rgba(0,0,0,0.06)] active:bg-[rgba(0,0,0,0.12)]">
+        <button onClick={onBack}
+          className="absolute left-4 w-8 h-8 flex items-center justify-center rounded-xl bg-[rgba(0,0,0,0.06)] active:bg-[rgba(0,0,0,0.12)]">
           <Ico d={I.back} size={17} color="#1A1A1A" sw={2} />
         </button>
         <span className="w-full text-center font-bold text-[#1A1A1A] text-base">Futures Giveaway</span>
       </div>
 
-      {/* Scrollable content */}
+      {/* ── Scrollable content ── */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
 
         {/* ── Event Banner ── */}
@@ -182,14 +179,12 @@ export function FuturesGiveawayPage({ onBack }: Props) {
           style={{ background: "linear-gradient(135deg,#1A1F3A 0%,#0F1628 60%,#1A2A1A 100%)", boxShadow: "0 6px 24px rgba(0,0,0,0.35)" }}>
           <div className="absolute -top-6 -right-6 w-36 h-36 rounded-full opacity-10 pointer-events-none"
             style={{ background: "radial-gradient(circle,#D4AF37,transparent)" }} />
-          <div className="absolute -bottom-4 -left-4 w-24 h-24 rounded-full opacity-8 pointer-events-none"
+          <div className="absolute -bottom-4 -left-4 w-24 h-24 rounded-full opacity-10 pointer-events-none"
             style={{ background: "radial-gradient(circle,#22c55e,transparent)" }} />
 
           <div className="px-5 pt-5 pb-4 relative">
             <div className="flex items-start justify-between mb-3">
-              <span className="bg-green-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full tracking-wide">
-                ACTIVE
-              </span>
+              <span className="bg-green-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full tracking-wide">ACTIVE</span>
               <span className="text-[rgba(255,255,255,0.4)] text-[10px]">Limited Time Event</span>
             </div>
 
@@ -199,13 +194,13 @@ export function FuturesGiveawayPage({ onBack }: Props) {
                 <Ico d={I.gift} size={22} color="#D4AF37" sw={1.8} />
               </div>
               <div>
-                <p className="text-white font-bold text-lg leading-tight">$30 USDT</p>
+                <p className="text-white font-bold text-lg leading-tight">30 USDT</p>
                 <p className="text-[#D4AF37] text-xs font-semibold">Futures Trading Bonus</p>
               </div>
             </div>
 
             <p className="text-[rgba(255,255,255,0.7)] text-xs leading-relaxed">
-              Complete all tasks below to receive a <span className="text-white font-semibold">$30 USDT Futures Bonus</span> credited directly to your Futures account. New users only. One bonus per account.
+              Complete all tasks below to receive a <span className="text-white font-semibold">30 USDT Futures Bonus</span> credited directly to your Futures account. New users only. One bonus per account.
             </p>
           </div>
 
@@ -213,9 +208,9 @@ export function FuturesGiveawayPage({ onBack }: Props) {
 
           <div className="px-5 pb-5 grid grid-cols-3 gap-3">
             {[
-              { label: "Reward", value: "$30 USDT" },
-              { label: "Duration", value: "30 Days" },
-              { label: "Participants", value: "Limited" },
+              { label: "Reward",       value: "30 USDT"  },
+              { label: "Bonus Valid",  value: "7 Days"   },
+              { label: "Participants", value: "Limited"  },
             ].map((item) => (
               <div key={item.label} className="text-center">
                 <p className="text-white font-bold text-sm">{item.value}</p>
@@ -225,12 +220,11 @@ export function FuturesGiveawayPage({ onBack }: Props) {
           </div>
         </div>
 
-        {/* ── Tasks ── */}
+        {/* ── Tasks Card ── */}
         <div className="panel-silver rounded-2xl border border-[#DDD5B0] overflow-hidden">
-          {/* Tasks header */}
           <div className="px-4 pt-4 pb-3 border-b border-[#EEE8CC]">
             <p className="font-bold text-[#1A1A1A] text-sm">Complete All Tasks</p>
-            <p className="text-[#888888] text-xs mt-0.5">All 4 tasks must be completed to qualify</p>
+            <p className="text-[#888888] text-xs mt-0.5">All tasks must be completed to qualify</p>
           </div>
 
           <div className="divide-y divide-[#EEE8CC]">
@@ -255,14 +249,12 @@ export function FuturesGiveawayPage({ onBack }: Props) {
                   className="flex-1 py-2 rounded-xl text-center text-xs font-semibold border border-[#3b82f6] text-[#3b82f6] bg-[#EFF6FF] active:opacity-80">
                   Open Channel
                 </a>
-                <button
-                  onClick={handleTelegramCheck}
-                  disabled={gs.telegram === "done"}
+                <button onClick={handleTelegramCheck} disabled={gs.telegram === "done"}
                   className="flex-1 py-2 rounded-xl text-center text-xs font-bold transition-all active:scale-[0.97]"
                   style={{
                     background: gs.telegram === "done" ? "#dcfce7" : "linear-gradient(to bottom,#E8C84A,#C9A520)",
-                    color: gs.telegram === "done" ? "#16a34a" : "#5C3A00",
-                    border: gs.telegram === "done" ? "1px solid #bbf7d0" : "none",
+                    color:      gs.telegram === "done" ? "#16a34a" : "#5C3A00",
+                    border:     gs.telegram === "done" ? "1px solid #bbf7d0" : "none",
                   }}>
                   {gs.telegram === "done" ? "Verified" : "Check"}
                 </button>
@@ -286,29 +278,23 @@ export function FuturesGiveawayPage({ onBack }: Props) {
               </p>
               {!gs.xDone ? (
                 <div className="flex gap-2">
-                  <input
-                    type="url"
-                    placeholder="https://x.com/yourpost/..."
+                  <input type="url" placeholder="https://x.com/yourpost/..."
                     value={gs.xLink}
                     onChange={(e) => setGs((p) => ({ ...p, xLink: e.target.value }))}
-                    className="flex-1 bg-[#F7F3E8] border border-[#DDD5B0] rounded-xl px-3 py-2 text-[11px] text-[#1A1A1A] outline-none focus:border-[#C9A520]"
-                  />
-                  <button
-                    onClick={handleXSubmit}
-                    disabled={!isXLinkValid}
+                    className="flex-1 bg-[#F7F3E8] border border-[#DDD5B0] rounded-xl px-3 py-2 text-[11px] text-[#1A1A1A] outline-none focus:border-[#C9A520]" />
+                  <button onClick={handleXSubmit} disabled={!isXLinkValid}
                     className="px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-[0.97]"
                     style={{
                       background: isXLinkValid ? "linear-gradient(to bottom,#E8C84A,#C9A520)" : "#E5E5E5",
-                      color: isXLinkValid ? "#5C3A00" : "#AAAAAA",
+                      color:      isXLinkValid ? "#5C3A00" : "#AAAAAA",
                     }}>
                     Submit
                   </button>
                 </div>
               ) : (
-                <div className="bg-green-50 border border-green-200 rounded-xl px-3 py-2">
-                  <p className="text-green-700 text-[11px] font-semibold truncate">
-                    <Ico d={I.check} size={10} color="#16a34a" sw={3} /> {gs.xLink}
-                  </p>
+                <div className="bg-green-50 border border-green-200 rounded-xl px-3 py-2 flex items-center gap-2">
+                  <Ico d={I.check} size={11} color="#16a34a" sw={3} />
+                  <p className="text-green-700 text-[11px] font-semibold truncate">{gs.xLink}</p>
                 </div>
               )}
             </div>
@@ -330,26 +316,22 @@ export function FuturesGiveawayPage({ onBack }: Props) {
               </p>
               {!gs.emailDone ? (
                 <div className="flex gap-2">
-                  <input
-                    type="email"
-                    placeholder="your@email.com"
+                  <input type="email" placeholder="your@email.com"
                     value={gs.email}
                     onChange={(e) => setGs((p) => ({ ...p, email: e.target.value }))}
-                    className="flex-1 bg-[#F7F3E8] border border-[#DDD5B0] rounded-xl px-3 py-2 text-[11px] text-[#1A1A1A] outline-none focus:border-[#C9A520]"
-                  />
-                  <button
-                    onClick={handleEmailSubmit}
-                    disabled={!isEmailValid}
+                    className="flex-1 bg-[#F7F3E8] border border-[#DDD5B0] rounded-xl px-3 py-2 text-[11px] text-[#1A1A1A] outline-none focus:border-[#C9A520]" />
+                  <button onClick={handleEmailSubmit} disabled={!isEmailValid}
                     className="px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-[0.97]"
                     style={{
                       background: isEmailValid ? "linear-gradient(to bottom,#E8C84A,#C9A520)" : "#E5E5E5",
-                      color: isEmailValid ? "#5C3A00" : "#AAAAAA",
+                      color:      isEmailValid ? "#5C3A00" : "#AAAAAA",
                     }}>
                     Submit
                   </button>
                 </div>
               ) : (
-                <div className="bg-green-50 border border-green-200 rounded-xl px-3 py-2">
+                <div className="bg-green-50 border border-green-200 rounded-xl px-3 py-2 flex items-center gap-2">
+                  <Ico d={I.check} size={11} color="#16a34a" sw={3} />
                   <p className="text-green-700 text-[11px] font-semibold">{gs.email}</p>
                 </div>
               )}
@@ -361,7 +343,8 @@ export function FuturesGiveawayPage({ onBack }: Props) {
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg flex items-center justify-center"
                     style={{ background: gs.referral === "done" ? "#dcfce7" : gs.referral === "error" ? "#fee2e2" : "#F0EAD0" }}>
-                    <Ico d={I.users} size={13} color={gs.referral === "done" ? "#16a34a" : gs.referral === "error" ? "#dc2626" : "#8B6300"} sw={2} />
+                    <Ico d={I.users} size={13}
+                      color={gs.referral === "done" ? "#16a34a" : gs.referral === "error" ? "#dc2626" : "#8B6300"} sw={2} />
                   </div>
                   <p className="text-[#1A1A1A] text-xs font-bold">Invite 2 Friends</p>
                 </div>
@@ -371,7 +354,7 @@ export function FuturesGiveawayPage({ onBack }: Props) {
                 Share your referral link and have at least <span className="font-semibold text-[#1A1A1A]">2 friends</span> register using your link to qualify.
               </p>
 
-              {/* Referral link */}
+              {/* Referral link row */}
               <div className="flex items-center gap-2 bg-[#F7F3E8] border border-[#DDD5B0] rounded-xl px-3 py-2 mb-3">
                 <p className="flex-1 text-[10px] text-[#555555] truncate font-mono">{REFERRAL_LINK}</p>
                 <button onClick={handleCopyLink}
@@ -390,20 +373,61 @@ export function FuturesGiveawayPage({ onBack }: Props) {
                 </div>
               )}
 
-              <button
-                onClick={handleReferralCheck}
-                disabled={gs.referral === "done"}
+              <button onClick={handleReferralCheck} disabled={gs.referral === "done"}
                 className="w-full py-2.5 rounded-xl text-xs font-bold transition-all active:scale-[0.97]"
                 style={{
                   background: gs.referral === "done" ? "#dcfce7" : "linear-gradient(to bottom,#E8C84A,#C9A520)",
-                  color: gs.referral === "done" ? "#16a34a" : "#5C3A00",
-                  border: gs.referral === "done" ? "1px solid #bbf7d0" : "none",
+                  color:      gs.referral === "done" ? "#16a34a" : "#5C3A00",
+                  border:     gs.referral === "done" ? "1px solid #bbf7d0" : "none",
                 }}>
                 {gs.referral === "done"
                   ? `Verified — ${gs.referralCount} Referral${gs.referralCount !== 1 ? "s" : ""}`
                   : "Check Referral Count"}
               </button>
             </div>
+          </div>
+
+          {/* ── Participate button — inside tasks card, below Task 4 ── */}
+          <div className="px-4 py-4 border-t border-[#EEE8CC]">
+            {participated ? (
+              <div className="rounded-xl border border-[#bbf7d0] bg-green-50 px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                    <Ico d={I.check} size={18} color="white" sw={2.5} />
+                  </div>
+                  <div>
+                    <p className="text-green-800 font-bold text-sm">Already Participated</p>
+                    <p className="text-green-700 text-xs mt-0.5">
+                      Under review — bonus will be credited within 24 hours.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {!allDone && (
+                  <div className="flex items-center gap-2 bg-[#FFF8E8] border border-[#E8C84A] rounded-xl px-3 py-2.5">
+                    <Ico d={I.alert} size={13} color="#C9A520" sw={2} />
+                    <p className="text-[#8B6300] text-[11px] font-medium">Complete all tasks above to enable participation.</p>
+                  </div>
+                )}
+                <button
+                  onClick={handleParticipate}
+                  disabled={!allDone}
+                  className="w-full py-4 rounded-xl font-bold text-[14px] transition-all active:scale-[0.98]"
+                  style={{
+                    background: allDone ? "linear-gradient(to bottom,#E8C84A 0%,#C9A520 100%)" : "#E5E5E5",
+                    color:      allDone ? "#3A2000" : "#AAAAAA",
+                    boxShadow:  allDone ? "0 3px 0 rgba(0,0,0,0.18), 0 6px 18px rgba(180,140,0,0.3), 0 1px 0 rgba(255,255,255,0.4) inset" : "none",
+                  }}>
+                  <div className="flex items-center justify-center gap-2">
+                    <img src={USDT_ICON} alt="USDT" className="w-5 h-5 rounded-full"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                    Participate & Claim 30 USDT Futures Bonus
+                  </div>
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -415,10 +439,10 @@ export function FuturesGiveawayPage({ onBack }: Props) {
           </div>
           <div className="space-y-2">
             {[
-              "The $30 USDT Futures Bonus can only be used to open Futures trading positions and cannot be withdrawn directly.",
+              "The 30 USDT Futures Bonus can only be used to open Futures trading positions and cannot be withdrawn directly.",
               "The bonus itself cannot be transferred to your Spot wallet. Only profits earned using the bonus may be transferred and withdrawn.",
               "Each user is eligible for this bonus only once. Duplicate accounts or attempts to claim multiple times will result in disqualification.",
-              "The bonus will expire 30 days after it is credited. Any unused bonus will be forfeited upon expiry.",
+              "The bonus will expire 7 days after it is credited. Any unused bonus will be forfeited upon expiry.",
               "Any form of manipulation, fraudulent activity, or abuse of the referral system will result in immediate cancellation of the bonus and any profits generated.",
               "Catrix Trading reserves the right to modify, suspend, or terminate this event at any time without prior notice.",
               "Participation in this event constitutes acceptance of all terms and conditions listed above.",
@@ -433,52 +457,6 @@ export function FuturesGiveawayPage({ onBack }: Props) {
           </div>
         </div>
 
-        {/* ── Participate Button ── */}
-        {participated ? (
-          <div className="rounded-2xl border border-[#bbf7d0] bg-green-50 px-5 py-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
-                <Ico d={I.check} size={20} color="white" sw={2.5} />
-              </div>
-              <div>
-                <p className="text-green-800 font-bold text-sm">Already Participated</p>
-                <p className="text-green-700 text-xs mt-0.5">
-                  Your submission is under review. Bonus will be credited within 24 hours.
-                </p>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {!allDone && (
-              <div className="flex items-center gap-2 bg-[#FFF8E8] border border-[#E8C84A] rounded-xl px-3 py-2.5">
-                <Ico d={I.alert} size={13} color="#C9A520" sw={2} />
-                <p className="text-[#8B6300] text-[11px] font-medium">Complete all 4 tasks above to enable participation.</p>
-              </div>
-            )}
-            <button
-              onClick={handleParticipate}
-              disabled={!allDone}
-              className="w-full py-4 rounded-2xl font-bold text-[14px] transition-all active:scale-[0.98]"
-              style={{
-                background: allDone
-                  ? "linear-gradient(to bottom,#E8C84A 0%,#C9A520 100%)"
-                  : "#E5E5E5",
-                color: allDone ? "#3A2000" : "#AAAAAA",
-                boxShadow: allDone
-                  ? "0 3px 0 rgba(0,0,0,0.18), 0 6px 18px rgba(180,140,0,0.35), 0 1px 0 rgba(255,255,255,0.4) inset"
-                  : "none",
-              }}>
-              <div className="flex items-center justify-center gap-2">
-                <img src={USDT_ICON} alt="USDT" className="w-5 h-5 rounded-full"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                Participate & Claim $30 Futures Bonus
-              </div>
-            </button>
-          </div>
-        )}
-
-        {/* Bottom spacing */}
         <div className="h-4" />
       </div>
     </div>

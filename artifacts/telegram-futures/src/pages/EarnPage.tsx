@@ -462,7 +462,7 @@ export function EarnPage() {
                     </div>
                     <p className="text-white font-bold text-sm leading-tight">Futures Giveaway</p>
                     <p className="text-[rgba(255,255,255,0.55)] text-[11px] mt-1 leading-snug">
-                      Complete 4 simple tasks and receive a <span className="text-[#D4AF37] font-semibold">$30 USDT Futures Bonus</span> for new users.
+                      Complete all tasks and receive a <span className="text-[#D4AF37] font-semibold">30 USDT Futures Bonus</span> for new users.
                     </p>
                   </div>
                 </div>
@@ -483,8 +483,8 @@ export function EarnPage() {
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[#D4AF37] font-bold text-xs">$30</span>
-                  <span className="text-[rgba(255,255,255,0.4)] text-[10px]">USDT Futures</span>
+                  <span className="text-[#D4AF37] font-bold text-xs">30 USDT</span>
+                  <span className="text-[rgba(255,255,255,0.4)] text-[10px]">Futures Bonus</span>
                 </div>
               </div>
             </div>
