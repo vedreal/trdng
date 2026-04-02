@@ -48,7 +48,7 @@ function AppContent() {
   const handleBack = () => {
     prevSubRoute.current = subRoute;
     setSubRoute(null);
-    triggerAnim("page-enter");
+    triggerAnim("subroute-back-enter");
   };
 
   const showBottomNav = subRoute === null;

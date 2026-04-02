@@ -158,7 +158,7 @@ function PairPickerModal({ selectedSymbol, onSelect, onClose }: {
   onClose: () => void;
 }) {
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-end" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-end modal-enter" onClick={onClose}>
       <div className="w-full rounded-t-2xl max-w-md mx-auto panel-silver border-t border-[#D4AF37] overflow-hidden"
         onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-[#D8D0A8]">
@@ -196,7 +196,7 @@ function SlTpModal({
   const [tp, setTp] = useState(pos.tp?.toString() ?? "");
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-end" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-end modal-enter" onClick={onClose}>
       <div className="w-full rounded-t-2xl p-5 max-w-md mx-auto panel-silver border-t border-[#D4AF37]"
         onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
@@ -442,7 +442,7 @@ function CloseModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 modal-enter">
       <div className="w-full max-w-md rounded-t-3xl panel-card border-t border-[#D4AF37] p-5 pb-8 shadow-2xl">
         <div className="flex items-center justify-between mb-4">
           <span className="text-base font-bold text-[#1A1A1A]">Close Position</span>
@@ -546,7 +546,7 @@ function TransferModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 modal-enter">
       <div className="w-full max-w-md rounded-t-3xl panel-card border-t border-[#D4AF37] p-5 pb-8 shadow-2xl">
         <div className="flex items-center justify-between mb-5">
           <span className="text-base font-bold text-[#1A1A1A]">Transfer</span>
@@ -1125,7 +1125,7 @@ export function FuturesPage() {
           </div>
 
           {activeTab === "position" && (
-            <div className="p-2">
+            <div className="p-2 tab-enter">
               {positions.length === 0
                 ? <p className="py-8 text-center text-sm text-[#AAAAAA]">No positions</p>
                 : positions.map((pos) => (
@@ -1142,7 +1142,7 @@ export function FuturesPage() {
           )}
 
           {activeTab === "orders" && (
-            <div className="p-2">
+            <div className="p-2 tab-enter">
               {pendingOrders.length === 0
                 ? <p className="py-8 text-center text-sm text-[#AAAAAA]">No pending orders</p>
                 : pendingOrders.map((order) => {
@@ -1206,7 +1206,7 @@ export function FuturesPage() {
           )}
 
           {activeTab === "history" && (
-            <div className="p-2">
+            <div className="p-2 tab-enter">
               {history.length === 0
                 ? <p className="py-8 text-center text-sm text-[#AAAAAA]">No history</p>
                 : history.map((trade) => <HistoryCard key={trade.id} trade={trade} />)
@@ -1218,7 +1218,7 @@ export function FuturesPage() {
 
       {/* Leverage modal */}
       {showLevModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end" onClick={() => setShowLevModal(false)}>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end modal-enter" onClick={() => setShowLevModal(false)}>
           <div className="w-full rounded-t-2xl p-5 max-w-md mx-auto panel-silver border-t border-[#D4AF37]"
             onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
