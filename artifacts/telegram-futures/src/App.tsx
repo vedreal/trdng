@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TradingProvider } from "@/contexts/TradingContext";
 import { BottomNav } from "@/components/BottomNav";
@@ -20,36 +20,56 @@ type SubRoute = null | "receive" | "send" | "swap" | "history";
 function AppContent() {
   const [page, setPage] = useState<NavPage>("futures");
   const [subRoute, setSubRoute] = useState<SubRoute>(null);
+  const [animClass, setAnimClass] = useState("page-enter");
+  const [animKey, setAnimKey] = useState(0);
+  const prevSubRoute = useRef<SubRoute>(null);
+
+  const triggerAnim = (cls: string) => {
+    setAnimClass(cls);
+    setAnimKey((k) => k + 1);
+  };
+
   const { price: bnbPrice } = useBinancePrice("BNBUSDT");
 
   const handleNavChange = (p: NavPage) => {
+    if (p === page && subRoute === null) return;
     setSubRoute(null);
+    prevSubRoute.current = null;
     setPage(p);
+    triggerAnim("page-enter");
   };
 
   const handleNavigate = (route: "receive" | "send" | "swap" | "history") => {
+    prevSubRoute.current = subRoute;
     setSubRoute(route);
+    triggerAnim("subroute-enter");
   };
 
-  const handleBack = () => setSubRoute(null);
+  const handleBack = () => {
+    prevSubRoute.current = subRoute;
+    setSubRoute(null);
+    triggerAnim("page-enter");
+  };
 
   const showBottomNav = subRoute === null;
 
   return (
     <div className="relative w-full max-w-md mx-auto overflow-hidden" style={{ height: "100dvh", background: '#DCDCDC' }}>
       <div className="h-full overflow-hidden">
-        {subRoute === "receive" && <ReceivePage onBack={handleBack} />}
-        {subRoute === "send"    && <SendPage onBack={handleBack} bnbPrice={bnbPrice} />}
-        {subRoute === "swap"    && <SwapPage onBack={handleBack} bnbPrice={bnbPrice} />}
-        {subRoute === "history" && <HistoryPage onBack={handleBack} />}
-        {subRoute === null && (
-          <>
-            {page === "portfolio" && <PortfolioPage onNavigate={handleNavigate} />}
-            {page === "futures"   && <FuturesPage />}
-            {page === "earn"      && <EarnPage />}
-            {page === "profile"   && <ProfilePage />}
-          </>
-        )}
+        <div key={animKey} className={`${animClass} h-full`}>
+          {subRoute === "receive" && <ReceivePage onBack={handleBack} />}
+          {subRoute === "send"    && <SendPage onBack={handleBack} bnbPrice={bnbPrice} />}
+          {subRoute === "swap"    && <SwapPage onBack={handleBack} bnbPrice={bnbPrice} />}
+          {subRoute === "history" && <HistoryPage onBack={handleBack} />}
+          {subRoute === null && (
+            <>
+              {page === "portfolio" && <PortfolioPage onNavigate={handleNavigate} />}
+              {page === "futures"   && <FuturesPage />}
+              {page === "earn"      && <EarnPage />}
+              {page === "profile"   && <ProfilePage />}
+            </>
+          )}
+        </div>
       </div>
       {showBottomNav && <BottomNav current={page} onChange={handleNavChange} />}
     </div>

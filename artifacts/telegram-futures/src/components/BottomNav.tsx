@@ -54,18 +54,20 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
             style={{ background: "rgba(255,255,255,0.45)" }}
           />
 
-          <div className="flex items-center justify-around px-3 py-1.5">
+          <div className="flex items-center justify-around px-3 py-2">
             {items.map((item) => {
               const active = current === item.id;
               return (
                 <button
                   key={item.id}
                   onClick={() => onChange(item.id)}
-                  className="flex flex-col items-center gap-1 transition-all active:scale-95"
+                  className="flex items-center justify-center transition-all duration-200 active:scale-90"
                 >
                   <div
-                    className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
+                    className="w-13 h-13 rounded-full flex items-center justify-center flex-shrink-0"
                     style={{
+                      width: 52,
+                      height: 52,
                       background: active
                         ? "linear-gradient(to bottom, rgba(255,255,255,0.97) 0%, rgba(255,242,170,0.92) 100%)"
                         : "linear-gradient(to bottom, rgba(255,255,255,0.78) 0%, rgba(255,235,140,0.68) 100%)",
@@ -73,19 +75,11 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
                         ? "0 3px 0 rgba(0,0,0,0.2), 0 6px 16px rgba(0,0,0,0.18), 0 1px 0 rgba(255,255,255,0.8) inset"
                         : "0 2px 0 rgba(0,0,0,0.12), 0 3px 8px rgba(0,0,0,0.1), 0 1px 0 rgba(255,255,255,0.5) inset",
                       color: active ? "#5C3A00" : "#8B6300",
+                      transition: "all 0.25s cubic-bezier(0.34,1.56,0.64,1)",
                     }}
                   >
                     {item.icon}
                   </div>
-                  <span
-                    className="text-[10px] leading-none"
-                    style={{
-                      fontWeight: active ? 700 : 600,
-                      color: active ? "#2A1500" : "rgba(60,30,0,0.7)",
-                    }}
-                  >
-                    {item.label}
-                  </span>
                 </button>
               );
             })}

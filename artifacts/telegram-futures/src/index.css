@@ -208,3 +208,49 @@ input[type="range"]::-moz-range-thumb {
   border: 3px solid white;
   box-shadow: 0 2px 6px rgba(180, 140, 0, 0.4);
 }
+
+/* ── Page & tab smooth transitions ───────────────────────────────── */
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.page-enter {
+  animation: pageEnter 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+.subroute-enter {
+  animation: slideInRight 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+.subroute-back-enter {
+  animation: slideInLeft 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
