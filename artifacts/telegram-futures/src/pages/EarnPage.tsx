@@ -380,31 +380,33 @@ export function EarnPage() {
                 )}
               </div>
             ) : (
-              <button
-                onClick={handleCheckIn}
-                className="w-full py-3.5 rounded-xl font-bold transition-all active:scale-[0.98]"
-                style={{
-                  background: "linear-gradient(to bottom, rgba(255,255,255,0.92) 0%, rgba(255,240,180,0.88) 100%)",
-                  boxShadow: "0 3px 0 rgba(0,0,0,0.2), 0 6px 16px rgba(0,0,0,0.15), 0 1px 0 rgba(255,255,255,0.8) inset",
-                  color: "#5C3A00",
-                  fontSize: "14px",
-                }}
-              >
-                <div className="flex items-center justify-center gap-2">
-                  {streakBroken && ciState.lastCheckIn !== "" ? (
-                    <>
-                      <IconRotateCcw size={15} color="#5C3A00" />
-                      <span>Restart Streak · Day 1 · +{fmtXaut(DAILY_REWARDS[0])} XAUT</span>
-                    </>
-                  ) : (
-                    <>
-                      <img src={XAUT_ICON} alt="XAUT" className="w-5 h-5 rounded-full flex-shrink-0"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                      <span>Check In Now · Day {nextDay} · +{fmtXaut(DAILY_REWARDS[nextDay - 1])} XAUT</span>
-                    </>
-                  )}
-                </div>
-              </button>
+              <div className="flex justify-center">
+                <button
+                  onClick={handleCheckIn}
+                  className="px-8 py-3 rounded-xl font-bold transition-all active:scale-[0.98]"
+                  style={{
+                    background: "linear-gradient(to bottom, rgba(255,255,255,0.92) 0%, rgba(255,240,180,0.88) 100%)",
+                    boxShadow: "0 3px 0 rgba(0,0,0,0.2), 0 6px 16px rgba(0,0,0,0.15), 0 1px 0 rgba(255,255,255,0.8) inset",
+                    color: "#5C3A00",
+                    fontSize: "14px",
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    {streakBroken && ciState.lastCheckIn !== "" ? (
+                      <>
+                        <IconRotateCcw size={15} color="#5C3A00" />
+                        <span>Restart Streak</span>
+                      </>
+                    ) : (
+                      <>
+                        <img src={XAUT_ICON} alt="XAUT" className="w-5 h-5 rounded-full flex-shrink-0"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                        <span>Check-In</span>
+                      </>
+                    )}
+                  </div>
+                </button>
+              </div>
             )}
           </div>
 
