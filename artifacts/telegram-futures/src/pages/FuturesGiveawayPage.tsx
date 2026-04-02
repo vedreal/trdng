@@ -200,7 +200,7 @@ export function FuturesGiveawayPage({ onBack }: Props) {
             </div>
 
             <p className="text-[rgba(255,255,255,0.7)] text-xs leading-relaxed">
-              Complete all tasks below to receive a <span className="text-white font-semibold">30 USDT Futures Bonus</span> credited directly to your Futures account. New users only. One bonus per account.
+              Complete all tasks below to receive a <span className="text-white font-semibold">$30 Futures Bonus</span> credited directly to your Futures account. New users only!
             </p>
           </div>
 
@@ -423,7 +423,7 @@ export function FuturesGiveawayPage({ onBack }: Props) {
                   <div className="flex items-center justify-center gap-2">
                     <img src={USDT_ICON} alt="USDT" className="w-5 h-5 rounded-full"
                       onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                    Participate & Claim 30 USDT Futures Bonus
+                    Participate & Claim $30 Futures Bonus
                   </div>
                 </button>
               </div>
@@ -439,7 +439,7 @@ export function FuturesGiveawayPage({ onBack }: Props) {
           </div>
           <div className="space-y-2">
             {[
-              "The 30 USDT Futures Bonus can only be used to open Futures trading positions and cannot be withdrawn directly.",
+              "The Futures Bonus can only be used to open Futures trading positions and cannot be withdrawn directly.",
               "The bonus itself cannot be transferred to your Spot wallet. Only profits earned using the bonus may be transferred and withdrawn.",
               "Each user is eligible for this bonus only once. Duplicate accounts or attempts to claim multiple times will result in disqualification.",
               "The bonus will expire 7 days after it is credited. Any unused bonus will be forfeited upon expiry.",
