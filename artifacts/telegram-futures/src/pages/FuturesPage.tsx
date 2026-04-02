@@ -580,16 +580,16 @@ function TransferModal({
         <div className="space-y-2 mb-4">
           <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-[#F5F3EA] border border-[#E0DDD0]">
             <span className="text-xs text-[#888888]">Spot</span>
-            <span className="text-sm font-semibold text-[#333333]">${fmt(spotBalance, 2)} USDT</span>
+            <span className="text-sm font-semibold text-[#333333]">{fmt(spotBalance, 2)} USDT</span>
           </div>
           <div className="px-3 py-2 rounded-xl bg-[#F5F3EA] border border-[#E0DDD0]">
             <div className="flex items-center justify-between">
               <span className="text-xs text-[#888888]">Futures</span>
-              <span className="text-sm font-semibold text-[#333333]">${fmt(futuresBalance, 2)} USDT</span>
+              <span className="text-sm font-semibold text-[#333333]">{fmt(futuresBalance, 2)} USDT</span>
             </div>
             <div className="flex items-center justify-between mt-1">
               <span className="text-xs text-[#888888]">Bonus</span>
-              <span className="text-xs font-medium text-[#C9A227]">${fmt(futuresBonus, 2)} USDT</span>
+              <span className="text-xs font-medium text-[#C9A227]">{fmt(futuresBonus, 2)} USDT</span>
             </div>
           </div>
         </div>
