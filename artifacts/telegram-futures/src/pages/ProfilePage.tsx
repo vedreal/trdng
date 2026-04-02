@@ -169,8 +169,10 @@ function SecurityPage({ onBack }: { onBack: () => void }) {
         </div>
 
         {/* Warning notice */}
-        <div className="flex items-start gap-2.5 bg-[#FFF8E8] border border-[#E8C84A] rounded-2xl px-4 py-3">
-          <Ico d={I.alert} size={14} color="#C9A520" sw={2} />
+        <div className="flex items-start gap-3 bg-[#FFF8E8] border border-[#E8C84A] rounded-2xl px-4 py-3">
+          <div className="flex-shrink-0 mt-0.5">
+            <Ico d={I.alert} size={20} color="#C9A520" sw={2} />
+          </div>
           <p className="text-[#7A5000] text-[11px] leading-relaxed">
             <span className="font-bold">Important:</span> Security data cannot be edited once submitted. Please ensure all information is accurate before saving. This data is stored locally on your device and is used solely for account recovery purposes.
           </p>
@@ -326,19 +328,6 @@ function ReferralPage({ onBack, userId }: { onBack: () => void; userId: number }
           </div>
         </div>
 
-        {/* Stats row */}
-        <div className="grid grid-cols-2 gap-3">
-          {[
-            { label: "Total Referrals", value: String(referrals.length) },
-            { label: "Status", value: referrals.length > 0 ? "Active" : "Pending" },
-          ].map((item) => (
-            <div key={item.label} className="panel-silver rounded-2xl border border-[#DDD5B0] px-4 py-3 text-center">
-              <p className="text-[#1A1A1A] font-bold text-lg">{item.value}</p>
-              <p className="text-[#888888] text-[11px] mt-0.5">{item.label}</p>
-            </div>
-          ))}
-        </div>
-
         {/* Referral link */}
         <div className="panel-silver rounded-2xl border border-[#DDD5B0] overflow-hidden">
           <div className="px-4 pt-4 pb-3 border-b border-[#EEE8CC]">
@@ -455,13 +444,13 @@ export function ProfilePage() {
     {
       id:      "referral",
       icon:    I.users,
-      iconColor: "#3b82f6",
-      iconBg:  "rgba(59,130,246,0.10)",
-      iconBorder: "rgba(59,130,246,0.3)",
+      iconColor: "#D4AF37",
+      iconBg:  "rgba(212,175,55,0.12)",
+      iconBorder: "rgba(212,175,55,0.35)",
       title:   "Referral",
       sub:     `${referrals.length} friend${referrals.length !== 1 ? "s" : ""} joined`,
-      badge:   String(referrals.length),
-      badgeOk: referrals.length > 0,
+      badge:   "",
+      badgeOk: false,
       onClick: () => setView("referral"),
     },
   ];
@@ -481,8 +470,8 @@ export function ProfilePage() {
           style={{ background: "linear-gradient(135deg,#1A1F3A 0%,#0F1628 60%,#1A2818 100%)", boxShadow: "0 6px 24px rgba(0,0,0,0.35)" }}>
           <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full opacity-10 pointer-events-none"
             style={{ background: "radial-gradient(circle,#D4AF37,transparent)" }} />
-          <div className="absolute -bottom-6 -left-6 w-28 h-28 rounded-full opacity-08 pointer-events-none"
-            style={{ background: "radial-gradient(circle,#22c55e,transparent)" }} />
+          <div className="absolute -bottom-6 -left-6 w-28 h-28 rounded-full opacity-10 pointer-events-none"
+            style={{ background: "radial-gradient(circle,#D4AF37,transparent)" }} />
 
           <div className="px-5 pt-6 pb-5 relative">
             <div className="flex items-center gap-4">
@@ -511,8 +500,8 @@ export function ProfilePage() {
                 <p className="text-[rgba(255,255,255,0.4)] text-[10px] mt-0.5">User ID</p>
               </div>
               <div className="text-center">
-                <p className="text-white font-bold text-sm">{referrals.length}</p>
-                <p className="text-[rgba(255,255,255,0.4)] text-[10px] mt-0.5">Referrals</p>
+                <p className="text-white font-bold text-sm">Healthy</p>
+                <p className="text-[rgba(255,255,255,0.4)] text-[10px] mt-0.5">Account</p>
               </div>
             </div>
           </div>
@@ -533,13 +522,15 @@ export function ProfilePage() {
                   <p className="text-[#888888] text-[11px] mt-0.5">{item.sub}</p>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                    item.badgeOk
-                      ? "bg-green-100 text-green-700 border border-green-200"
-                      : "bg-[#F0EAD0] text-[#8B6300] border border-[#D4AF37]"
-                  }`}>
-                    {item.badge}
-                  </span>
+                  {item.badge && (
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      item.badgeOk
+                        ? "bg-green-100 text-green-700 border border-green-200"
+                        : "bg-[#F0EAD0] text-[#8B6300] border border-[#D4AF37]"
+                    }`}>
+                      {item.badge}
+                    </span>
+                  )}
                   <Ico d={I.chevron} size={15} color="#CCCCCC" sw={2} />
                 </div>
               </div>
@@ -555,15 +546,15 @@ export function ProfilePage() {
           className="flex items-center gap-3 w-full panel-silver rounded-2xl border border-[#DDD5B0] px-4 py-3.5 active:scale-[0.985] transition-transform"
         >
           <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 border"
-            style={{ background: "rgba(59,130,246,0.08)", borderColor: "rgba(59,130,246,0.25)" }}>
-            <Ico d={I.headset} size={18} color="#3b82f6" sw={1.8} />
+            style={{ background: "rgba(212,175,55,0.12)", borderColor: "rgba(212,175,55,0.35)" }}>
+            <Ico d={I.headset} size={18} color="#D4AF37" sw={1.8} />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[#1A1A1A] font-bold text-sm">Support</p>
             <p className="text-[#888888] text-[11px] mt-0.5">Contact our team via Telegram</p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <Ico d={I.send} size={15} color="#3b82f6" sw={1.8} />
+            <Ico d={I.send} size={15} color="#D4AF37" sw={1.8} />
           </div>
         </a>
 
