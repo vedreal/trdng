@@ -456,7 +456,7 @@ export function ProfilePage() {
   ];
 
   return (
-    <div className="flex flex-col h-full page-bg overflow-y-auto">
+    <div className="flex flex-col h-full page-bg overflow-y-auto pb-28">
 
       {/* Header */}
       <div className="relative flex items-center justify-center px-4 py-3 panel-header border-b border-[#C8B040] flex-shrink-0">

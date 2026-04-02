@@ -923,7 +923,7 @@ export function FuturesPage() {
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto pb-28">
 
         {/* Trade panel */}
         <div className="mx-3 mt-3 panel-card rounded-2xl p-4 shadow-sm" style={{ border: '1px solid #D4AF37' }}>

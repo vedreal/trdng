@@ -243,7 +243,7 @@ export function EarnPage() {
   };
 
   return (
-    <div className="flex flex-col h-full page-bg overflow-y-auto">
+    <div className="flex flex-col h-full page-bg overflow-y-auto pb-28">
 
       {/* ── Floating Toast ── */}
       {toast && (

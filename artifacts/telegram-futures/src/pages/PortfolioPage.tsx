@@ -252,7 +252,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
   ];
 
   return (
-    <div className="flex flex-col h-full page-bg overflow-y-auto">
+    <div className="flex flex-col h-full page-bg overflow-y-auto pb-28">
 
       {/* Transfer modal */}
       {showTransferModal && (
