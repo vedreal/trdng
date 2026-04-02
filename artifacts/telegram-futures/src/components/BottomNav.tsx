@@ -51,28 +51,30 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none">
-      <div className="max-w-md mx-auto px-4 pb-4 pointer-events-auto">
+      <div className="max-w-md mx-auto px-4 pb-3 pointer-events-auto">
         <div
           className="rounded-3xl overflow-hidden relative"
           style={{
-            background: "linear-gradient(135deg, #E8C84A 0%, #D4AF37 40%, #B8960C 80%, #9B7A1A 100%)",
+            background: "linear-gradient(135deg, rgba(232,200,74,0.72) 0%, rgba(212,175,55,0.78) 40%, rgba(184,150,12,0.82) 80%, rgba(155,122,26,0.85) 100%)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
             boxShadow: "0 8px 32px rgba(0,0,0,0.22), 0 2px 0 rgba(255,255,255,0.25) inset",
           }}
         >
           {/* Subtle top glare */}
           <div
             className="absolute top-0 left-0 right-0 h-px pointer-events-none"
-            style={{ background: "rgba(255,255,255,0.35)" }}
+            style={{ background: "rgba(255,255,255,0.45)" }}
           />
 
-          <div className="flex items-center justify-around px-3 py-3">
+          <div className="flex items-center justify-around px-3 py-1.5">
             {items.map((item) => {
               const active = current === item.id;
               return (
                 <button
                   key={item.id}
                   onClick={() => onChange(item.id)}
-                  className="flex flex-col items-center gap-1.5 transition-all active:scale-95"
+                  className="flex flex-col items-center gap-1 transition-all active:scale-95"
                 >
                   <div
                     className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
@@ -92,7 +94,7 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
                     className="text-[10px] leading-none"
                     style={{
                       fontWeight: active ? 700 : 600,
-                      color: active ? "#2A1500" : "rgba(60,30,0,0.65)",
+                      color: active ? "#2A1500" : "rgba(60,30,0,0.7)",
                     }}
                   >
                     {item.label}

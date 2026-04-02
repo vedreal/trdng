@@ -432,9 +432,10 @@ export function ProfilePage() {
     {
       id:      "security",
       icon:    I.shield,
-      iconColor: "#D4AF37",
-      iconBg:  "rgba(212,175,55,0.12)",
-      iconBorder: "rgba(212,175,55,0.35)",
+      iconColor: "#5C3A00",
+      iconBg:  "linear-gradient(to bottom, rgba(255,255,255,0.97) 0%, rgba(255,242,170,0.92) 100%)",
+      iconBorder: "transparent",
+      iconShadow: "0 3px 0 rgba(0,0,0,0.18), 0 5px 14px rgba(0,0,0,0.15), 0 1px 0 rgba(255,255,255,0.8) inset",
       title:   "Security Backup",
       sub:     security ? "Phone & email saved" : "Add phone & email",
       badge:   security ? "Saved" : "Not set",
@@ -444,9 +445,10 @@ export function ProfilePage() {
     {
       id:      "referral",
       icon:    I.users,
-      iconColor: "#D4AF37",
-      iconBg:  "rgba(212,175,55,0.12)",
-      iconBorder: "rgba(212,175,55,0.35)",
+      iconColor: "#5C3A00",
+      iconBg:  "linear-gradient(to bottom, rgba(255,255,255,0.97) 0%, rgba(255,242,170,0.92) 100%)",
+      iconBorder: "transparent",
+      iconShadow: "0 3px 0 rgba(0,0,0,0.18), 0 5px 14px rgba(0,0,0,0.15), 0 1px 0 rgba(255,255,255,0.8) inset",
       title:   "Referral",
       sub:     `${referrals.length} friend${referrals.length !== 1 ? "s" : ""} joined`,
       badge:   "",
@@ -513,9 +515,9 @@ export function ProfilePage() {
             <button key={item.id} onClick={item.onClick}
               className="w-full text-left panel-silver rounded-2xl border border-[#DDD5B0] overflow-hidden active:scale-[0.985] transition-transform">
               <div className="px-4 py-3.5 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 border"
-                  style={{ background: item.iconBg, borderColor: item.iconBorder }}>
-                  <Ico d={item.icon} size={18} color={item.iconColor} sw={1.8} />
+                <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
+                  style={{ background: item.iconBg, boxShadow: (item as any).iconShadow ?? "0 2px 0 rgba(0,0,0,0.12), 0 3px 8px rgba(0,0,0,0.1)" }}>
+                  <Ico d={item.icon} size={19} color={item.iconColor} sw={1.8} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[#1A1A1A] font-bold text-sm">{item.title}</p>
@@ -545,9 +547,12 @@ export function ProfilePage() {
           rel="noopener noreferrer"
           className="flex items-center gap-3 w-full panel-silver rounded-2xl border border-[#DDD5B0] px-4 py-3.5 active:scale-[0.985] transition-transform"
         >
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 border"
-            style={{ background: "rgba(212,175,55,0.12)", borderColor: "rgba(212,175,55,0.35)" }}>
-            <Ico d={I.headset} size={18} color="#D4AF37" sw={1.8} />
+          <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{
+              background: "linear-gradient(to bottom, rgba(255,255,255,0.97) 0%, rgba(255,242,170,0.92) 100%)",
+              boxShadow: "0 3px 0 rgba(0,0,0,0.18), 0 5px 14px rgba(0,0,0,0.15), 0 1px 0 rgba(255,255,255,0.8) inset",
+            }}>
+            <Ico d={I.headset} size={19} color="#5C3A00" sw={1.8} />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[#1A1A1A] font-bold text-sm">Support</p>
