@@ -216,23 +216,23 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .page-enter {
-  animation: slowFadeIn 0.55s ease both;
+  animation: slowFadeIn 1s ease both;
 }
 
 .subroute-enter {
-  animation: slowFadeIn 0.55s ease both;
+  animation: slowFadeIn 1s ease both;
 }
 
 .subroute-back-enter {
-  animation: slowFadeIn 0.55s ease both;
+  animation: slowFadeIn 1s ease both;
 }
 
 .tab-enter {
-  animation: slowFadeIn 0.45s ease both;
+  animation: slowFadeIn 0.8s ease both;
 }
 
 .modal-enter {
-  animation: slowFadeIn 0.45s ease both;
+  animation: slowFadeIn 0.8s ease both;
 }
 
 /* ── Global slow transition override ─────────────────────────────── */
