@@ -633,27 +633,12 @@ interface NewsItem {
   coin: string;
 }
 
-const COIN_KEYWORDS: Record<string, string[]> = {
-  BTC: ["bitcoin", "btc"],
-  ETH: ["ethereum", "eth"],
-  BNB: ["bnb", "binance coin", "binance smart chain", "bsc"],
-  SOL: ["solana", "sol"],
-};
-
 const COIN_COLORS: Record<string, string> = {
   BTC: "#F7931A",
   ETH: "#627EEA",
   BNB: "#F3BA2F",
   SOL: "#9945FF",
 };
-
-function detectCoin(text: string): string {
-  const lower = text.toLowerCase();
-  for (const [coin, keywords] of Object.entries(COIN_KEYWORDS)) {
-    if (keywords.some((kw) => lower.includes(kw))) return coin;
-  }
-  return "CRYPTO";
-}
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -665,70 +650,10 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-const RSS_FEEDS: { url: string; source: string }[] = [
-  { url: "https://cointelegraph.com/rss",         source: "Cointelegraph" },
-  { url: "https://bitcoinist.com/feed/",           source: "Bitcoinist"   },
-  { url: "https://decrypt.co/feed",                source: "Decrypt"      },
-  { url: "https://cryptopotato.com/feed/",         source: "CryptoPotato" },
-];
-
-const CORS_PROXIES = [
-  (u: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-  (u: string) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-];
-
-async function fetchWithProxy(rssUrl: string): Promise<string> {
-  for (const proxy of CORS_PROXIES) {
-    try {
-      const res = await fetch(proxy(rssUrl), { cache: "no-store" });
-      if (res.ok) {
-        const text = await res.text();
-        if (text.includes("<item")) return text;
-      }
-    } catch { /* try next */ }
-  }
-  throw new Error("all proxies failed");
-}
-
-function parseRssXml(xml: string, source: string): NewsItem[] {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(xml, "text/xml");
-  const items = Array.from(doc.querySelectorAll("item"));
-  const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
-  const result: NewsItem[] = [];
-  for (const el of items) {
-    const title = el.querySelector("title")?.textContent?.trim() ?? "";
-    if (!title) continue;
-    const link =
-      el.querySelector("link")?.textContent?.trim() ||
-      el.querySelector("guid")?.textContent?.trim() ||
-      "#";
-    const pubDate = el.querySelector("pubDate")?.textContent?.trim() ?? "";
-    const ts = pubDate ? new Date(pubDate).getTime() : 0;
-    if (ts > 0 && ts < thirtyDaysAgo) continue;
-    result.push({ title, link, pubDate, thumbnail: "", source, coin: detectCoin(title) });
-  }
-  return result;
-}
-
 async function fetchRssNews(): Promise<NewsItem[]> {
-  const allItems: NewsItem[] = [];
-
-  await Promise.allSettled(
-    RSS_FEEDS.map(async ({ url, source }) => {
-      try {
-        const xml = await fetchWithProxy(url);
-        const items = parseRssXml(xml, source);
-        allItems.push(...items);
-      } catch { /* skip */ }
-    })
-  );
-
-  allItems.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
-  const seen = new Set<string>();
-  return allItems
-    .filter((it) => { if (seen.has(it.title)) return false; seen.add(it.title); return true; })
-    .slice(0, 5);
+  const res = await fetch("/api/news", { cache: "no-store" });
+  if (!res.ok) throw new Error(`News API error ${res.status}`);
+  return res.json();
 }
 
 function CryptoNewsWidget() {
