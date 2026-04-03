@@ -487,7 +487,7 @@ export function EarnPage() {
                 <div className="flex items-center gap-1.5">
                   <IconShieldCheck size={12} color="rgba(255,255,255,0.35)" stroke={2} />
                   <span className="text-[rgba(255,255,255,0.4)] text-[10px]">
-                    {localStorage.getItem("futures_challenge_joined_v1") === "1" ? "Already Joined" : "Real Balance Required"}
+                    {localStorage.getItem("futures_challenge_joined_v1") === "1" ? "Already Joined" : "All Users Eligible"}
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5">
