@@ -12,6 +12,8 @@ const COIN_ICONS: Record<string, string> = {
   USDT: "https://gold-defensive-cattle-30.mypinata.cloud/ipfs/bafkreiar6ik6oswrb7ncslxa2aeopdg7ifn252akbcpvd572v7u34dzcqq",
   XAUT: "https://gold-defensive-cattle-30.mypinata.cloud/ipfs/bafkreiccstl7irrcrvusudyp26zjudtisjc44dz34o3molmxzuwfaizo5m",
   BNB:  IPFS + "bafkreieg2zkdn3muod7uir7q77lee37cmisxoqqym3sjsm6smfn5wkq2da",
+  ETH:  "https://gold-defensive-cattle-30.mypinata.cloud/ipfs/bafkreiccdvf3jvs2kngcddhe6siaca44y3ztru254dor3vocue36gbplw4",
+  TON:  "https://gold-defensive-cattle-30.mypinata.cloud/ipfs/bafkreib6wlrvvorkcbkma43liqxrm4dv7hgad4jbqlcjzaa6rynileb7c4",
 };
 
 interface PortfolioPageProps {
@@ -141,13 +143,16 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
   const {
     balance, positions, history, getPnl,
     bnbBalance, xautBalance, spotUsdtBalance,
+    ethBalance, tonBalance,
     walletHistory, transferToFutures, transferFromFutures,
     futuresBonus,
   } = useTrading();
 
-  const { price: btcPrice } = useBinancePrice("BTCUSDT");
+  const { price: btcPrice }  = useBinancePrice("BTCUSDT");
   const { price: bnbPrice }  = useBinancePrice("BNBUSDT");
   const { price: xautPrice } = useBinancePrice("XAUTUSDT");
+  const { price: ethPrice }  = useBinancePrice("ETHUSDT");
+  const { price: tonPrice }  = useBinancePrice("TONUSDT");
 
   const [assetTab, setAssetTab]             = useState<"spot" | "futures">("spot");
   const [showTransferModal, setShowTransfer] = useState(false);
@@ -163,14 +168,15 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
       .reduce((sum, t) => sum + t.pnl, 0);
   }, [history]);
 
-  const todayPnl        = unrealizedPnl + todayRealizedPnl;
-  const bnbValueUsdt    = bnbBalance  * (bnbPrice  > 0 ? bnbPrice  : 600);
-  const xautValueUsdt   = xautBalance * (xautPrice > 0 ? xautPrice : 2620);
-  const totalBalance    = spotUsdtBalance + balance + unrealizedPnl + bnbValueUsdt + xautValueUsdt;
-  const todayPct        = totalBalance > 0 ? (todayPnl / (totalBalance - todayPnl)) * 100 : 0;
-  const pnlPositive     = todayPnl >= 0;
+  const todayPnl      = unrealizedPnl + todayRealizedPnl;
+  const bnbValueUsdt  = bnbBalance  * (bnbPrice  > 0 ? bnbPrice  : 600);
+  const xautValueUsdt = xautBalance * (xautPrice > 0 ? xautPrice : 2620);
+  const ethValueUsdt  = ethBalance  * (ethPrice  > 0 ? ethPrice  : 3000);
+  const tonValueUsdt  = tonBalance  * (tonPrice  > 0 ? tonPrice  : 5);
+  const totalBalance  = spotUsdtBalance + balance + unrealizedPnl + bnbValueUsdt + xautValueUsdt + ethValueUsdt + tonValueUsdt;
+  const todayPct      = totalBalance > 0 ? (todayPnl / (totalBalance - todayPnl)) * 100 : 0;
+  const pnlPositive   = todayPnl >= 0;
 
-  // Merged recent activity for Futures tab: closed trades + transfer txs + bonus, sorted by time, max 3
   const futuresActivity = useMemo(() => {
     type ActivityItem =
       | { kind: "trade"; id: string; side: "long" | "short"; leverage: number; pnl: number; time: number }
@@ -240,7 +246,6 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
   return (
     <div className="flex flex-col h-full page-bg overflow-y-auto pb-28">
 
-      {/* Transfer modal */}
       {showTransferModal && (
         <TransferModal
           spotBalance={spotUsdtBalance}
@@ -252,7 +257,6 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
         />
       )}
 
-      {/* Header */}
       <div className="relative flex items-center justify-center px-4 py-3 panel-header border-b border-[#C8B040] flex-shrink-0">
         <span className="font-bold text-[#1A1A1A] text-base">Portfolio</span>
         <div className="absolute right-4 flex items-center gap-1.5">
@@ -270,13 +274,11 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
             boxShadow: '0 4px 20px rgba(180,140,0,0.35), 0 1px 0 rgba(255,255,255,0.3) inset',
           }}>
 
-          {/* Decorative circles */}
           <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-20 pointer-events-none"
             style={{ background: 'radial-gradient(circle, #FFE566, transparent)' }} />
           <div className="absolute -bottom-5 -left-5 w-24 h-24 rounded-full opacity-15 pointer-events-none"
             style={{ background: 'radial-gradient(circle, #FFE566, transparent)' }} />
 
-          {/* History icon — top-right */}
           <button
             onClick={() => onNavigate("history")}
             className="absolute top-3 right-4 z-10 text-[rgba(255,255,255,0.7)] hover:text-white transition-colors active:scale-90"
@@ -284,7 +286,6 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
             <IconClock size={26} stroke={2} />
           </button>
 
-          {/* Balance content */}
           <div className="px-5 pt-5 pb-4">
             <p className="text-[11px] font-semibold text-[rgba(255,255,255,0.8)] uppercase tracking-wide mb-1">Total Balance</p>
             <p className="text-4xl font-bold text-white mb-0.5">
@@ -302,10 +303,8 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
               </span>
             </div>
 
-            {/* Divider */}
             <div className="border-t border-[rgba(255,255,255,0.2)] mb-4" />
 
-            {/* Action buttons */}
             <div className="flex items-center justify-around pb-1">
               {actionBtns.map((btn) => (
                 <button
@@ -347,7 +346,6 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
 
         {/* Assets */}
         <div>
-          {/* Header + tab switcher */}
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold text-[#888888] uppercase tracking-wide">Assets</p>
             <div className="flex rounded-lg border border-[#C8C0A0] bg-[#E8E4D0] p-0.5 gap-0.5">
@@ -364,10 +362,10 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
             </div>
           </div>
 
-          {/* Spot tab */}
+          {/* Spot tab — order: USDT, XAUT, ETH, BNB, TON */}
           {assetTab === "spot" && (
             <div className="space-y-2">
-              {/* USDT Spot */}
+              {/* USDT */}
               <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3.5 flex items-center gap-3">
                 <img src={COIN_ICONS.USDT} alt="USDT" className="w-10 h-10 rounded-full flex-shrink-0"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
@@ -399,6 +397,22 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                 </div>
               </div>
 
+              {/* ETH */}
+              <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3.5 flex items-center gap-3">
+                <img src={COIN_ICONS.ETH} alt="ETH" className="w-10 h-10 rounded-full flex-shrink-0"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-[#1A1A1A]">ETH</span>
+                    <span className="text-sm font-bold text-[#1A1A1A]">${fmtUsd(ethValueUsdt)}</span>
+                  </div>
+                  <div className="flex items-center justify-between mt-0.5">
+                    <span className="text-[11px] text-[#888888]">Ethereum</span>
+                    <span className="text-[11px] text-[#888888]">{ethBalance.toFixed(6)} ETH</span>
+                  </div>
+                </div>
+              </div>
+
               {/* BNB */}
               <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3.5 flex items-center gap-3">
                 <img src={COIN_ICONS.BNB} alt="BNB" className="w-10 h-10 rounded-full flex-shrink-0"
@@ -414,13 +428,28 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                   </div>
                 </div>
               </div>
+
+              {/* TON */}
+              <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3.5 flex items-center gap-3">
+                <img src={COIN_ICONS.TON} alt="TON" className="w-10 h-10 rounded-full flex-shrink-0"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-[#1A1A1A]">TON</span>
+                    <span className="text-sm font-bold text-[#1A1A1A]">${fmtUsd(tonValueUsdt)}</span>
+                  </div>
+                  <div className="flex items-center justify-between mt-0.5">
+                    <span className="text-[11px] text-[#888888]">Toncoin</span>
+                    <span className="text-[11px] text-[#888888]">{tonBalance.toFixed(4)} TON</span>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
           {/* Futures tab */}
           {assetTab === "futures" && (
             <div className="space-y-2">
-              {/* USDT Futures */}
               <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3.5 flex items-center gap-3">
                 <img src={COIN_ICONS.USDT} alt="USDT" className="w-10 h-10 rounded-full flex-shrink-0"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
@@ -440,7 +469,6 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                 </div>
               </div>
 
-              {/* Recent Activity — Futures tab only */}
               <>
                 <p className="text-[11px] font-semibold text-[#888888] uppercase tracking-wide pt-1 pb-0.5 px-1">
                   Recent Activity
@@ -477,7 +505,6 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                       );
                     }
 
-                    // bonus item
                     if (item.kind === "bonus") {
                       return (
                         <div key={item.id}
@@ -501,36 +528,33 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                       );
                     }
 
-                    // transfer item
-                    const toFutures = item.direction === "toFutures";
+                    const transferItem = item as { kind: "transfer"; id: string; direction: "toFutures" | "fromFutures"; amount: number; time: number };
                     return (
-                      <div key={item.id}
+                      <div key={transferItem.id}
                         className="panel-silver border border-[#D8D0A8] rounded-xl px-4 py-3 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 bg-[#C9A227]">
-                            <IconArrowsRightLeft size={14} stroke={2.5} />
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 bg-blue-500">
+                            ⇄
                           </div>
                           <div>
                             <p className="text-xs font-semibold text-[#333333]">
-                              {toFutures ? "Spot → Futures" : "Futures → Spot"}
+                              {transferItem.direction === "toFutures" ? "Spot → Futures" : "Futures → Spot"}
                             </p>
                             <p className="text-[10px] text-[#888888]">
-                              {new Date(item.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                              {new Date(transferItem.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                             </p>
                           </div>
                         </div>
-                        <span className="text-sm font-semibold text-[#1A1A1A]">
-                          ${fmtUsd(item.amount)}
+                        <span className="text-sm font-semibold text-[#333333]">
+                          ${fmtUsd(transferItem.amount)}
                         </span>
                       </div>
                     );
                   })}
-                </>
+              </>
             </div>
           )}
         </div>
-
-        <div className="h-2" />
       </div>
     </div>
   );

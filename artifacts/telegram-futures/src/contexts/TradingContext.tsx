@@ -3,7 +3,9 @@ import { useTradingStore } from "../hooks/useTradingStore";
 
 const BNB_INITIAL = 0.5;
 const XAUT_INITIAL = 0;
-const SPOT_USDT_INITIAL = 5_000; // Portfolio (spot) wallet starts at $5,000
+const SPOT_USDT_INITIAL = 5_000;
+const ETH_INITIAL = 0;
+const TON_INITIAL = 0;
 
 export type WalletTxType = "deposit" | "withdraw" | "swap" | "transfer" | "bonus";
 
@@ -26,6 +28,10 @@ interface TradingContextType extends ReturnType<typeof useTradingStore> {
   setXautBalance: (v: number | ((prev: number) => number)) => void;
   spotUsdtBalance: number;
   setSpotUsdtBalance: (v: number | ((prev: number) => number)) => void;
+  ethBalance: number;
+  setEthBalance: (v: number | ((prev: number) => number)) => void;
+  tonBalance: number;
+  setTonBalance: (v: number | ((prev: number) => number)) => void;
   transferToFutures: (amount: number) => { success: boolean; message: string };
   transferFromFutures: (amount: number) => { success: boolean; message: string };
   walletHistory: WalletTransaction[];
@@ -41,6 +47,8 @@ export function TradingProvider({ children }: { children: ReactNode }) {
   const [bnbBalance, setBnbBalance] = useState(BNB_INITIAL);
   const [xautBalance, setXautBalance] = useState(XAUT_INITIAL);
   const [spotUsdtBalance, setSpotUsdtBalance] = useState(SPOT_USDT_INITIAL);
+  const [ethBalance, setEthBalance] = useState(ETH_INITIAL);
+  const [tonBalance, setTonBalance] = useState(TON_INITIAL);
   const [walletHistory, setWalletHistory] = useState<WalletTransaction[]>([]);
   const [futuresBonus, setFuturesBonus] = useState(0);
 
@@ -54,12 +62,10 @@ export function TradingProvider({ children }: { children: ReactNode }) {
     setWalletHistory((prev) => [entry, ...prev]);
   }, []);
 
-  /** Transfer from Portfolio (spot) → Futures balance */
   const transferToFutures = useCallback(
     (amount: number): { success: boolean; message: string } => {
       if (amount <= 0) return { success: false, message: "Amount must be greater than 0" };
       if (amount > spotUsdtBalance) return { success: false, message: "Insufficient portfolio balance" };
-
       setSpotUsdtBalance((b) => parseFloat((b - amount).toFixed(5)));
       store.depositFunds(amount);
       addWalletTx({ type: "transfer", asset: "USDT", amount, toAsset: "USDT (Futures)", toAmount: amount });
@@ -68,15 +74,12 @@ export function TradingProvider({ children }: { children: ReactNode }) {
     [spotUsdtBalance, store, addWalletTx]
   );
 
-  /** Transfer from Futures balance → Portfolio (spot) */
   const transferFromFutures = useCallback(
     (amount: number): { success: boolean; message: string } => {
       if (amount <= 0) return { success: false, message: "Amount must be greater than 0" };
       if (amount > store.balance) return { success: false, message: "Insufficient futures balance" };
-
       const ok = store.withdrawFunds(amount, store.balance);
       if (!ok) return { success: false, message: "Insufficient futures balance" };
-
       setSpotUsdtBalance((b) => parseFloat((b + amount).toFixed(5)));
       addWalletTx({ type: "transfer", asset: "USDT (Futures)", amount, toAsset: "USDT", toAmount: amount });
       return { success: true, message: `Transferred $${amount.toFixed(2)} to Portfolio` };
@@ -84,7 +87,6 @@ export function TradingProvider({ children }: { children: ReactNode }) {
     [store, addWalletTx]
   );
 
-  /** Add Futures Bonus */
   const addFuturesBonus = useCallback(
     (amount: number) => {
       if (amount <= 0) return;
@@ -100,6 +102,8 @@ export function TradingProvider({ children }: { children: ReactNode }) {
       bnbBalance, setBnbBalance,
       xautBalance, setXautBalance,
       spotUsdtBalance, setSpotUsdtBalance,
+      ethBalance, setEthBalance,
+      tonBalance, setTonBalance,
       transferToFutures,
       transferFromFutures,
       walletHistory, addWalletTx,
