@@ -667,31 +667,37 @@ function timeAgo(dateStr: string): string {
 
 const RSS_SOURCES = [
   "https://cointelegraph.com/rss",
+  "https://bitcoinist.com/feed/",
+  "https://decrypt.co/feed",
   "https://coindesk.com/arc/outboundfeeds/rss/",
 ];
 
 async function fetchRssNews(): Promise<NewsItem[]> {
   const allItems: NewsItem[] = [];
-  const KEYWORDS_FLAT = Object.values(COIN_KEYWORDS).flat();
 
   await Promise.allSettled(
     RSS_SOURCES.map(async (rssUrl) => {
       try {
-        const url = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}&count=30`;
+        const url = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}&count=20`;
         const res = await fetch(url, { cache: "no-store" });
         const data = await res.json();
-        if (data.status !== "ok") return;
-        const sourceName = data.feed?.title?.replace(" - Latest Cryptocurrency News", "").replace(" | Cointelegraph", "") || "Crypto News";
-        for (const item of data.items ?? []) {
-          const text = `${item.title ?? ""} ${item.description ?? ""} ${(item.categories ?? []).join(" ")}`.toLowerCase();
-          if (!KEYWORDS_FLAT.some((kw) => text.includes(kw))) continue;
+        if (data.status !== "ok" || !Array.isArray(data.items)) return;
+        const sourceName: string =
+          (data.feed?.title ?? "")
+            .replace("Cointelegraph.com News", "Cointelegraph")
+            .replace(" - Latest Cryptocurrency News", "")
+            .replace(" | Cointelegraph", "")
+            .replace("CoinDesk: Bitcoin, Ethereum, Crypto News and Price Data", "CoinDesk")
+            || "Crypto News";
+        for (const item of data.items) {
+          if (!item.title) continue;
           allItems.push({
-            title: item.title ?? "",
+            title: item.title,
             link: item.link ?? "#",
             pubDate: item.pubDate ?? "",
             thumbnail: item.thumbnail ?? "",
             source: sourceName,
-            coin: detectCoin(item.title + " " + (item.description ?? "")),
+            coin: detectCoin(item.title),
           });
         }
       } catch {
@@ -781,9 +787,9 @@ function CryptoNewsWidget() {
               className="flex items-start gap-3 px-4 py-3 hover:bg-[#F5F0DC] transition-colors active:bg-[#EDE8D0]">
               {/* Coin badge */}
               <div
-                className="mt-0.5 flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-white text-[8px] font-bold"
-                style={{ background: COIN_COLORS[item.coin] ?? "#999" }}>
-                {item.coin === "CRYPTO" ? "₿" : item.coin.slice(0, 3)}
+                className="mt-0.5 flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-white text-[9px] font-bold"
+                style={{ background: COIN_COLORS[item.coin] ?? "#B8860B" }}>
+                {item.coin === "CRYPTO" ? "🔥" : item.coin.slice(0, 3)}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-[#1A1A1A] leading-snug line-clamp-2">{item.title}</p>
