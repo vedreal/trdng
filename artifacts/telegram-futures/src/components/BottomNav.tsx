@@ -40,7 +40,7 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
     <div
       className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none"
       style={{
-        background: "linear-gradient(to top, rgba(0,0,0,0.35) 0%, transparent 100%)",
+        background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%)",
       }}
     >
       <div className="max-w-md mx-auto pb-6 flex justify-center pointer-events-auto">
