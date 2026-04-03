@@ -3,7 +3,7 @@ import { useTrading } from "../contexts/TradingContext";
 import { useBinancePrice } from "../hooks/useBinancePrice";
 import {
   IconChevronLeft, IconArrowsUpDown, IconCheck, IconX,
-  IconSearch, IconAlertTriangle,
+  IconSearch,
 } from "@tabler/icons-react";
 
 // ─── Coin Config ────────────────────────────────────────────────────────────
@@ -180,6 +180,7 @@ export function SwapPage({ onBack }: SwapPageProps) {
   const [toast, setToast]           = useState<string | null>(null);
   const [showFromPicker, setShowFromPicker] = useState(false);
   const [showToPicker,   setShowToPicker  ] = useState(false);
+  const [showConfirm,    setShowConfirm   ] = useState(false);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -273,25 +274,25 @@ export function SwapPage({ onBack }: SwapPageProps) {
     setFromAmount(maxFrom.toFixed(COIN_DEC[fromAsset]));
   };
 
+  // Open confirm modal after validation
   const handleSwap = () => {
     if (parsedFrom <= 0) return showToast("Enter a valid amount");
-
     if (fromIsFeeAsset) {
-      // from balance must cover both the swap amount AND the gas fee
       if (parsedFrom + feeInAsset > balances[fromAsset]) {
-        return showToast(
-          `Insufficient ${fromAsset}. Need ${(parsedFrom + feeInAsset).toFixed(6)} ${fromAsset} (swap + gas fee)`
-        );
+        return showToast(`Insufficient ${fromAsset}. Use Max button.`);
       }
     } else {
       if (parsedFrom > balances[fromAsset]) return showToast(`Insufficient ${fromAsset} balance`);
       if (!hasFee) {
-        return showToast(
-          `Insufficient ${feeConfig.feeAsset} for gas fee. Need ${feeInAsset.toFixed(6)} ${feeConfig.feeAsset}`
-        );
+        return showToast(`Insufficient ${feeConfig.feeAsset} for gas fee`);
       }
     }
+    setShowConfirm(true);
+  };
 
+  // Actually execute after user confirms
+  const executeSwap = () => {
+    setShowConfirm(false);
     const decFrom = COIN_DEC[fromAsset];
     const decTo   = COIN_DEC[toAsset];
 
@@ -372,7 +373,7 @@ export function SwapPage({ onBack }: SwapPageProps) {
             <button onClick={() => setStep("form")} className="flex-1 py-3.5 rounded-xl text-sm btn-3d-silver">
               Swap Again
             </button>
-            <button onClick={onBack} className="flex-1 py-3.5 rounded-xl text-sm btn-3d-gold">
+            <button onClick={() => setStep("form")} className="flex-1 py-3.5 rounded-xl text-sm btn-3d-gold">
               Done
             </button>
           </div>
@@ -419,6 +420,107 @@ export function SwapPage({ onBack }: SwapPageProps) {
           onSelect={handleToPick}
           onClose={() => setShowToPicker(false)}
         />
+      )}
+
+      {/* ── Swap Confirmation Modal ── */}
+      {showConfirm && (
+        <div
+          className="fixed inset-0 z-[70] flex items-end justify-center bg-black/60"
+          onClick={() => setShowConfirm(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-t-3xl bg-white shadow-2xl pb-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Handle bar */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-[#DDD]" />
+            </div>
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 pt-3 pb-4">
+              <span className="text-base font-bold text-[#1A1A1A]">Confirm Swap</span>
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-[#F0EDE0] text-[#666]"
+              >
+                <IconX size={16} stroke={2.5} />
+              </button>
+            </div>
+
+            {/* Coin flow */}
+            <div className="mx-5 mb-4 rounded-2xl border border-[#E8E0C0] bg-[#F9F6EC] p-4 space-y-3">
+              {/* From */}
+              <div className="flex items-center gap-3">
+                <img
+                  src={COIN_ICONS[fromAsset]}
+                  alt={fromAsset}
+                  className="w-10 h-10 rounded-full flex-shrink-0"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                />
+                <div className="flex-1">
+                  <p className="text-[11px] text-[#888888] font-medium uppercase tracking-wide">You Pay</p>
+                  <p className="text-lg font-bold text-[#1A1A1A]">
+                    {parsedFrom.toFixed(COIN_DEC[fromAsset])} {fromAsset}
+                  </p>
+                  <p className="text-[11px] text-[#888888]">
+                    ≈ ${(parsedFrom * prices[fromAsset]).toFixed(2)} USD
+                  </p>
+                </div>
+              </div>
+
+              {/* Arrow */}
+              <div className="flex justify-center">
+                <div className="w-7 h-7 rounded-full bg-[#E8C84A] flex items-center justify-center">
+                  <IconArrowsUpDown size={14} stroke={2.5} color="#5C3A00" />
+                </div>
+              </div>
+
+              {/* To */}
+              <div className="flex items-center gap-3">
+                <img
+                  src={COIN_ICONS[toAsset]}
+                  alt={toAsset}
+                  className="w-10 h-10 rounded-full flex-shrink-0"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                />
+                <div className="flex-1">
+                  <p className="text-[11px] text-[#888888] font-medium uppercase tracking-wide">You Receive (est.)</p>
+                  <p className="text-lg font-bold text-green-600">
+                    {toAmount.toFixed(COIN_DEC[toAsset])} {toAsset}
+                  </p>
+                  <p className="text-[11px] text-[#888888]">
+                    ≈ ${(toAmount * prices[toAsset]).toFixed(2)} USD
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Fee row */}
+            <div className="mx-5 mb-5 flex items-center justify-between bg-[#F5F3EA] rounded-xl px-4 py-2.5">
+              <span className="text-xs text-[#888888]">Gas Fee</span>
+              <span className="text-xs font-semibold text-[#333333]">
+                {feeInAsset.toFixed(6)} {feeConfig.feeAsset} (~${feeConfig.feeUsd.toFixed(2)})
+              </span>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-3 mx-5">
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="flex-1 py-3.5 rounded-xl text-sm font-semibold btn-3d-silver"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={executeSwap}
+                className="flex-1 py-3.5 rounded-xl text-sm font-bold btn-3d-gold"
+              >
+                Confirm Swap
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Header */}
@@ -566,26 +668,6 @@ export function SwapPage({ onBack }: SwapPageProps) {
             </div>
           )}
         </div>
-
-        {/* Insufficient fee / balance warning */}
-        {!hasFee && (
-          <div className="flex items-start gap-2 bg-red-50 border border-red-300 rounded-xl px-4 py-3">
-            <IconAlertTriangle size={14} className="text-red-500 mt-0.5 flex-shrink-0" />
-            {fromIsFeeAsset ? (
-              <p className="text-[11px] text-red-600 leading-relaxed">
-                Not enough {fromAsset}. Your swap amount + gas fee is{" "}
-                <strong>{(parsedFrom + feeInAsset).toFixed(6)} {fromAsset}</strong> but you only have{" "}
-                {feeAssetBalance.toFixed(6)} {fromAsset}. Reduce the swap amount or use Max.
-              </p>
-            ) : (
-              <p className="text-[11px] text-red-600 leading-relaxed">
-                Insufficient {feeConfig.feeAsset} for gas fee. Need at least{" "}
-                <strong>{feeInAsset.toFixed(6)} {feeConfig.feeAsset}</strong> but only have{" "}
-                {feeAssetBalance.toFixed(6)} {feeConfig.feeAsset}.
-              </p>
-            )}
-          </div>
-        )}
 
         <button
           onClick={handleSwap}
