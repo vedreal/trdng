@@ -588,19 +588,22 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                 <img src={COIN_ICONS.USDT} alt="USDT" className="w-10 h-10 rounded-full flex-shrink-0"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 <div className="flex-1 min-w-0">
+                  {/* Row 1: Symbol | $price ±% */}
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-bold text-[#1A1A1A]">USDT</span>
-                    <span className="text-sm font-bold text-[#1A1A1A]">${fmtUsd(spotUsdtBalance)}</span>
-                  </div>
-                  <div className="flex items-center justify-between mt-0.5">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="text-[11px] text-[#888888]">Tether USD</span>
-                      <span className="text-[11px] font-semibold text-[#555]">$1.00</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-semibold text-[#333]">$1.00</span>
                       <PctBadge pct={0} />
                     </div>
+                  </div>
+                  {/* Row 2: Full name | mini chart */}
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-[11px] text-[#888888]">Tether USD</span>
                     <MiniSparkline prices={usdtSpark} isUp={true} />
                   </div>
-                  <div className="flex justify-end mt-0.5">
+                  {/* Row 3: $total value | amount */}
+                  <div className="flex items-center justify-between mt-0.5">
+                    <span className="text-[11px] font-semibold text-[#1A1A1A]">${fmtUsd(spotUsdtBalance)}</span>
                     <span className="text-[11px] text-[#888888]">{fmtUsd(spotUsdtBalance)} USDT</span>
                   </div>
                 </div>
@@ -611,21 +614,24 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                 <img src={COIN_ICONS.XAUT} alt="XAUT" className="w-10 h-10 rounded-full flex-shrink-0"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 <div className="flex-1 min-w-0">
+                  {/* Row 1: Symbol | $price ±% */}
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-bold text-[#1A1A1A]">XAUT</span>
-                    <span className="text-sm font-bold text-[#1A1A1A]">${fmtUsd(xautValueUsdt)}</span>
-                  </div>
-                  <div className="flex items-center justify-between mt-0.5">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="text-[11px] text-[#888888]">Tether Gold</span>
-                      <span className="text-[11px] font-semibold text-[#555]">
-                        ${xautPrice > 0 ? fmtUsd(xautPrice) : "—"}
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-semibold text-[#333]">
+                        {xautPrice > 0 ? `$${fmtUsd(xautPrice)}` : "—"}
                       </span>
                       {xautPrice > 0 && <PctBadge pct={xautChangePct} />}
                     </div>
+                  </div>
+                  {/* Row 2: Full name | mini chart */}
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-[11px] text-[#888888]">Tether Gold</span>
                     <MiniSparkline prices={xautSpark} isUp={xautChangePct >= 0} />
                   </div>
-                  <div className="flex justify-end mt-0.5">
+                  {/* Row 3: $total value | amount */}
+                  <div className="flex items-center justify-between mt-0.5">
+                    <span className="text-[11px] font-semibold text-[#1A1A1A]">${fmtUsd(xautValueUsdt)}</span>
                     <span className="text-[11px] text-[#888888]">{xautBalance.toFixed(6)} XAUT</span>
                   </div>
                 </div>
@@ -636,21 +642,24 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                 <img src={COIN_ICONS.ETH} alt="ETH" className="w-10 h-10 rounded-full flex-shrink-0"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 <div className="flex-1 min-w-0">
+                  {/* Row 1: Symbol | $price ±% */}
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-bold text-[#1A1A1A]">ETH</span>
-                    <span className="text-sm font-bold text-[#1A1A1A]">${fmtUsd(ethValueUsdt)}</span>
-                  </div>
-                  <div className="flex items-center justify-between mt-0.5">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="text-[11px] text-[#888888]">Ethereum</span>
-                      <span className="text-[11px] font-semibold text-[#555]">
-                        ${ethPrice > 0 ? fmtUsd(ethPrice) : "—"}
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-semibold text-[#333]">
+                        {ethPrice > 0 ? `$${fmtUsd(ethPrice)}` : "—"}
                       </span>
                       {ethPrice > 0 && <PctBadge pct={ethChangePct} />}
                     </div>
+                  </div>
+                  {/* Row 2: Full name | mini chart */}
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-[11px] text-[#888888]">Ethereum</span>
                     <MiniSparkline prices={ethSpark} isUp={ethChangePct >= 0} />
                   </div>
-                  <div className="flex justify-end mt-0.5">
+                  {/* Row 3: $total value | amount */}
+                  <div className="flex items-center justify-between mt-0.5">
+                    <span className="text-[11px] font-semibold text-[#1A1A1A]">${fmtUsd(ethValueUsdt)}</span>
                     <span className="text-[11px] text-[#888888]">{ethBalance.toFixed(6)} ETH</span>
                   </div>
                 </div>
@@ -661,21 +670,24 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                 <img src={COIN_ICONS.BNB} alt="BNB" className="w-10 h-10 rounded-full flex-shrink-0"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 <div className="flex-1 min-w-0">
+                  {/* Row 1: Symbol | $price ±% */}
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-bold text-[#1A1A1A]">BNB</span>
-                    <span className="text-sm font-bold text-[#1A1A1A]">${fmtUsd(bnbValueUsdt)}</span>
-                  </div>
-                  <div className="flex items-center justify-between mt-0.5">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="text-[11px] text-[#888888]">BNB</span>
-                      <span className="text-[11px] font-semibold text-[#555]">
-                        ${bnbPrice > 0 ? fmtUsd(bnbPrice) : "—"}
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-semibold text-[#333]">
+                        {bnbPrice > 0 ? `$${fmtUsd(bnbPrice)}` : "—"}
                       </span>
                       {bnbPrice > 0 && <PctBadge pct={bnbChangePct} />}
                     </div>
+                  </div>
+                  {/* Row 2: Full name | mini chart */}
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-[11px] text-[#888888]">BNB</span>
                     <MiniSparkline prices={bnbSpark} isUp={bnbChangePct >= 0} />
                   </div>
-                  <div className="flex justify-end mt-0.5">
+                  {/* Row 3: $total value | amount */}
+                  <div className="flex items-center justify-between mt-0.5">
+                    <span className="text-[11px] font-semibold text-[#1A1A1A]">${fmtUsd(bnbValueUsdt)}</span>
                     <span className="text-[11px] text-[#888888]">{bnbBalance.toFixed(6)} BNB</span>
                   </div>
                 </div>
@@ -686,21 +698,24 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                 <img src={COIN_ICONS.TON} alt="TON" className="w-10 h-10 rounded-full flex-shrink-0"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 <div className="flex-1 min-w-0">
+                  {/* Row 1: Symbol | $price ±% */}
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-bold text-[#1A1A1A]">TON</span>
-                    <span className="text-sm font-bold text-[#1A1A1A]">${fmtUsd(tonValueUsdt)}</span>
-                  </div>
-                  <div className="flex items-center justify-between mt-0.5">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="text-[11px] text-[#888888]">Toncoin</span>
-                      <span className="text-[11px] font-semibold text-[#555]">
-                        ${tonPrice > 0 ? fmtUsd(tonPrice, 3) : "—"}
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-semibold text-[#333]">
+                        {tonPrice > 0 ? `$${fmtUsd(tonPrice, 3)}` : "—"}
                       </span>
                       {tonPrice > 0 && <PctBadge pct={tonChangePct} />}
                     </div>
+                  </div>
+                  {/* Row 2: Full name | mini chart */}
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-[11px] text-[#888888]">Toncoin</span>
                     <MiniSparkline prices={tonSpark} isUp={tonChangePct >= 0} />
                   </div>
-                  <div className="flex justify-end mt-0.5">
+                  {/* Row 3: $total value | amount */}
+                  <div className="flex items-center justify-between mt-0.5">
+                    <span className="text-[11px] font-semibold text-[#1A1A1A]">${fmtUsd(tonValueUsdt)}</span>
                     <span className="text-[11px] text-[#888888]">{tonBalance.toFixed(4)} TON</span>
                   </div>
                 </div>
