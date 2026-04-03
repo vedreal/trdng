@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { IconX, IconChevronDown, IconChevronRight, IconPlus } from "@tabler/icons-react";
 import { useBinancePrice, type CandleData } from "../hooks/useBinancePrice";
 import {
@@ -623,50 +623,179 @@ function TransferModal({
   );
 }
 
-// ── Crypto News Widget (TradingView Timeline) ─────────────────────
+// ── Crypto News Widget (RSS Real-time) ────────────────────────────
+interface NewsItem {
+  title: string;
+  link: string;
+  pubDate: string;
+  thumbnail: string;
+  source: string;
+  coin: string;
+}
+
+const COIN_KEYWORDS: Record<string, string[]> = {
+  BTC: ["bitcoin", "btc"],
+  ETH: ["ethereum", "eth"],
+  BNB: ["bnb", "binance coin", "binance smart chain", "bsc"],
+  SOL: ["solana", "sol"],
+};
+
+const COIN_COLORS: Record<string, string> = {
+  BTC: "#F7931A",
+  ETH: "#627EEA",
+  BNB: "#F3BA2F",
+  SOL: "#9945FF",
+};
+
+function detectCoin(text: string): string {
+  const lower = text.toLowerCase();
+  for (const [coin, keywords] of Object.entries(COIN_KEYWORDS)) {
+    if (keywords.some((kw) => lower.includes(kw))) return coin;
+  }
+  return "CRYPTO";
+}
+
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
+const RSS_SOURCES = [
+  "https://cointelegraph.com/rss",
+  "https://coindesk.com/arc/outboundfeeds/rss/",
+];
+
+async function fetchRssNews(): Promise<NewsItem[]> {
+  const allItems: NewsItem[] = [];
+  const KEYWORDS_FLAT = Object.values(COIN_KEYWORDS).flat();
+
+  await Promise.allSettled(
+    RSS_SOURCES.map(async (rssUrl) => {
+      try {
+        const url = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}&count=30`;
+        const res = await fetch(url, { cache: "no-store" });
+        const data = await res.json();
+        if (data.status !== "ok") return;
+        const sourceName = data.feed?.title?.replace(" - Latest Cryptocurrency News", "").replace(" | Cointelegraph", "") || "Crypto News";
+        for (const item of data.items ?? []) {
+          const text = `${item.title ?? ""} ${item.description ?? ""} ${(item.categories ?? []).join(" ")}`.toLowerCase();
+          if (!KEYWORDS_FLAT.some((kw) => text.includes(kw))) continue;
+          allItems.push({
+            title: item.title ?? "",
+            link: item.link ?? "#",
+            pubDate: item.pubDate ?? "",
+            thumbnail: item.thumbnail ?? "",
+            source: sourceName,
+            coin: detectCoin(item.title + " " + (item.description ?? "")),
+          });
+        }
+      } catch {
+        // ignore failed source
+      }
+    })
+  );
+
+  allItems.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+  const seen = new Set<string>();
+  return allItems.filter((it) => {
+    if (seen.has(it.title)) return false;
+    seen.add(it.title);
+    return true;
+  }).slice(0, 5);
+}
+
 function CryptoNewsWidget() {
-  const ref = useRef<HTMLDivElement>(null);
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState("");
+
+  async function load() {
+    setLoading(true);
+    setError(false);
+    try {
+      const items = await fetchRssNews();
+      setNews(items);
+      setLastUpdated(new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }));
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    if (!ref.current) return;
-    ref.current.innerHTML = "";
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "tradingview-widget-container";
-
-    const widgetDiv = document.createElement("div");
-    widgetDiv.className = "tradingview-widget-container__widget";
-    wrapper.appendChild(widgetDiv);
-
-    const script = document.createElement("script");
-    script.type = "text/javascript";
-    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-timeline.js";
-    script.async = true;
-    script.innerHTML = JSON.stringify({
-      feedMode: "market",
-      market: "crypto",
-      isTransparent: true,
-      displayMode: "compact",
-      width: "100%",
-      height: 420,
-      colorTheme: "light",
-      locale: "en"
-    });
-    wrapper.appendChild(script);
-
-    ref.current.appendChild(wrapper);
-
-    return () => {
-      if (ref.current) ref.current.innerHTML = "";
-    };
+    load();
+    const timer = setInterval(load, 5 * 60 * 1000);
+    return () => clearInterval(timer);
   }, []);
 
   return (
-    <div
-      ref={ref}
-      className="mx-3 mt-1 mb-3 rounded-2xl overflow-hidden border border-[#D4AF37] bg-white"
-      style={{ minHeight: 420 }}
-    />
+    <div className="mx-3 mt-1 mb-3 rounded-2xl overflow-hidden border border-[#D4AF37] panel-silver">
+      {/* Header bar */}
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#E0D8B0]">
+        <span className="text-xs font-semibold text-[#888888]">Crypto News · BTC ETH BNB SOL</span>
+        <div className="flex items-center gap-2">
+          {lastUpdated && (
+            <span className="text-[10px] text-[#AAAAAA]">Updated {lastUpdated}</span>
+          )}
+          <button
+            onClick={load}
+            className="text-[10px] font-bold px-2 py-0.5 rounded-full btn-3d-gold leading-tight">
+            ↻
+          </button>
+        </div>
+      </div>
+
+      {loading && (
+        <div className="py-10 flex flex-col items-center gap-2">
+          <div className="w-6 h-6 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs text-[#AAAAAA]">Loading latest news…</span>
+        </div>
+      )}
+
+      {error && !loading && (
+        <div className="py-10 flex flex-col items-center gap-3">
+          <span className="text-sm text-[#AAAAAA]">Failed to load news</span>
+          <button onClick={load} className="text-xs px-4 py-1.5 rounded-lg btn-3d-gold">Retry</button>
+        </div>
+      )}
+
+      {!loading && !error && news.length === 0 && (
+        <div className="py-10 text-center text-sm text-[#AAAAAA]">No recent news found</div>
+      )}
+
+      {!loading && !error && news.length > 0 && (
+        <div className="divide-y divide-[#E8E4D0]">
+          {news.map((item, i) => (
+            <a
+              key={i}
+              href={item.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-start gap-3 px-4 py-3 hover:bg-[#F5F0DC] transition-colors active:bg-[#EDE8D0]">
+              {/* Coin badge */}
+              <div
+                className="mt-0.5 flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-white text-[8px] font-bold"
+                style={{ background: COIN_COLORS[item.coin] ?? "#999" }}>
+                {item.coin === "CRYPTO" ? "₿" : item.coin.slice(0, 3)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-[#1A1A1A] leading-snug line-clamp-2">{item.title}</p>
+                <p className="mt-0.5 text-[10px] text-[#AAAAAA]">
+                  {timeAgo(item.pubDate)} · {item.source}
+                </p>
+              </div>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
