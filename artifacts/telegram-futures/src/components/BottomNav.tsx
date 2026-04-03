@@ -17,22 +17,22 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
     {
       id: "portfolio",
       label: "Portfolio",
-      icon: (active) => <IconWallet size={34} stroke={active ? 2.2 : 1.7} />,
+      icon: (active) => <IconWallet size={40} stroke={active ? 2.2 : 1.7} />,
     },
     {
       id: "futures",
       label: "Futures",
-      icon: (active) => <IconChartCandle size={34} stroke={active ? 2.2 : 1.7} />,
+      icon: (active) => <IconChartCandle size={40} stroke={active ? 2.2 : 1.7} />,
     },
     {
       id: "earn",
       label: "Earn",
-      icon: (active) => <IconCoins size={34} stroke={active ? 2.2 : 1.7} />,
+      icon: (active) => <IconCoins size={40} stroke={active ? 2.2 : 1.7} />,
     },
     {
       id: "profile",
       label: "Profile",
-      icon: (active) => <IconUserCircle size={34} stroke={active ? 2.2 : 1.7} />,
+      icon: (active) => <IconUserCircle size={40} stroke={active ? 2.2 : 1.7} />,
     },
   ];
 
@@ -42,7 +42,7 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
         <div
           className="rounded-3xl overflow-hidden relative"
           style={{
-            background: "linear-gradient(135deg, rgba(232,200,74,0.72) 0%, rgba(212,175,55,0.78) 40%, rgba(184,150,12,0.82) 80%, rgba(155,122,26,0.85) 100%)",
+            background: "linear-gradient(135deg, rgba(232,200,74,0.38) 0%, rgba(212,175,55,0.44) 40%, rgba(184,150,12,0.48) 80%, rgba(155,122,26,0.52) 100%)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
             boxShadow: "0 8px 32px rgba(0,0,0,0.22), 0 2px 0 rgba(255,255,255,0.25) inset",
