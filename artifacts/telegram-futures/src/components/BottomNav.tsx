@@ -38,7 +38,7 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none">
-      <div className="max-w-md mx-auto pb-3 flex justify-end pr-4 pointer-events-auto">
+      <div className="max-w-md mx-auto pb-6 flex justify-center pointer-events-auto">
         <div
           className="rounded-3xl overflow-hidden relative"
           style={{
@@ -63,7 +63,7 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
                   onClick={() => onChange(item.id)}
                   className="flex flex-col items-center justify-center px-2.5 py-1 transition-all active:scale-90"
                   style={{
-                    color: active ? "#3A1A00" : "rgba(255,255,255,0.82)",
+                    color: active ? "#D4AF37" : "rgba(255,255,255,0.82)",
                     filter: active ? "drop-shadow(0 1px 2px rgba(0,0,0,0.25))" : "none",
                     transition: "all 0.2s ease",
                   }}
