@@ -27,8 +27,14 @@ const COIN_NAMES: Record<CoinSymbol, string> = {
 
 // Decimals used for display
 const COIN_DEC: Record<CoinSymbol, number> = {
-  USDT: 2, XAUT: 6, ETH: 6, BNB: 4, TON: 4,
+  USDT: 2, XAUT: 6, ETH: 6, BNB: 7, TON: 6,
 };
+
+// Truncate (floor) a number to N decimal places — avoids rounding up past balance
+function truncateDec(value: number, decimals: number): number {
+  const factor = Math.pow(10, decimals);
+  return Math.floor(value * factor) / factor;
+}
 
 // Non-USDT coins that can be swapped
 const ALT_COINS: CoinSymbol[] = ["XAUT", "ETH", "BNB", "TON"];
@@ -271,7 +277,9 @@ export function SwapPage({ onBack }: SwapPageProps) {
   };
 
   const handleMax = () => {
-    setFromAmount(maxFrom.toFixed(COIN_DEC[fromAsset]));
+    const dec = COIN_DEC[fromAsset];
+    const truncated = truncateDec(maxFrom, dec);
+    setFromAmount(truncated.toFixed(dec));
   };
 
   // Open confirm modal after validation
@@ -282,7 +290,7 @@ export function SwapPage({ onBack }: SwapPageProps) {
         return showToast(`Insufficient ${fromAsset}. Use Max button.`);
       }
     } else {
-      if (parsedFrom > balances[fromAsset]) return showToast(`Insufficient ${fromAsset} balance`);
+      if (parsedFrom > balances[fromAsset] + 1e-9) return showToast(`Insufficient ${fromAsset} balance`);
       if (!hasFee) {
         return showToast(`Insufficient ${feeConfig.feeAsset} for gas fee`);
       }
