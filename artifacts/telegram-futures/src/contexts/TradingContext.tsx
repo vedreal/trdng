@@ -82,7 +82,7 @@ export function TradingProvider({ children }: { children: ReactNode }) {
       if (!ok) return { success: false, message: "Insufficient futures balance" };
       setSpotUsdtBalance((b) => parseFloat((b + amount).toFixed(5)));
       addWalletTx({ type: "transfer", asset: "USDT (Futures)", amount, toAsset: "USDT", toAmount: amount });
-      return { success: true, message: `Transferred $${amount.toFixed(2)} to Portfolio` };
+      return { success: true, message: `Transferred $${amount.toFixed(2)} to Spot` };
     },
     [store, addWalletTx]
   );

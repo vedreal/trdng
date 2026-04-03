@@ -1089,7 +1089,7 @@ export function FuturesPage() {
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm text-[#777777]">Available</span>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-[#333333]">${fmt(balance, 2)} USDT</span>
+              <span className="text-sm font-semibold text-[#333333]">{fmt(balance, 2)} USDT</span>
               <button
                 onClick={() => setShowTransferModal(true)}
                 className="text-[10px] font-bold px-2 py-0.5 rounded-full btn-3d-gold leading-tight">
