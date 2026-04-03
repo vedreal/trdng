@@ -244,7 +244,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
   ];
 
   return (
-    <div className="flex flex-col h-full page-bg overflow-y-auto pb-28">
+    <div className="flex flex-col h-full page-bg overflow-hidden">
 
       {showTransferModal && (
         <TransferModal
@@ -257,15 +257,18 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
         />
       )}
 
-      <div className="relative flex items-center justify-center px-4 py-3 panel-header border-b border-[#C8B040] flex-shrink-0">
-        <span className="font-bold text-[#1A1A1A] text-base">Portfolio</span>
-        <div className="absolute right-4 flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full bg-green-500" />
-          <span className="text-[10px] text-[#666666]">MAINNET</span>
-        </div>
-      </div>
+      {/* ── FIXED TOP SECTION (does not scroll) ── */}
+      <div className="flex-shrink-0">
 
-      <div className="px-4 py-4 space-y-4">
+        <div className="relative flex items-center justify-center px-4 py-3 panel-header border-b border-[#C8B040]">
+          <span className="font-bold text-[#1A1A1A] text-base">Portfolio</span>
+          <div className="absolute right-4 flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-green-500" />
+            <span className="text-[10px] text-[#666666]">MAINNET</span>
+          </div>
+        </div>
+
+        <div className="px-4 pt-4 space-y-4">
 
         {/* Balance card */}
         <div className="rounded-2xl shadow-md relative overflow-hidden"
@@ -344,23 +347,28 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
           </div>
         )}
 
-        {/* Assets */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-semibold text-[#888888] uppercase tracking-wide">Assets</p>
-            <div className="flex rounded-lg border border-[#C8C0A0] bg-[#E8E4D0] p-0.5 gap-0.5">
-              {(["spot", "futures"] as const).map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setAssetTab(tab)}
-                  className={`px-3 py-0.5 rounded-md text-[11px] font-semibold transition-all ${
-                    assetTab === tab ? "btn-3d-gold" : "text-[#888888]"
-                  }`}>
-                  {tab === "spot" ? "Spot" : "Futures"}
-                </button>
-              ))}
-            </div>
+        {/* Assets header + tab switcher — stays fixed */}
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold text-[#888888] uppercase tracking-wide">Assets</p>
+          <div className="flex rounded-lg border border-[#C8C0A0] bg-[#E8E4D0] p-0.5 gap-0.5">
+            {(["spot", "futures"] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setAssetTab(tab)}
+                className={`px-3 py-0.5 rounded-md text-[11px] font-semibold transition-all ${
+                  assetTab === tab ? "btn-3d-gold" : "text-[#888888]"
+                }`}>
+                {tab === "spot" ? "Spot" : "Futures"}
+              </button>
+            ))}
           </div>
+        </div>
+
+        </div>{/* end px-4 pt-4 */}
+      </div>{/* end flex-shrink-0 */}
+
+      {/* ── SCROLLABLE ASSET LIST ONLY ── */}
+      <div className="flex-1 overflow-y-auto px-4 pb-28 pt-3">
 
           {/* Spot tab — order: USDT, XAUT, ETH, BNB, TON */}
           {assetTab === "spot" && (
@@ -554,8 +562,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
               </>
             </div>
           )}
-        </div>
-      </div>
+      </div>{/* end scrollable */}
     </div>
   );
 }
