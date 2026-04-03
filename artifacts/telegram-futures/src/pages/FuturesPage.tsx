@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { IconX, IconChevronDown, IconChevronRight, IconPlus } from "@tabler/icons-react";
 import { useBinancePrice, type CandleData } from "../hooks/useBinancePrice";
 import {
@@ -623,6 +623,53 @@ function TransferModal({
   );
 }
 
+// ── Crypto News Widget (TradingView Timeline) ─────────────────────
+function CryptoNewsWidget() {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    ref.current.innerHTML = "";
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "tradingview-widget-container";
+
+    const widgetDiv = document.createElement("div");
+    widgetDiv.className = "tradingview-widget-container__widget";
+    wrapper.appendChild(widgetDiv);
+
+    const script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-timeline.js";
+    script.async = true;
+    script.innerHTML = JSON.stringify({
+      feedMode: "market",
+      market: "crypto",
+      isTransparent: true,
+      displayMode: "compact",
+      width: "100%",
+      height: 420,
+      colorTheme: "light",
+      locale: "en"
+    });
+    wrapper.appendChild(script);
+
+    ref.current.appendChild(wrapper);
+
+    return () => {
+      if (ref.current) ref.current.innerHTML = "";
+    };
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className="mx-3 mt-1 mb-3 rounded-2xl overflow-hidden border border-[#D4AF37] bg-white"
+      style={{ minHeight: 420 }}
+    />
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────
 export function FuturesPage() {
   const [selectedPair, setSelectedPair] = useState<TradingPair>(TRADING_PAIRS[0]);
@@ -648,6 +695,7 @@ export function FuturesPage() {
   const [entryTp, setEntryTp] = useState("");
 
   const [activeTab, setActiveTab]       = useState<TabType>("position");
+  const [contractTab, setContractTab]   = useState<"trade" | "news">("trade");
   const [showLevModal, setShowLevModal] = useState(false);
   const [editingPos, setEditingPos]     = useState<Position | null>(null);
   const [closingPos, setClosingPos]     = useState<Position | null>(null);
@@ -859,10 +907,10 @@ export function FuturesPage() {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#C8B040] flex-shrink-0 panel-header">
-        <div className="w-[26px]" />
-        <span className="text-base font-bold text-[#1A1A1A] tracking-tight">Futures Trade</span>
-        <div className="flex items-center gap-2">
+      <div className="relative flex items-center px-4 py-3 border-b border-[#C8B040] flex-shrink-0 panel-header">
+        <div className="w-[60px]" />
+        <span className="absolute left-1/2 -translate-x-1/2 text-base font-bold text-[#1A1A1A] tracking-tight">Futures Trade</span>
+        <div className="flex items-center gap-2 ml-auto">
           <div className="p-1 w-[26px] h-[26px]" />
           <div className="p-1 w-[26px] h-[26px]" />
         </div>
@@ -911,8 +959,33 @@ export function FuturesPage() {
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto pb-28">
 
+        {/* Contract header with Trade/News toggle */}
+        <div className="flex items-center justify-between px-3 pt-3 pb-2">
+          <span className="text-sm font-bold text-[#1A1A1A]">Contract</span>
+          <div className="flex rounded-xl border border-[#C8C0A0] p-1 bg-[#E8E4D0]">
+            <button
+              onClick={() => setContractTab("trade")}
+              className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                contractTab === "trade" ? "btn-3d-gold" : "text-[#888888]"
+              }`}>
+              Trade
+            </button>
+            <button
+              onClick={() => setContractTab("news")}
+              className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                contractTab === "news" ? "btn-3d-gold" : "text-[#888888]"
+              }`}>
+              News
+            </button>
+          </div>
+        </div>
+
+        {contractTab === "news" && <CryptoNewsWidget />}
+
+        {contractTab === "trade" && <>
+
         {/* Trade panel */}
-        <div className="mx-3 mt-3 panel-card rounded-2xl p-4 shadow-sm" style={{ border: '1px solid #D4AF37' }}>
+        <div className="mx-3 mt-0 panel-card rounded-2xl p-4 shadow-sm" style={{ border: '1px solid #D4AF37' }}>
 
           {/* Leverage selector */}
           <div className="flex items-center justify-between mb-3">
@@ -1209,6 +1282,9 @@ export function FuturesPage() {
             </div>
           )}
         </div>
+
+        </>}
+
       </div>
 
       {/* Leverage modal */}
