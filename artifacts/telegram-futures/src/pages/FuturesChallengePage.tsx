@@ -132,7 +132,7 @@ export function FuturesChallengePage({ onBack }: Props) {
                 <IconTrendingUp size={22} color="#D4AF37" stroke={1.8} />
               </div>
               <div>
-                <p className="text-white font-bold text-lg leading-tight">Up to $50 USDT</p>
+                <p className="text-white font-bold text-lg leading-tight">Up to 50 USDT</p>
                 <p className="text-[#D4AF37] text-xs font-semibold">Futures Trading Bonus</p>
               </div>
             </div>
@@ -146,9 +146,9 @@ export function FuturesChallengePage({ onBack }: Props) {
 
           <div className="px-5 pb-5 grid grid-cols-3 gap-3">
             {[
-              { label: "Max Reward",    value: "$50 USDT" },
+              { label: "Max Reward",    value: "50 USDT" },
               { label: "Bonus Valid",   value: "7 Days"   },
-              { label: "Payout",        value: "Instant"  },
+              { label: "Distribution",        value: "Instant"  },
             ].map((item) => (
               <div key={item.label} className="text-center">
                 <p className="text-white font-bold text-sm">{item.value}</p>
