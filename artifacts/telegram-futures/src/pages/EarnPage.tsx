@@ -201,7 +201,7 @@ export function EarnPage() {
   };
 
   return (
-    <div key="earn-main" className="page-enter flex flex-col h-full page-bg overflow-y-auto pb-28">
+    <div key="earn-main" className="page-enter flex flex-col h-full page-bg overflow-hidden">
 
       {/* ── Floating Toast ── */}
       {toast && (
@@ -230,12 +230,13 @@ export function EarnPage() {
         </div>
       )}
 
-      {/* ── Header ── */}
+      {/* ── Header — stays fixed ── */}
       <div className="relative flex items-center justify-center px-4 py-3 panel-header border-b border-[#C8B040] flex-shrink-0">
         <span className="font-bold text-[#1A1A1A] text-base">Earn</span>
       </div>
 
-      <div className="px-4 py-4">
+      {/* ── Scrollable content ── */}
+      <div className="flex-1 overflow-y-auto px-4 py-4 pb-28">
 
         {/* ── Single Check-In Card ── */}
         <div
