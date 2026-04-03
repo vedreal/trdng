@@ -210,9 +210,16 @@ export function SwapPage({ onBack }: SwapPageProps) {
   const feeAssetPrice = prices[feeConfig.feeAsset];
   const feeInAsset = feeAssetPrice > 0 ? feeConfig.feeUsd / feeAssetPrice : 0;
   const feeAssetBalance = balances[feeConfig.feeAsset];
-  const hasFee = feeAssetBalance >= feeInAsset;
-
   const parsedFrom = parseFloat(fromAmount) || 0;
+
+  // When fromAsset === feeAsset (e.g. BNB→USDT with BNB fee),
+  // the fee comes out of the same balance as the swap amount.
+  // So we need: parsedFrom + feeInAsset ≤ feeAssetBalance.
+  // Otherwise fee balance is independent.
+  const fromIsFeeAsset = fromAsset === feeConfig.feeAsset;
+  const hasFee = fromIsFeeAsset
+    ? feeAssetBalance >= parsedFrom + feeInAsset
+    : feeAssetBalance >= feeInAsset;
 
   // Estimated output (no fee deduction from output, fee is separate)
   const toAmount = useMemo(() => {
@@ -228,7 +235,10 @@ export function SwapPage({ onBack }: SwapPageProps) {
     ? (feeInAsset / feeAssetBalance) * 100
     : 0;
 
-  const maxFrom = balances[fromAsset];
+  // Max swappable: if fromAsset is also the fee asset, reserve the fee amount
+  const maxFrom = fromIsFeeAsset
+    ? Math.max(0, balances[fromAsset] - feeInAsset)
+    : balances[fromAsset];
 
   const handleFromPick = (coin: CoinSymbol) => {
     if (coin === "USDT") {
@@ -265,11 +275,21 @@ export function SwapPage({ onBack }: SwapPageProps) {
 
   const handleSwap = () => {
     if (parsedFrom <= 0) return showToast("Enter a valid amount");
-    if (parsedFrom > balances[fromAsset]) return showToast(`Insufficient ${fromAsset} balance`);
-    if (!hasFee) {
-      return showToast(
-        `Insufficient ${feeConfig.feeAsset} for gas fee. Need ${feeInAsset.toFixed(6)} ${feeConfig.feeAsset}`
-      );
+
+    if (fromIsFeeAsset) {
+      // from balance must cover both the swap amount AND the gas fee
+      if (parsedFrom + feeInAsset > balances[fromAsset]) {
+        return showToast(
+          `Insufficient ${fromAsset}. Need ${(parsedFrom + feeInAsset).toFixed(6)} ${fromAsset} (swap + gas fee)`
+        );
+      }
+    } else {
+      if (parsedFrom > balances[fromAsset]) return showToast(`Insufficient ${fromAsset} balance`);
+      if (!hasFee) {
+        return showToast(
+          `Insufficient ${feeConfig.feeAsset} for gas fee. Need ${feeInAsset.toFixed(6)} ${feeConfig.feeAsset}`
+        );
+      }
     }
 
     const decFrom = COIN_DEC[fromAsset];
@@ -547,15 +567,23 @@ export function SwapPage({ onBack }: SwapPageProps) {
           )}
         </div>
 
-        {/* Insufficient fee warning */}
+        {/* Insufficient fee / balance warning */}
         {!hasFee && (
           <div className="flex items-start gap-2 bg-red-50 border border-red-300 rounded-xl px-4 py-3">
             <IconAlertTriangle size={14} className="text-red-500 mt-0.5 flex-shrink-0" />
-            <p className="text-[11px] text-red-600 leading-relaxed">
-              Insufficient {feeConfig.feeAsset} for gas fee. You need at least{" "}
-              <strong>{feeInAsset.toFixed(6)} {feeConfig.feeAsset}</strong> but only have{" "}
-              {feeAssetBalance.toFixed(6)} {feeConfig.feeAsset}.
-            </p>
+            {fromIsFeeAsset ? (
+              <p className="text-[11px] text-red-600 leading-relaxed">
+                Not enough {fromAsset}. Your swap amount + gas fee is{" "}
+                <strong>{(parsedFrom + feeInAsset).toFixed(6)} {fromAsset}</strong> but you only have{" "}
+                {feeAssetBalance.toFixed(6)} {fromAsset}. Reduce the swap amount or use Max.
+              </p>
+            ) : (
+              <p className="text-[11px] text-red-600 leading-relaxed">
+                Insufficient {feeConfig.feeAsset} for gas fee. Need at least{" "}
+                <strong>{feeInAsset.toFixed(6)} {feeConfig.feeAsset}</strong> but only have{" "}
+                {feeAssetBalance.toFixed(6)} {feeConfig.feeAsset}.
+              </p>
+            )}
           </div>
         )}
 
