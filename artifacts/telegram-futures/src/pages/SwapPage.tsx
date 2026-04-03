@@ -27,7 +27,7 @@ const COIN_NAMES: Record<CoinSymbol, string> = {
 
 // Decimals used for display
 const COIN_DEC: Record<CoinSymbol, number> = {
-  USDT: 2, XAUT: 6, ETH: 6, BNB: 7, TON: 6,
+  USDT: 2, XAUT: 6, ETH: 6, BNB: 6, TON: 4,
 };
 
 // Truncate (floor) a number to N decimal places — avoids rounding up past balance

@@ -1,10 +1,13 @@
 import { useMemo, useState } from "react";
 import { useTrading } from "../contexts/TradingContext";
 import { useBinancePrice } from "../hooks/useBinancePrice";
+import { useSparkline } from "../hooks/useSparkline";
+import type { ClosedTrade } from "../hooks/useTradingStore";
 import {
   IconX, IconArrowBarToDown, IconArrowBarToUp,
   IconSwitchVertical, IconArrowsRightLeft,
-  IconClock, IconGift,
+  IconClock, IconGift, IconChevronDown, IconChevronUp,
+  IconChevronLeft, IconChevronRight,
 } from "@tabler/icons-react";
 
 const IPFS = "https://gold-defensive-cattle-30.mypinata.cloud/ipfs/";
@@ -25,6 +28,170 @@ TODAY_START.setHours(0, 0, 0, 0);
 
 function fmtUsd(n: number, dec = 2) {
   return n.toLocaleString("en-US", { minimumFractionDigits: dec, maximumFractionDigits: dec });
+}
+
+// ── Mini Sparkline SVG ─────────────────────────────────────────────────────
+function MiniSparkline({ prices, isUp }: { prices: number[]; isUp: boolean }) {
+  if (prices.length < 2) {
+    return <div className="w-16 h-8 flex-shrink-0" />;
+  }
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  const range = max - min || max * 0.001 || 1;
+  const W = 64;
+  const H = 30;
+  const pad = 2;
+
+  const pts = prices
+    .map((p, i) => {
+      const x = pad + (i / (prices.length - 1)) * (W - pad * 2);
+      const y = H - pad - ((p - min) / range) * (H - pad * 2);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+
+  const color = isUp ? "#16a34a" : "#ef4444";
+  const fillColor = isUp ? "rgba(22,163,74,0.08)" : "rgba(239,68,68,0.08)";
+
+  const firstPt = prices.map((p, i) => {
+    const x = pad + (i / (prices.length - 1)) * (W - pad * 2);
+    const y = H - pad - ((p - min) / range) * (H - pad * 2);
+    return { x, y };
+  });
+  const fillPath =
+    `M${firstPt[0].x.toFixed(1)},${H} ` +
+    firstPt.map((p) => `L${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ") +
+    ` L${firstPt[firstPt.length - 1].x.toFixed(1)},${H} Z`;
+
+  return (
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="flex-shrink-0 overflow-visible">
+      <path d={fillPath} fill={fillColor} />
+      <polyline
+        points={pts}
+        fill="none"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+// ── Futures PnL Calendar ───────────────────────────────────────────────────
+function FuturesPnlCalendar({ history }: { history: ClosedTrade[] }) {
+  const today = new Date();
+  const [viewYear, setViewYear]   = useState(today.getFullYear());
+  const [viewMonth, setViewMonth] = useState(today.getMonth());
+
+  const dailyPnl = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const t of history) {
+      const d = new Date(t.closeTime);
+      const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      map[key] = (map[key] ?? 0) + t.pnl;
+    }
+    return map;
+  }, [history]);
+
+  const monthlyTotal = useMemo(() => {
+    return Object.entries(dailyPnl)
+      .filter(([key]) => {
+        const [y, m] = key.split("-").map(Number);
+        return y === viewYear && m === viewMonth;
+      })
+      .reduce((sum, [, v]) => sum + v, 0);
+  }, [dailyPnl, viewYear, viewMonth]);
+
+  const firstDay = new Date(viewYear, viewMonth, 1);
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  let startDow = firstDay.getDay();
+  startDow = startDow === 0 ? 6 : startDow - 1; // Mon=0 ... Sun=6
+
+  const cells: (number | null)[] = [
+    ...Array(startDow).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ];
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const prevMonth = () => {
+    if (viewMonth === 0) { setViewYear((y) => y - 1); setViewMonth(11); }
+    else setViewMonth((m) => m - 1);
+  };
+  const nextMonth = () => {
+    if (viewMonth === 11) { setViewYear((y) => y + 1); setViewMonth(0); }
+    else setViewMonth((m) => m + 1);
+  };
+
+  const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const DOW = ["Mo","Tu","We","Th","Fr","Sa","Su"];
+
+  return (
+    <div className="mt-3 px-1">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-2">
+        <button onClick={prevMonth} className="w-7 h-7 flex items-center justify-center rounded-full bg-[#E8E4D0] text-[#666] active:scale-90">
+          <IconChevronLeft size={14} stroke={2.5} />
+        </button>
+        <div className="text-center">
+          <span className="text-xs font-bold text-[#1A1A1A]">{MONTH_NAMES[viewMonth]} {viewYear}</span>
+          <div className={`text-[10px] font-semibold mt-0.5 ${monthlyTotal >= 0 ? "text-green-600" : "text-red-500"}`}>
+            Monthly: {monthlyTotal >= 0 ? "+" : ""}${fmtUsd(monthlyTotal)}
+          </div>
+        </div>
+        <button onClick={nextMonth} className="w-7 h-7 flex items-center justify-center rounded-full bg-[#E8E4D0] text-[#666] active:scale-90">
+          <IconChevronRight size={14} stroke={2.5} />
+        </button>
+      </div>
+
+      {/* Day headers */}
+      <div className="grid grid-cols-7 mb-1">
+        {DOW.map((d) => (
+          <div key={d} className="text-center text-[9px] font-semibold text-[#AAAAAA]">{d}</div>
+        ))}
+      </div>
+
+      {/* Day cells */}
+      <div className="grid grid-cols-7 gap-y-0.5">
+        {cells.map((day, idx) => {
+          if (!day) return <div key={idx} />;
+          const key = `${viewYear}-${viewMonth}-${day}`;
+          const pnl = dailyPnl[key];
+          const isToday =
+            day === today.getDate() &&
+            viewMonth === today.getMonth() &&
+            viewYear === today.getFullYear();
+
+          const hasPnl = pnl !== undefined;
+          const isPos  = hasPnl && pnl >= 0;
+          const isNeg  = hasPnl && pnl < 0;
+
+          return (
+            <div
+              key={idx}
+              className={`flex flex-col items-center justify-center rounded-lg py-0.5 min-h-[38px] relative ${
+                isToday ? "ring-1 ring-[#D4AF37]" : ""
+              } ${isPos ? "bg-green-50" : isNeg ? "bg-red-50" : ""}`}
+            >
+              <span className={`text-[10px] font-semibold ${
+                isToday ? "text-[#C9A227]" :
+                isPos ? "text-green-700" :
+                isNeg ? "text-red-600" :
+                "text-[#999]"
+              }`}>
+                {day}
+              </span>
+              {hasPnl && (
+                <span className={`text-[8px] font-bold leading-tight ${isPos ? "text-green-600" : "text-red-500"}`}>
+                  {isPos ? "+" : ""}{Math.abs(pnl) >= 1000 ? `${(pnl / 1000).toFixed(1)}k` : pnl.toFixed(1)}
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 // ── Inline Transfer Modal ──────────────────────────────────────────
@@ -138,7 +305,7 @@ function TransferModal({
   );
 }
 
-// ── Main Component ─────────────────────────────────────────────────
+// ── Main Component ─────────────────────────────────────────────────────────
 export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
   const {
     balance, positions, history, getPnl,
@@ -149,13 +316,22 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
   } = useTrading();
 
   const { price: btcPrice }  = useBinancePrice("BTCUSDT");
-  const { price: bnbPrice }  = useBinancePrice("BNBUSDT");
-  const { price: xautPrice } = useBinancePrice("XAUTUSDT");
-  const { price: ethPrice }  = useBinancePrice("ETHUSDT");
-  const { price: tonPrice }  = useBinancePrice("TONUSDT");
+  const { price: bnbPrice,  priceChangePercent: bnbChangePct  } = useBinancePrice("BNBUSDT");
+  const { price: xautPrice, priceChangePercent: xautChangePct } = useBinancePrice("XAUTUSDT");
+  const { price: ethPrice,  priceChangePercent: ethChangePct  } = useBinancePrice("ETHUSDT");
+  const { price: tonPrice,  priceChangePercent: tonChangePct  } = useBinancePrice("TONUSDT");
+
+  // Sparkline data (25 hourly candles for 24h trend)
+  const bnbSpark  = useSparkline("BNBUSDT");
+  const xautSpark = useSparkline("XAUTUSDT");
+  const ethSpark  = useSparkline("ETHUSDT");
+  const tonSpark  = useSparkline("TONUSDT");
+  // USDT is a stablecoin — flat line
+  const usdtSpark = useMemo(() => Array(25).fill(1), []);
 
   const [assetTab, setAssetTab]             = useState<"spot" | "futures">("spot");
   const [showTransferModal, setShowTransfer] = useState(false);
+  const [showPnlCalendar, setShowPnlCalendar] = useState(false);
 
   const unrealizedPnl = useMemo(() => {
     if (btcPrice <= 0) return 0;
@@ -168,11 +344,32 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
       .reduce((sum, t) => sum + t.pnl, 0);
   }, [history]);
 
-  const todayPnl      = unrealizedPnl + todayRealizedPnl;
-  const bnbValueUsdt  = bnbBalance  * (bnbPrice  > 0 ? bnbPrice  : 600);
-  const xautValueUsdt = xautBalance * (xautPrice > 0 ? xautPrice : 2620);
-  const ethValueUsdt  = ethBalance  * (ethPrice  > 0 ? ethPrice  : 3000);
-  const tonValueUsdt  = tonBalance  * (tonPrice  > 0 ? tonPrice  : 5);
+  // Effective prices with fallback
+  const bnbValuePrice  = bnbPrice  > 0 ? bnbPrice  : 600;
+  const xautValuePrice = xautPrice > 0 ? xautPrice : 2620;
+  const ethValuePrice  = ethPrice  > 0 ? ethPrice  : 3000;
+  const tonValuePrice  = tonPrice  > 0 ? tonPrice  : 5;
+
+  // Spot today PnL based on 24h price change of each spot crypto asset
+  const spotTodayPnl = useMemo(() => {
+    return (
+      bnbBalance  * bnbValuePrice  * (bnbChangePct  / 100) +
+      xautBalance * xautValuePrice * (xautChangePct / 100) +
+      ethBalance  * ethValuePrice  * (ethChangePct  / 100) +
+      tonBalance  * tonValuePrice  * (tonChangePct  / 100)
+    );
+  }, [
+    bnbBalance, bnbValuePrice, bnbChangePct,
+    xautBalance, xautValuePrice, xautChangePct,
+    ethBalance, ethValuePrice, ethChangePct,
+    tonBalance, tonValuePrice, tonChangePct,
+  ]);
+
+  const todayPnl      = unrealizedPnl + todayRealizedPnl + spotTodayPnl;
+  const bnbValueUsdt  = bnbBalance  * bnbValuePrice;
+  const xautValueUsdt = xautBalance * xautValuePrice;
+  const ethValueUsdt  = ethBalance  * ethValuePrice;
+  const tonValueUsdt  = tonBalance  * tonValuePrice;
   const totalBalance  = spotUsdtBalance + balance + unrealizedPnl + bnbValueUsdt + xautValueUsdt + ethValueUsdt + tonValueUsdt;
   const todayPct      = totalBalance > 0 ? (todayPnl / (totalBalance - todayPnl)) * 100 : 0;
   const pnlPositive   = todayPnl >= 0;
@@ -242,6 +439,18 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
       icon: <IconArrowsRightLeft size={20} stroke={2} />,
     },
   ];
+
+  // Helper: render a ±% badge
+  const PctBadge = ({ pct }: { pct: number }) => {
+    const pos = pct >= 0;
+    return (
+      <span className={`text-[10px] font-semibold px-1 py-0.5 rounded ${
+        pos ? "text-green-600 bg-green-50" : "text-red-500 bg-red-50"
+      }`}>
+        {pos ? "+" : ""}{pct.toFixed(2)}%
+      </span>
+    );
+  };
 
   return (
     <div className="flex flex-col h-full page-bg overflow-hidden">
@@ -373,8 +582,9 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
           {/* Spot tab — order: USDT, XAUT, ETH, BNB, TON */}
           {assetTab === "spot" && (
             <div className="space-y-2">
+
               {/* USDT */}
-              <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3.5 flex items-center gap-3">
+              <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3 flex items-center gap-3">
                 <img src={COIN_ICONS.USDT} alt="USDT" className="w-10 h-10 rounded-full flex-shrink-0"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 <div className="flex-1 min-w-0">
@@ -383,14 +593,21 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                     <span className="text-sm font-bold text-[#1A1A1A]">${fmtUsd(spotUsdtBalance)}</span>
                   </div>
                   <div className="flex items-center justify-between mt-0.5">
-                    <span className="text-[11px] text-[#888888]">Tether USD</span>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="text-[11px] text-[#888888]">Tether USD</span>
+                      <span className="text-[11px] font-semibold text-[#555]">$1.00</span>
+                      <PctBadge pct={0} />
+                    </div>
+                    <MiniSparkline prices={usdtSpark} isUp={true} />
+                  </div>
+                  <div className="flex justify-end mt-0.5">
                     <span className="text-[11px] text-[#888888]">{fmtUsd(spotUsdtBalance)} USDT</span>
                   </div>
                 </div>
               </div>
 
               {/* XAUT */}
-              <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3.5 flex items-center gap-3">
+              <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3 flex items-center gap-3">
                 <img src={COIN_ICONS.XAUT} alt="XAUT" className="w-10 h-10 rounded-full flex-shrink-0"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 <div className="flex-1 min-w-0">
@@ -399,14 +616,23 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                     <span className="text-sm font-bold text-[#1A1A1A]">${fmtUsd(xautValueUsdt)}</span>
                   </div>
                   <div className="flex items-center justify-between mt-0.5">
-                    <span className="text-[11px] text-[#888888]">Tether Gold</span>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="text-[11px] text-[#888888]">Tether Gold</span>
+                      <span className="text-[11px] font-semibold text-[#555]">
+                        ${xautPrice > 0 ? fmtUsd(xautPrice) : "—"}
+                      </span>
+                      {xautPrice > 0 && <PctBadge pct={xautChangePct} />}
+                    </div>
+                    <MiniSparkline prices={xautSpark} isUp={xautChangePct >= 0} />
+                  </div>
+                  <div className="flex justify-end mt-0.5">
                     <span className="text-[11px] text-[#888888]">{xautBalance.toFixed(6)} XAUT</span>
                   </div>
                 </div>
               </div>
 
               {/* ETH */}
-              <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3.5 flex items-center gap-3">
+              <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3 flex items-center gap-3">
                 <img src={COIN_ICONS.ETH} alt="ETH" className="w-10 h-10 rounded-full flex-shrink-0"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 <div className="flex-1 min-w-0">
@@ -415,14 +641,23 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                     <span className="text-sm font-bold text-[#1A1A1A]">${fmtUsd(ethValueUsdt)}</span>
                   </div>
                   <div className="flex items-center justify-between mt-0.5">
-                    <span className="text-[11px] text-[#888888]">Ethereum</span>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="text-[11px] text-[#888888]">Ethereum</span>
+                      <span className="text-[11px] font-semibold text-[#555]">
+                        ${ethPrice > 0 ? fmtUsd(ethPrice) : "—"}
+                      </span>
+                      {ethPrice > 0 && <PctBadge pct={ethChangePct} />}
+                    </div>
+                    <MiniSparkline prices={ethSpark} isUp={ethChangePct >= 0} />
+                  </div>
+                  <div className="flex justify-end mt-0.5">
                     <span className="text-[11px] text-[#888888]">{ethBalance.toFixed(6)} ETH</span>
                   </div>
                 </div>
               </div>
 
               {/* BNB */}
-              <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3.5 flex items-center gap-3">
+              <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3 flex items-center gap-3">
                 <img src={COIN_ICONS.BNB} alt="BNB" className="w-10 h-10 rounded-full flex-shrink-0"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 <div className="flex-1 min-w-0">
@@ -431,14 +666,23 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                     <span className="text-sm font-bold text-[#1A1A1A]">${fmtUsd(bnbValueUsdt)}</span>
                   </div>
                   <div className="flex items-center justify-between mt-0.5">
-                    <span className="text-[11px] text-[#888888]">BNB</span>
-                    <span className="text-[11px] text-[#888888]">{bnbBalance.toFixed(4)} BNB</span>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="text-[11px] text-[#888888]">BNB</span>
+                      <span className="text-[11px] font-semibold text-[#555]">
+                        ${bnbPrice > 0 ? fmtUsd(bnbPrice) : "—"}
+                      </span>
+                      {bnbPrice > 0 && <PctBadge pct={bnbChangePct} />}
+                    </div>
+                    <MiniSparkline prices={bnbSpark} isUp={bnbChangePct >= 0} />
+                  </div>
+                  <div className="flex justify-end mt-0.5">
+                    <span className="text-[11px] text-[#888888]">{bnbBalance.toFixed(6)} BNB</span>
                   </div>
                 </div>
               </div>
 
               {/* TON */}
-              <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3.5 flex items-center gap-3">
+              <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3 flex items-center gap-3">
                 <img src={COIN_ICONS.TON} alt="TON" className="w-10 h-10 rounded-full flex-shrink-0"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 <div className="flex-1 min-w-0">
@@ -447,7 +691,16 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                     <span className="text-sm font-bold text-[#1A1A1A]">${fmtUsd(tonValueUsdt)}</span>
                   </div>
                   <div className="flex items-center justify-between mt-0.5">
-                    <span className="text-[11px] text-[#888888]">Toncoin</span>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="text-[11px] text-[#888888]">Toncoin</span>
+                      <span className="text-[11px] font-semibold text-[#555]">
+                        ${tonPrice > 0 ? fmtUsd(tonPrice, 3) : "—"}
+                      </span>
+                      {tonPrice > 0 && <PctBadge pct={tonChangePct} />}
+                    </div>
+                    <MiniSparkline prices={tonSpark} isUp={tonChangePct >= 0} />
+                  </div>
+                  <div className="flex justify-end mt-0.5">
                     <span className="text-[11px] text-[#888888]">{tonBalance.toFixed(4)} TON</span>
                   </div>
                 </div>
@@ -458,23 +711,49 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
           {/* Futures tab */}
           {assetTab === "futures" && (
             <div className="space-y-2">
-              <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3.5 flex items-center gap-3">
-                <img src={COIN_ICONS.USDT} alt="USDT" className="w-10 h-10 rounded-full flex-shrink-0"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-[#1A1A1A]">USDT</span>
-                    <span className="text-sm font-bold text-[#1A1A1A]">${fmtUsd(balance + futuresBonus)}</span>
-                  </div>
-                  <div className="flex items-center justify-between mt-0.5">
-                    <span className="text-[11px] text-[#888888]">Futures Balance</span>
-                    <span className="text-[11px] text-[#888888]">{fmtUsd(balance)} USDT</span>
-                  </div>
-                  <div className="flex items-center justify-between mt-0.5">
-                    <span className="text-[11px] text-[#888888]">Futures Bonus</span>
-                    <span className="text-[11px] text-[#888888]">{fmtUsd(futuresBonus)} USDT</span>
+              {/* Futures balance card with collapsible PnL calendar */}
+              <div className="panel-silver border border-[#D4AF37] rounded-2xl overflow-hidden">
+                {/* Balance rows */}
+                <div className="px-4 py-3.5 flex items-center gap-3">
+                  <img src={COIN_ICONS.USDT} alt="USDT" className="w-10 h-10 rounded-full flex-shrink-0"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-[#1A1A1A]">USDT</span>
+                      <span className="text-sm font-bold text-[#1A1A1A]">${fmtUsd(balance + futuresBonus)}</span>
+                    </div>
+                    <div className="flex items-center justify-between mt-0.5">
+                      <span className="text-[11px] text-[#888888]">Futures Balance</span>
+                      <span className="text-[11px] text-[#888888]">{fmtUsd(balance)} USDT</span>
+                    </div>
+                    <div className="flex items-center justify-between mt-0.5">
+                      <span className="text-[11px] text-[#888888]">Futures Bonus</span>
+                      <span className="text-[11px] text-[#888888]">{fmtUsd(futuresBonus)} USDT</span>
+                    </div>
                   </div>
                 </div>
+
+                {/* Collapsible PnL Calendar */}
+                {showPnlCalendar && (
+                  <div className="px-4 pb-3 border-t border-[#E8E0C0]">
+                    <p className="text-[10px] font-semibold text-[#888888] uppercase tracking-wide pt-2 pb-0.5">
+                      Futures PnL Calendar
+                    </p>
+                    <FuturesPnlCalendar history={history} />
+                  </div>
+                )}
+
+                {/* Toggle arrow at bottom center */}
+                <button
+                  onClick={() => setShowPnlCalendar((v) => !v)}
+                  className="w-full flex items-center justify-center py-2 border-t border-[#E8E0C0] text-[#AAAAAA] hover:text-[#888888] active:scale-95 transition-all"
+                  aria-label="Toggle PnL Calendar"
+                >
+                  {showPnlCalendar
+                    ? <IconChevronUp size={16} stroke={2} />
+                    : <IconChevronDown size={16} stroke={2} />
+                  }
+                </button>
               </div>
 
               <>
