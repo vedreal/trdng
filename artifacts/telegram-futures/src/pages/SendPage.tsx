@@ -521,7 +521,7 @@ export function SendPage({ onBack, bnbPrice }: SendPageProps) {
         </div>
 
         {/* XAUT ETH gas warning */}
-        {selectedAsset.xautEthGasFee && (
+        {/*selectedAsset.xautEthGasFee && (
           <div className={`rounded-xl px-4 py-3 flex items-start gap-2 border ${
             ethBalance < fee
               ? "bg-red-50 border-red-300"
@@ -535,7 +535,7 @@ export function SendPage({ onBack, bnbPrice }: SendPageProps) {
               }
             </p>
           </div>
-        )}
+        )*/}
 
         {/* Address input */}
         <div>
