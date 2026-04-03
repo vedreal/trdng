@@ -1037,7 +1037,7 @@ export function FuturesPage() {
 
         {/* Contract header with Trade/News toggle */}
         <div className="flex items-center justify-between px-3 pt-3 pb-2">
-          <span className="text-sm font-bold text-[#1A1A1A]">Contract</span>
+          <span className="text-xs font-semibold text-[#888888] uppercase tracking-wide">Contract</span>
           <div className="flex rounded-xl border border-[#C8C0A0] p-1 bg-[#E8E4D0]">
             <button
               onClick={() => setContractTab("trade")}
