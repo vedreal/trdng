@@ -13,32 +13,32 @@ interface BottomNavProps {
 }
 
 export function BottomNav({ current, onChange }: BottomNavProps) {
-  const items: { id: NavPage; label: string; icon: React.ReactNode }[] = [
+  const items: { id: NavPage; label: string; icon: (active: boolean) => React.ReactNode }[] = [
     {
       id: "portfolio",
       label: "Portfolio",
-      icon: <IconWallet size={22} stroke={1.8} />,
+      icon: (active) => <IconWallet size={28} stroke={active ? 2.2 : 1.7} />,
     },
     {
       id: "futures",
       label: "Futures",
-      icon: <IconChartCandle size={22} stroke={1.8} />,
+      icon: (active) => <IconChartCandle size={28} stroke={active ? 2.2 : 1.7} />,
     },
     {
       id: "earn",
       label: "Earn",
-      icon: <IconCoins size={22} stroke={1.8} />,
+      icon: (active) => <IconCoins size={28} stroke={active ? 2.2 : 1.7} />,
     },
     {
       id: "profile",
       label: "Profile",
-      icon: <IconUserCircle size={22} stroke={1.8} />,
+      icon: (active) => <IconUserCircle size={28} stroke={active ? 2.2 : 1.7} />,
     },
   ];
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none">
-      <div className="max-w-md mx-auto px-4 pb-3 pointer-events-auto">
+      <div className="max-w-md mx-auto pb-3 flex justify-end pr-4 pointer-events-auto">
         <div
           className="rounded-3xl overflow-hidden relative"
           style={{
@@ -54,32 +54,21 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
             style={{ background: "rgba(255,255,255,0.45)" }}
           />
 
-          <div className="flex items-center justify-around px-3 py-2">
+          <div className="flex items-center gap-1 px-4 py-2.5">
             {items.map((item) => {
               const active = current === item.id;
               return (
                 <button
                   key={item.id}
                   onClick={() => onChange(item.id)}
-                  className="flex items-center justify-center transition-all active:scale-90"
+                  className="flex flex-col items-center justify-center px-3 py-1 transition-all active:scale-90"
+                  style={{
+                    color: active ? "#3A1A00" : "rgba(255,255,255,0.82)",
+                    filter: active ? "drop-shadow(0 1px 2px rgba(0,0,0,0.25))" : "none",
+                    transition: "all 0.2s ease",
+                  }}
                 >
-                  <div
-                    className="w-13 h-13 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{
-                      width: 52,
-                      height: 52,
-                      background: active
-                        ? "linear-gradient(to bottom, rgba(255,255,255,0.97) 0%, rgba(255,242,170,0.92) 100%)"
-                        : "linear-gradient(to bottom, rgba(255,255,255,0.78) 0%, rgba(255,235,140,0.68) 100%)",
-                      boxShadow: active
-                        ? "0 3px 0 rgba(0,0,0,0.2), 0 6px 16px rgba(0,0,0,0.18), 0 1px 0 rgba(255,255,255,0.8) inset"
-                        : "0 2px 0 rgba(0,0,0,0.12), 0 3px 8px rgba(0,0,0,0.1), 0 1px 0 rgba(255,255,255,0.5) inset",
-                      color: active ? "#5C3A00" : "#8B6300",
-                      transition: "all 0.45s cubic-bezier(0.22,1,0.36,1)",
-                    }}
-                  >
-                    {item.icon}
-                  </div>
+                  {item.icon(active)}
                 </button>
               );
             })}
