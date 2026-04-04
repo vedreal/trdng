@@ -513,8 +513,8 @@ export function ProfilePage() {
   const [joinDate]      = useState(getOrSetJoinDate);
   const { history }     = useTrading();
 
-  // Points: each trade with net profit >= $1 earns 2 points
-  const points = history.reduce((sum, t) => sum + (t.pnl >= 1 ? 2 : 0), 0);
+  // Points: profit >= $1 earns 2 pts per dollar (floor), e.g. $474 profit = 948 pts
+  const points = history.reduce((sum, t) => sum + (t.pnl >= 1 ? Math.floor(t.pnl) * 2 : 0), 0);
 
   // Re-render on security/referral save
   const [, forceUpdate] = useState(0);
