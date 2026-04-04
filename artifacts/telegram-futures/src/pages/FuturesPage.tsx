@@ -277,7 +277,7 @@ function PositionCard({
   const liqPrice = computeDynamicLiqPrice(pos, futuresBalance, allPositions);
 
   return (
-    <div className="mx-1 mb-3 rounded-2xl border border-[#D4AF37] p-4 shadow-sm panel-silver">
+    <div className="mx-1 mb-3 rounded-2xl p-4 shadow-sm panel-silver">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
@@ -367,7 +367,7 @@ function HistoryCard({ trade }: { trade: ClosedTrade }) {
   const totalFees = trade.openingFee + trade.closingFee;
 
   return (
-    <div className="mx-1 mb-3 rounded-xl border border-[#D8D0A8] p-3 bg-[#EEECE0]">
+    <div className="mx-1 mb-3 rounded-xl p-3 bg-[#EEECE0]">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
@@ -812,7 +812,7 @@ function TraderActivityWidget() {
   }, [events, eventCounter]);
 
   return (
-    <div className="mx-3 mt-1 mb-3 rounded-2xl overflow-hidden border border-[#D4AF37] panel-silver">
+    <div className="mx-3 mt-1 mb-3 rounded-2xl overflow-hidden panel-silver">
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#E0D8B0]">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
@@ -1139,17 +1139,12 @@ export function FuturesPage() {
       )}
 
       {/* Header */}
-      <div className="relative flex items-center px-4 py-3 border-b border-[#C8B040] flex-shrink-0 panel-header">
-        <div className="w-[60px]" />
+      <div className="relative flex items-center px-4 py-3 flex-shrink-0">
         <span className="absolute left-1/2 -translate-x-1/2 text-base font-bold text-[#1A1A1A] tracking-tight">Futures Trade</span>
-        <div className="flex items-center gap-2 ml-auto">
-          <div className="p-1 w-[26px] h-[26px]" />
-          <div className="p-1 w-[26px] h-[26px]" />
-        </div>
       </div>
 
       {/* Price row */}
-      <div className="flex items-center px-4 py-2 flex-shrink-0 panel-header border-b border-[#D8D0A0]">
+      <div className="flex items-center px-4 py-2 flex-shrink-0 border-b border-[#D8D0A0]">
         <img
           src={selectedPair.icon}
           alt={selectedPair.base}
@@ -1170,14 +1165,16 @@ export function FuturesPage() {
       </div>
 
       {/* Interval selector */}
-      <div className="flex items-center px-4 pt-2 pb-1 gap-1 flex-shrink-0 panel-header border-b border-[#D8D0A0]">
+      <div className="flex items-center px-4 pt-1.5 pb-1 gap-0.5 flex-shrink-0 border-b border-[#D8D0A0]">
         {INTERVALS.map((iv) => (
           <button key={iv.value} onClick={() => setInterval(iv.value)}
-            className={`text-sm px-3 py-1 rounded-lg font-medium transition-all ${
-              interval === iv.value
-                ? "btn-3d-gold border-0"
-                : "text-[#777777] hover:text-[#444444]"
-            }`}>
+            className={`text-xs px-2.5 py-0.5 rounded-lg font-medium transition-all ${
+              interval === iv.value ? "text-[#8B6300]" : "text-[#777777]"
+            }`}
+            style={interval === iv.value ? {
+              background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+              boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+            } : {}}>
             {iv.label}
           </button>
         ))}
@@ -1194,19 +1191,27 @@ export function FuturesPage() {
         {/* Contract header with Trade/News toggle */}
         <div className="flex items-center justify-between px-3 pt-3 pb-2">
           <span className="text-xs font-semibold text-[#888888] uppercase tracking-wide">Contract</span>
-          <div className="flex rounded-xl border border-[#C8C0A0] p-1 bg-[#E8E4D0]">
+          <div className="flex bg-[#E8E4D0] rounded-lg p-0.5 gap-0.5">
             <button
               onClick={() => setContractTab("trade")}
-              className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                contractTab === "trade" ? "btn-3d-gold" : "text-[#888888]"
-              }`}>
+              className={`px-3 py-0.5 rounded-md text-xs font-semibold transition-all ${
+                contractTab === "trade" ? "text-[#8B6300]" : "text-[#888888]"
+              }`}
+              style={contractTab === "trade" ? {
+                background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+                boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+              } : {}}>
               Trade
             </button>
             <button
               onClick={() => setContractTab("news")}
-              className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                contractTab === "news" ? "btn-3d-gold" : "text-[#888888]"
-              }`}>
+              className={`px-3 py-0.5 rounded-md text-xs font-semibold transition-all ${
+                contractTab === "news" ? "text-[#8B6300]" : "text-[#888888]"
+              }`}
+              style={contractTab === "news" ? {
+                background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+                boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+              } : {}}>
               Activity
             </button>
           </div>
@@ -1217,12 +1222,32 @@ export function FuturesPage() {
         {contractTab === "trade" && <>
 
         {/* Trade panel */}
-        <div className="mx-3 mt-0 panel-card rounded-2xl p-4 shadow-sm" style={{ border: '1px solid #D4AF37' }}>
+        <div className="mx-3 mt-0 panel-card rounded-2xl p-4 shadow-sm">
 
-          {/* Leverage selector */}
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs text-[#888888] font-medium">Cross Margin</span>
-            <div className="flex gap-1.5">
+          {/* Leverage selector + Order type */}
+          <div className="flex items-start justify-between mb-3">
+            <div>
+              <span className="text-xs text-[#888888] font-medium block mb-1.5">Cross Margin</span>
+              <div className="flex bg-[#E8E4D0] rounded-lg p-0.5 gap-0.5">
+                <button onClick={() => setOrderType("limit")}
+                  className={`px-2.5 py-0.5 rounded-md text-xs font-semibold transition-all ${
+                    orderType === "limit" ? "text-[#8B6300]" : "text-[#888888]"
+                  }`}
+                  style={orderType === "limit" ? {
+                    background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+                    boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+                  } : {}}>Limit</button>
+                <button onClick={() => setOrderType("market")}
+                  className={`px-2.5 py-0.5 rounded-md text-xs font-semibold transition-all ${
+                    orderType === "market" ? "text-[#8B6300]" : "text-[#888888]"
+                  }`}
+                  style={orderType === "market" ? {
+                    background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+                    boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+                  } : {}}>Market</button>
+              </div>
+            </div>
+            <div className="flex gap-1">
               {leverageOptions.map((lev) => (
                 <button
                   key={lev}
@@ -1236,26 +1261,18 @@ export function FuturesPage() {
                       setPendingLev(lev);
                     }
                   }}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-[0.97] ${
-                    leverage === lev ? "btn-3d-gold" : "btn-3d-silver"
+                  className={`px-2 py-0.5 rounded-md text-xs font-bold transition-all active:scale-[0.97] ${
+                    leverage === lev ? "text-[#8B6300]" : "text-[#888888]"
                   }`}
+                  style={leverage === lev ? {
+                    background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+                    boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+                  } : {}}
                 >
                   {lev}x
                 </button>
               ))}
             </div>
-          </div>
-
-          {/* Limit / Market tabs */}
-          <div className="flex rounded-xl border border-[#C8C0A0] p-1 mb-4 bg-[#E8E4D0]">
-            <button onClick={() => setOrderType("limit")}
-              className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
-                orderType === "limit" ? "btn-3d-gold" : "text-[#888888]"
-              }`}>Limit</button>
-            <button onClick={() => setOrderType("market")}
-              className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
-                orderType === "market" ? "btn-3d-gold" : "text-[#888888]"
-              }`}>Market</button>
           </div>
 
           {/* Available */}
@@ -1265,7 +1282,11 @@ export function FuturesPage() {
               <span className="text-sm font-semibold text-[#333333]">{fmt(balance, 2)} USDT</span>
               <button
                 onClick={() => setShowTransferModal(true)}
-                className="text-[10px] font-bold px-2 py-0.5 rounded-full btn-3d-gold leading-tight">
+                className="text-[10px] font-bold px-2 py-0.5 rounded-full leading-tight text-[#8B6300]"
+                style={{
+                  background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+                  boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+                }}>
                 Transfer
               </button>
             </div>
@@ -1415,7 +1436,7 @@ export function FuturesPage() {
         </div>
 
         {/* Position / Orders / History */}
-        <div className="mx-3 mt-3 mb-3 rounded-2xl overflow-hidden shadow-sm border border-[#D4AF37] panel-silver">
+        <div className="mx-3 mt-3 mb-3 rounded-2xl overflow-hidden shadow-sm panel-silver">
           <div className="flex">
             {(["position", "orders", "history"] as TabType[]).map((tab, idx) => (
               <button key={tab} onClick={() => setActiveTab(tab)}
@@ -1465,7 +1486,7 @@ export function FuturesPage() {
                 : pendingOrders.map((order) => {
                   const previewPos = calcEffectivePosition(order.requestedMargin, order.leverage, order.limitPrice, order.stepSize, MAKER_FEE);
                   return (
-                    <div key={order.id} className="mx-1 mb-3 rounded-2xl border border-[#D4AF37] p-4 shadow-sm panel-silver">
+                    <div key={order.id} className="mx-1 mb-3 rounded-2xl p-4 shadow-sm panel-silver">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
