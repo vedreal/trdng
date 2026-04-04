@@ -1139,12 +1139,12 @@ export function FuturesPage() {
       )}
 
       {/* Header */}
-      <div className="relative flex items-center px-4 py-3 flex-shrink-0">
-        <span className="absolute left-1/2 -translate-x-1/2 text-base font-bold text-[#1A1A1A] tracking-tight">Futures Trade</span>
+      <div className="relative flex items-center justify-center px-4 py-3 flex-shrink-0">
+        <span className="text-base font-bold text-[#1A1A1A] tracking-tight">Futures Trade</span>
       </div>
 
       {/* Price row */}
-      <div className="flex items-center px-4 py-2 flex-shrink-0 border-b border-[#D8D0A0]">
+      <div className="flex items-center px-4 py-3 flex-shrink-0">
         <img
           src={selectedPair.icon}
           alt={selectedPair.base}
@@ -1165,7 +1165,7 @@ export function FuturesPage() {
       </div>
 
       {/* Interval selector */}
-      <div className="flex items-center px-4 pt-1.5 pb-1 gap-0.5 flex-shrink-0 border-b border-[#D8D0A0]">
+      <div className="flex items-center px-4 pt-2 pb-2 gap-0.5 flex-shrink-0 border-b border-[#D8D0A0]">
         {INTERVALS.map((iv) => (
           <button key={iv.value} onClick={() => setInterval(iv.value)}
             className={`text-xs px-2.5 py-0.5 rounded-lg font-medium transition-all ${
