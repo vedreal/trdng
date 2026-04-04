@@ -63,7 +63,7 @@
 
 /* ── Page & Panel Backgrounds ─────────────────────────────────────── */
 .page-bg {
-  background: transparent;
+  background: linear-gradient(135deg, #F4F4F4 0%, #EDE8D4 100%);
 }
 
 .panel-silver {

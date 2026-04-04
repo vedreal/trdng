@@ -473,10 +473,10 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
       <div className="flex-shrink-0">
 
         <div className="relative flex items-center justify-center px-4 py-3">
-          <span className="font-bold text-white text-base">Portfolio</span>
+          <span className="font-bold text-[#1A1A1A] text-base">Portfolio</span>
           <div className="absolute right-4 flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full bg-green-500" />
-            <span className="text-[10px] text-white">MAINNET</span>
+            <span className="text-[10px] text-[#666666]">MAINNET</span>
           </div>
         </div>
 
@@ -587,14 +587,14 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
             <div className="space-y-2">
 
               {/* USDT */}
-              <div className="panel-silver rounded-2xl px-4 py-3 flex items-center gap-3 relative overflow-hidden" style={{ backgroundImage: 'url("https://gold-defensive-cattle-30.mypinata.cloud/ipfs/bafybeielcpftt4xbntnfvj3ku6roiauf4neft2bzvqqw7a5rbiq46s2siy")', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+              <div className="panel-silver rounded-2xl px-4 py-3 flex items-center gap-3">
                 <img src={COIN_ICONS.USDT} alt="USDT" className="w-10 h-10 rounded-full flex-shrink-0"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 <div className="flex-1 min-w-0 flex gap-2">
                   {/* Left col: symbol + name + total */}
                   <div className="flex flex-col justify-between flex-1 min-w-0">
                     <span className="text-sm font-bold text-[#1A1A1A] leading-none">USDT</span>
-                    <span className="text-[11px] text-white leading-none mt-[3px]">Tether USD</span>
+                    <span className="text-[11px] text-[#888888] leading-none mt-[3px]">Tether USD</span>
                     <span className="text-[11px] font-semibold text-[#D4AF37] mt-2">{fmtFiat(spotUsdtBalance)}</span>
                   </div>
                   {/* Right col: price+% + chart + amount */}
@@ -610,13 +610,13 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
               </div>
 
               {/* XAUT */}
-              <div className="panel-silver rounded-2xl px-4 py-3 flex items-center gap-3 relative overflow-hidden" style={{ backgroundImage: 'url("https://gold-defensive-cattle-30.mypinata.cloud/ipfs/bafybeielcpftt4xbntnfvj3ku6roiauf4neft2bzvqqw7a5rbiq46s2siy")', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+              <div className="panel-silver rounded-2xl px-4 py-3 flex items-center gap-3">
                 <img src={COIN_ICONS.XAUT} alt="XAUT" className="w-10 h-10 rounded-full flex-shrink-0"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 <div className="flex-1 min-w-0 flex gap-2">
                   <div className="flex flex-col justify-between flex-1 min-w-0">
                     <span className="text-sm font-bold text-[#1A1A1A] leading-none">XAUT</span>
-                    <span className="text-[11px] text-white leading-none mt-[3px]">Tether Gold</span>
+                    <span className="text-[11px] text-[#888888] leading-none mt-[3px]">Tether Gold</span>
                     <span className="text-[11px] font-semibold text-[#D4AF37] mt-2">{fmtFiat(xautValueUsdt)}</span>
                   </div>
                   <div className="flex flex-col items-end justify-between">
@@ -633,13 +633,13 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
               </div>
 
               {/* ETH */}
-              <div className="panel-silver rounded-2xl px-4 py-3 flex items-center gap-3 relative overflow-hidden" style={{ backgroundImage: 'url("https://gold-defensive-cattle-30.mypinata.cloud/ipfs/bafybeielcpftt4xbntnfvj3ku6roiauf4neft2bzvqqw7a5rbiq46s2siy")', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+              <div className="panel-silver rounded-2xl px-4 py-3 flex items-center gap-3">
                 <img src={COIN_ICONS.ETH} alt="ETH" className="w-10 h-10 rounded-full flex-shrink-0"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 <div className="flex-1 min-w-0 flex gap-2">
                   <div className="flex flex-col justify-between flex-1 min-w-0">
                     <span className="text-sm font-bold text-[#1A1A1A] leading-none">ETH</span>
-                    <span className="text-[11px] text-white leading-none mt-[3px]">Ethereum</span>
+                    <span className="text-[11px] text-[#888888] leading-none mt-[3px]">Ethereum</span>
                     <span className="text-[11px] font-semibold text-[#D4AF37] mt-2">{fmtFiat(ethValueUsdt)}</span>
                   </div>
                   <div className="flex flex-col items-end justify-between">
@@ -656,13 +656,13 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
               </div>
 
               {/* BNB */}
-              <div className="panel-silver rounded-2xl px-4 py-3 flex items-center gap-3 relative overflow-hidden" style={{ backgroundImage: 'url("https://gold-defensive-cattle-30.mypinata.cloud/ipfs/bafybeielcpftt4xbntnfvj3ku6roiauf4neft2bzvqqw7a5rbiq46s2siy")', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+              <div className="panel-silver rounded-2xl px-4 py-3 flex items-center gap-3">
                 <img src={COIN_ICONS.BNB} alt="BNB" className="w-10 h-10 rounded-full flex-shrink-0"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 <div className="flex-1 min-w-0 flex gap-2">
                   <div className="flex flex-col justify-between flex-1 min-w-0">
                     <span className="text-sm font-bold text-[#1A1A1A] leading-none">BNB</span>
-                    <span className="text-[11px] text-white leading-none mt-[3px]">BNB</span>
+                    <span className="text-[11px] text-[#888888] leading-none mt-[3px]">BNB</span>
                     <span className="text-[11px] font-semibold text-[#D4AF37] mt-2">{fmtFiat(bnbValueUsdt)}</span>
                   </div>
                   <div className="flex flex-col items-end justify-between">
@@ -679,13 +679,13 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
               </div>
 
               {/* TON */}
-              <div className="panel-silver rounded-2xl px-4 py-3 flex items-center gap-3 relative overflow-hidden" style={{ backgroundImage: 'url("https://gold-defensive-cattle-30.mypinata.cloud/ipfs/bafybeielcpftt4xbntnfvj3ku6roiauf4neft2bzvqqw7a5rbiq46s2siy")', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+              <div className="panel-silver rounded-2xl px-4 py-3 flex items-center gap-3">
                 <img src={COIN_ICONS.TON} alt="TON" className="w-10 h-10 rounded-full flex-shrink-0"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 <div className="flex-1 min-w-0 flex gap-2">
                   <div className="flex flex-col justify-between flex-1 min-w-0">
                     <span className="text-sm font-bold text-[#1A1A1A] leading-none">TON</span>
-                    <span className="text-[11px] text-white leading-none mt-[3px]">Toncoin</span>
+                    <span className="text-[11px] text-[#888888] leading-none mt-[3px]">Toncoin</span>
                     <span className="text-[11px] font-semibold text-[#D4AF37] mt-2">{fmtFiat(tonValueUsdt)}</span>
                   </div>
                   <div className="flex flex-col items-end justify-between">
