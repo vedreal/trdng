@@ -606,7 +606,7 @@ function TransferModal({
           <button
             onClick={() => setAmountInput(maxAmount.toFixed(2))}
             className="text-xs font-semibold text-[#C9A227] hover:text-[#A07800]">
-            Max ${fmt(maxAmount, 2)}
+            Max {fmt(maxAmount, 2)} USDT
           </button>
         </div>
 
