@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TradingProvider } from "@/contexts/TradingContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { BottomNav } from "@/components/BottomNav";
+import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { FuturesPage } from "@/pages/FuturesPage";
 import { PortfolioPage } from "@/pages/PortfolioPage";
 import { ReceivePage } from "@/pages/ReceivePage";
@@ -55,8 +56,9 @@ function AppContent() {
   const showBottomNav = subRoute === null;
 
   return (
-    <div className="relative w-full max-w-md mx-auto overflow-hidden" style={{ height: "100dvh", background: '#DCDCDC' }}>
-      <div className="h-full overflow-hidden">
+    <div className="relative w-full max-w-md mx-auto overflow-hidden" style={{ height: "100dvh" }}>
+      <AnimatedBackground />
+      <div className="h-full overflow-hidden" style={{ position: "relative", zIndex: 1 }}>
         <div key={animKey} className={`${animClass} h-full`}>
           {subRoute === "receive" && <ReceivePage onBack={handleBack} />}
           {subRoute === "send"    && <SendPage onBack={handleBack} bnbPrice={bnbPrice} />}
