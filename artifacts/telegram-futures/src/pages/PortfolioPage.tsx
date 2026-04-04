@@ -587,7 +587,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
             <div className="space-y-2">
 
               {/* USDT */}
-              <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3 flex items-center gap-3">
+              <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3 flex items-center gap-3 relative overflow-hidden" style={{ backgroundImage: 'url("https://gold-defensive-cattle-30.mypinata.cloud/ipfs/bafybeielcpftt4xbntnfvj3ku6roiauf4neft2bzvqqw7a5rbiq46s2siy")', backgroundSize: 'cover', backgroundPosition: 'center' }}>
                 <img src={COIN_ICONS.USDT} alt="USDT" className="w-10 h-10 rounded-full flex-shrink-0"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 <div className="flex-1 min-w-0 flex gap-2">
@@ -610,7 +610,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
               </div>
 
               {/* XAUT */}
-              <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3 flex items-center gap-3">
+              <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3 flex items-center gap-3 relative overflow-hidden" style={{ backgroundImage: 'url("https://gold-defensive-cattle-30.mypinata.cloud/ipfs/bafybeielcpftt4xbntnfvj3ku6roiauf4neft2bzvqqw7a5rbiq46s2siy")', backgroundSize: 'cover', backgroundPosition: 'center' }}>
                 <img src={COIN_ICONS.XAUT} alt="XAUT" className="w-10 h-10 rounded-full flex-shrink-0"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 <div className="flex-1 min-w-0 flex gap-2">
@@ -633,7 +633,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
               </div>
 
               {/* ETH */}
-              <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3 flex items-center gap-3">
+              <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3 flex items-center gap-3 relative overflow-hidden" style={{ backgroundImage: 'url("https://gold-defensive-cattle-30.mypinata.cloud/ipfs/bafybeielcpftt4xbntnfvj3ku6roiauf4neft2bzvqqw7a5rbiq46s2siy")', backgroundSize: 'cover', backgroundPosition: 'center' }}>
                 <img src={COIN_ICONS.ETH} alt="ETH" className="w-10 h-10 rounded-full flex-shrink-0"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 <div className="flex-1 min-w-0 flex gap-2">
@@ -656,7 +656,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
               </div>
 
               {/* BNB */}
-              <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3 flex items-center gap-3">
+              <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3 flex items-center gap-3 relative overflow-hidden" style={{ backgroundImage: 'url("https://gold-defensive-cattle-30.mypinata.cloud/ipfs/bafybeielcpftt4xbntnfvj3ku6roiauf4neft2bzvqqw7a5rbiq46s2siy")', backgroundSize: 'cover', backgroundPosition: 'center' }}>
                 <img src={COIN_ICONS.BNB} alt="BNB" className="w-10 h-10 rounded-full flex-shrink-0"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 <div className="flex-1 min-w-0 flex gap-2">
@@ -679,7 +679,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
               </div>
 
               {/* TON */}
-              <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3 flex items-center gap-3">
+              <div className="panel-silver border border-[#D4AF37] rounded-2xl px-4 py-3 flex items-center gap-3 relative overflow-hidden" style={{ backgroundImage: 'url("https://gold-defensive-cattle-30.mypinata.cloud/ipfs/bafybeielcpftt4xbntnfvj3ku6roiauf4neft2bzvqqw7a5rbiq46s2siy")', backgroundSize: 'cover', backgroundPosition: 'center' }}>
                 <img src={COIN_ICONS.TON} alt="TON" className="w-10 h-10 rounded-full flex-shrink-0"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 <div className="flex-1 min-w-0 flex gap-2">
