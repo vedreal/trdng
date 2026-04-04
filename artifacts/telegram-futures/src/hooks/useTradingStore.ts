@@ -23,6 +23,7 @@ export interface Position {
 
 export interface PendingOrder {
   id: string;
+  symbol: string;
   side: "long" | "short";
   requestedMargin: number;
   limitPrice: number;
@@ -273,6 +274,7 @@ export function useTradingStore() {
   const placeLimitOrder = useCallback(
     (
       side: "long" | "short",
+      symbol: string,
       requestedMargin: number,
       limitPrice: number,
       leverage: number,
@@ -291,6 +293,7 @@ export function useTradingStore() {
 
       const order: PendingOrder = {
         id: Date.now().toString() + Math.random().toString(36).slice(2, 6),
+        symbol,
         side,
         requestedMargin,
         limitPrice,
@@ -313,7 +316,7 @@ export function useTradingStore() {
 
   // Single-position mode: don't fill pending orders if a position is already open
   const checkPendingOrders = useCallback(
-    (marketPrice: number, currentBalance: number) => {
+    (priceMap: Record<string, number>, currentBalance: number) => {
       if (positions.length > 0) return; // block fill when position already exists
 
       setPendingOrders((prev) => {
@@ -323,6 +326,8 @@ export function useTradingStore() {
         const remaining: PendingOrder[] = [];
 
         for (const order of prev) {
+          const marketPrice = priceMap[order.symbol] ?? 0;
+          if (marketPrice <= 0) { remaining.push(order); continue; }
           const shouldFill =
             order.side === "long"
               ? marketPrice <= order.limitPrice
@@ -411,11 +416,14 @@ export function useTradingStore() {
   }, []);
 
   const checkLiquidations = useCallback(
-    (marketPrice: number): { id: string; reason: TriggerReason; closePrice: number }[] => {
+    (priceMap: Record<string, number>): { id: string; reason: TriggerReason; closePrice: number }[] => {
       const result: { id: string; reason: TriggerReason; closePrice: number }[] = [];
       const W = computeWalletBalance(balance, positions);
 
       for (const pos of positions) {
+        const marketPrice = priceMap[pos.symbol] ?? 0;
+        if (marketPrice <= 0) continue;
+
         const liqPrice = calcLiqPrice(pos.side, pos.entryPrice, pos.notional, pos.margin, "Cross", W);
 
         if (pos.side === "long") {
