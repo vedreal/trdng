@@ -600,7 +600,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                   {/* Right col: price+% + chart + amount */}
                   <div className="flex flex-col items-end justify-between">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-semibold text-[#333] leading-none">$1.00</span>
+                      <span className="text-sm font-semibold text-[#333] leading-none">{fmtFiat(1)}</span>
                       <PctBadge pct={0} />
                     </div>
                     <MiniSparkline prices={usdtSpark} isUp={true} />
