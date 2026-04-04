@@ -19,8 +19,9 @@ export interface BinancePriceData {
   setInterval: (interval: string) => void;
 }
 
-// ── Binance Perpetual Futures endpoints (called directly from the browser) ──
-const FAPI_BASE = "https://fapi.binance.com/fapi/v1";
+// ── Binance Perpetual Futures endpoints ──
+const FAPI_PROXY = "/api/binance";
+const FAPI_DIRECT = "https://fapi.binance.com/fapi/v1";
 const FSTREAM_WS = "wss://fstream.binance.com/ws";
 
 /** Convert Binance interval string to milliseconds */
@@ -108,7 +109,7 @@ async function fetchTicker24h(
   symbol: string,
 ): Promise<{ price: number; change: number; changePct: number }> {
   try {
-    const url = `${FAPI_BASE}/ticker/24hr?symbol=${symbol}`;
+    const url = `${FAPI_BASE}/ticker?symbol=${symbol}`;
     const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();

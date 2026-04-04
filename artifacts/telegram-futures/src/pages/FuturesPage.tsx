@@ -874,10 +874,6 @@ export function FuturesPage() {
   const [showPairPicker, setShowPairPicker] = useState(false);
 
   const { price, priceChangePercent, candles, interval, setInterval } = useBinancePrice(selectedPair.symbol);
-// ← Tambahkan ini: price feed khusus untuk posisi yang sedang open
-  const positionSymbol = positions.length > 0 ? positions[0].symbol : null;
-  const { price: positionPrice } = useBinancePrice(positionSymbol ?? selectedPair.symbol);
-  const activePositionPrice = positionSymbol && positionPrice > 0 ? positionPrice : 0;
   const {
     balance, positions, pendingOrders, history,
     openPosition, placeLimitOrder, cancelPendingOrder, checkPendingOrders, checkLiquidations,
@@ -885,6 +881,10 @@ export function FuturesPage() {
     spotUsdtBalance, transferToFutures, transferFromFutures,
     futuresBonus,
   } = useTrading();
+
+  const positionSymbol = positions.length > 0 ? positions[0].symbol : null;
+  const { price: positionPrice } = useBinancePrice(positionSymbol ?? selectedPair.symbol);
+  const activePositionPrice = positionSymbol && positionPrice > 0 ? positionPrice : 0;
 
   const [orderType, setOrderType] = useState<OrderType>("limit");
   const [marginInput, setMarginInput] = useState("");
