@@ -874,6 +874,10 @@ export function FuturesPage() {
   const [showPairPicker, setShowPairPicker] = useState(false);
 
   const { price, priceChangePercent, candles, interval, setInterval } = useBinancePrice(selectedPair.symbol);
+// ← Tambahkan ini: price feed khusus untuk posisi yang sedang open
+  const positionSymbol = positions.length > 0 ? positions[0].symbol : null;
+  const { price: positionPrice } = useBinancePrice(positionSymbol ?? selectedPair.symbol);
+  const activePositionPrice = positionSymbol && positionPrice > 0 ? positionPrice : 0;
   const {
     balance, positions, pendingOrders, history,
     openPosition, placeLimitOrder, cancelPendingOrder, checkPendingOrders, checkLiquidations,
@@ -949,8 +953,8 @@ export function FuturesPage() {
   }, [price]);
 
   useEffect(() => {
-    if (price > 0 && positions.length > 0) {
-      const triggered = checkLiquidations(price);
+  if (activePositionPrice > 0 && positions.length > 0) {  // ← ganti price → activePositionPrice
+    const triggered = checkLiquidations(activePositionPrice);
       for (const { id, reason, closePrice } of triggered) {
         closePosition(id, closePrice);
         if (reason === "liquidation") showToast("Position liquidated!", false);
@@ -1008,7 +1012,7 @@ export function FuturesPage() {
     const tp = parseFloat(entryTp) || undefined;
 
     if (orderType === "market") {
-      const result = openPosition(tradeSide, rawMargin, price, leverage, selectedPair.stepSize, "Cross", sl, tp, balance, positions);
+      const result = openPosition(tradeSide, selectedPair.symbol, rawMargin, price, leverage, selectedPair.stepSize, "Cross", sl, tp, balance, positions);
       if (result.success) {
         setMarginInput(""); setSliderValue(0);
         setEntrySl(""); setEntryTp("");
@@ -1430,7 +1434,7 @@ export function FuturesPage() {
               {positions.length === 0
                 ? <p className="py-8 text-center text-sm text-[#AAAAAA]">No positions</p>
                 : positions.map((pos) => (
-                  <PositionCard key={pos.id} pos={pos} currentPrice={price}
+                  <PositionCard key={pos.id} pos={pos} currentPrice={activePositionPrice}
                     onClose={() => setClosingPos(pos)}
                     onEditSlTp={() => setEditingPos(pos)}
                     getPnl={getPnl}
