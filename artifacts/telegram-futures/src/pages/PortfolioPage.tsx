@@ -288,7 +288,7 @@ function TransferModal({
         <div className="flex items-center justify-end mb-4">
           <button onClick={() => setAmountInput(maxAmount.toFixed(2))}
             className="text-xs font-semibold text-[#C9A227] hover:text-[#A07800]">
-            Max {fmtUsd(maxAmount)} USDT</span>
+            Max {fmtUsd(maxAmount)} USDT</button>
           </button>
         </div>
 
