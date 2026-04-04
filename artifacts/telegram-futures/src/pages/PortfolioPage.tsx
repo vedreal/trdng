@@ -472,11 +472,11 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
       {/* ── FIXED TOP SECTION (does not scroll) ── */}
       <div className="flex-shrink-0">
 
-        <div className="relative flex items-center justify-center px-4 py-3 panel-header border-b border-[#C8B040]">
-          <span className="font-bold text-[#1A1A1A] text-base">Portfolio</span>
+        <div className="relative flex items-center justify-center px-4 py-3">
+          <span className="font-bold text-white text-base">Portfolio</span>
           <div className="absolute right-4 flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full bg-green-500" />
-            <span className="text-[10px] text-[#666666]">MAINNET</span>
+            <span className="text-[10px] text-white">MAINNET</span>
           </div>
         </div>
 
