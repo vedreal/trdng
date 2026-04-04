@@ -208,7 +208,7 @@ function SecurityPage({ onBack }: { onBack: () => void }) {
               ) : (
                 <input
                   type="tel"
-                  placeholder="+62 812 3456 7890"
+                  placeholder="Please enter mobile phone number"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   className="w-full bg-[#F7F3E8] border border-[#DDD5B0] rounded-xl px-3 py-2.5 text-sm text-[#1A1A1A] outline-none focus:border-[#C9A520]"
@@ -546,7 +546,7 @@ export function ProfilePage() {
       iconBg:  "linear-gradient(to bottom, rgba(255,255,255,0.97) 0%, rgba(255,242,170,0.92) 100%)",
       iconBorder: "transparent",
       iconShadow: "0 3px 0 rgba(0,0,0,0.18), 0 5px 14px rgba(0,0,0,0.15), 0 1px 0 rgba(255,255,255,0.8) inset",
-      title:   "Security Backup",
+      title:   "Security",
       sub:     security ? "Phone & email saved" : "Add phone & email",
       badge:   security ? "Saved" : "Not set",
       badgeOk: !!security,
