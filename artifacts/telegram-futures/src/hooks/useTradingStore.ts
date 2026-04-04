@@ -5,6 +5,7 @@ export const MAKER_FEE = 0.0002; // 0.02%
 
 export interface Position {
   id: string;
+  symbol: string;
   side: "long" | "short";
   quantity: number;
   notional: number;
@@ -198,6 +199,7 @@ export function useTradingStore() {
   const _executeOpen = useCallback(
     (
       side: "long" | "short",
+      symbol: string,
       requestedMargin: number,
       price: number,
       leverage: number,
@@ -227,6 +229,7 @@ export function useTradingStore() {
 
       const pos: Position = {
         id: Date.now().toString() + Math.random().toString(36).slice(2, 6),
+        symbol,
         side,
         quantity,
         notional,
@@ -251,6 +254,7 @@ export function useTradingStore() {
   const openPosition = useCallback(
     (
       side: "long" | "short",
+      symbol: string,
       requestedMargin: number,
       price: number,
       leverage: number,
