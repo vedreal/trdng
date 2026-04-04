@@ -3,8 +3,9 @@ import {
   IconArrowLeft, IconChevronRight, IconShieldLock, IconUsers,
   IconHeadset, IconCopy, IconCheck, IconPhone, IconMail,
   IconAlertTriangle, IconCalendarEvent, IconUser, IconLink,
-  IconInfoCircle, IconSend2, IconLock, IconCurrencyDollar,
+  IconInfoCircle, IconSend2, IconLock, IconCurrencyDollar, IconStar,
 } from "@tabler/icons-react";
+import { useTrading } from "../contexts/TradingContext";
 
 // ── localStorage keys ─────────────────────────────────────────────
 const LS_JOIN_DATE     = "profile_join_date_v1";
@@ -510,6 +511,10 @@ export function ProfilePage() {
   const [view, setView] = useState<View>("main");
   const [user]          = useState(getTgUser);
   const [joinDate]      = useState(getOrSetJoinDate);
+  const { history }     = useTrading();
+
+  // Points: each trade with net profit >= $1 earns 2 points
+  const points = history.reduce((sum, t) => sum + (t.pnl >= 1 ? 2 : 0), 0);
 
   // Re-render on security/referral save
   const [, forceUpdate] = useState(0);
@@ -621,8 +626,11 @@ export function ProfilePage() {
 
             <div className="mt-4 pt-4 border-t border-[rgba(255,255,255,0.08)] grid grid-cols-2 gap-3">
               <div className="text-center">
-                <p className="text-white font-bold text-sm">{user.id}</p>
-                <p className="text-[rgba(255,255,255,0.4)] text-[10px] mt-0.5">User ID</p>
+                <div className="flex items-center justify-center gap-1">
+                  <IconStar size={13} color="#E8C84A" stroke={2} fill="#E8C84A" />
+                  <p className="text-[#E8C84A] font-bold text-sm">{points.toLocaleString()}</p>
+                </div>
+                <p className="text-[rgba(255,255,255,0.4)] text-[10px] mt-0.5">Points</p>
               </div>
               <div className="text-center">
                 <p className="text-white font-bold text-sm">Healthy</p>
