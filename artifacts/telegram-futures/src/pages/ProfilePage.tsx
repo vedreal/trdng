@@ -3,13 +3,40 @@ import {
   IconArrowLeft, IconChevronRight, IconShieldLock, IconUsers,
   IconHeadset, IconCopy, IconCheck, IconPhone, IconMail,
   IconAlertTriangle, IconCalendarEvent, IconUser, IconLink,
-  IconInfoCircle, IconSend2, IconLock,
+  IconInfoCircle, IconSend2, IconLock, IconCurrencyDollar,
 } from "@tabler/icons-react";
 
 // ── localStorage keys ─────────────────────────────────────────────
 const LS_JOIN_DATE     = "profile_join_date_v1";
 const LS_SECURITY      = "profile_security_v1";
 const LS_REFERRALS     = "referral_count";
+const LS_CURRENCY      = "profile_currency_v1";
+
+// ── Currency helpers ──────────────────────────────────────────────
+export const CURRENCIES = [
+  { code: "AUD", name: "Australian Dollar" },
+  { code: "CAD", name: "Canadian Dollar" },
+  { code: "CHF", name: "Swiss Franc" },
+  { code: "EUR", name: "Euro" },
+  { code: "GBP", name: "British Pound" },
+  { code: "HKD", name: "Hong Kong Dollar" },
+  { code: "IDR", name: "Indonesian Rupiah" },
+  { code: "INR", name: "Indian Rupee" },
+  { code: "JPY", name: "Japanese Yen" },
+  { code: "KRW", name: "South Korean Won" },
+  { code: "MYR", name: "Malaysian Ringgit" },
+  { code: "NZD", name: "New Zealand Dollar" },
+  { code: "QAR", name: "Qatari Riyal" },
+  { code: "RUB", name: "Russian Ruble" },
+  { code: "SAR", name: "Saudi Riyal" },
+  { code: "SGD", name: "Singapore Dollar" },
+  { code: "USD", name: "United States Dollar" },
+  { code: "VND", name: "Vietnamese Dong" },
+];
+export function loadCurrency(): string {
+  return localStorage.getItem(LS_CURRENCY) ?? "USD";
+}
+function saveCurrency(code: string) { localStorage.setItem(LS_CURRENCY, code); }
 
 const SUPPORT_LINK     = "https://t.me/CatrixSupport"; // ganti link bot support sesuai kebutuhan
 
@@ -384,9 +411,100 @@ function ReferralPage({ onBack, userId }: { onBack: () => void; userId: number }
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// SUB-PAGE: Currency
+// ═══════════════════════════════════════════════════════════════════
+function CurrencyPage({ onBack }: { onBack: () => void }) {
+  const [selected, setSelected] = useState(loadCurrency);
+
+  const handleSelect = (code: string) => {
+    saveCurrency(code);
+    setSelected(code);
+  };
+
+  return (
+    <div className="flex flex-col h-full page-bg overflow-hidden">
+      <div className="relative flex items-center px-4 py-3 panel-header border-b border-[#C8B040] flex-shrink-0">
+        <button onClick={onBack} className="absolute left-4 w-8 h-8 flex items-center justify-center rounded-xl bg-[rgba(0,0,0,0.06)] active:bg-[rgba(0,0,0,0.12)]">
+          <IconArrowLeft size={17} color="#1A1A1A" stroke={2} />
+        </button>
+        <span className="w-full text-center font-bold text-[#1A1A1A] text-base">Display Currency</span>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+
+        {/* Banner */}
+        <div className="rounded-2xl overflow-hidden relative"
+          style={{ background: "linear-gradient(135deg,#1A1F3A 0%,#0F1628 60%,#1A2818 100%)", boxShadow: "0 6px 24px rgba(0,0,0,0.35)" }}>
+          <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full opacity-10 pointer-events-none"
+            style={{ background: "radial-gradient(circle,#D4AF37,transparent)" }} />
+          <div className="px-5 py-5 relative flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full border-2 border-[#D4AF37] flex items-center justify-center flex-shrink-0"
+              style={{ background: "rgba(212,175,55,0.15)" }}>
+              <IconCurrencyDollar size={22} color="#D4AF37" stroke={1.8} />
+            </div>
+            <div>
+              <p className="text-white font-bold text-base leading-tight">Display Currency</p>
+              <p className="text-[rgba(255,255,255,0.6)] text-xs mt-1 leading-snug">
+                Select your preferred currency for display.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Currency list */}
+        <div className="panel-silver rounded-2xl border border-[#DDD5B0] overflow-hidden">
+          <div className="px-4 pt-4 pb-3 border-b border-[#EEE8CC]">
+            <p className="font-bold text-[#1A1A1A] text-sm">Select Currency</p>
+            <p className="text-[#888888] text-xs mt-0.5">Currently: {selected}</p>
+          </div>
+          <div className="divide-y divide-[#EEE8CC]">
+            {CURRENCIES.map((c) => {
+              const active = selected === c.code;
+              return (
+                <button
+                  key={c.code}
+                  onClick={() => handleSelect(c.code)}
+                  className="w-full text-left px-4 py-3 flex items-center gap-3 active:bg-[#FFF8E8] transition-colors"
+                >
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-xs"
+                    style={{
+                      background: active
+                        ? "linear-gradient(to bottom,#E8C84A,#C9A520)"
+                        : "linear-gradient(to bottom, rgba(255,255,255,0.97) 0%, rgba(240,235,215,0.92) 100%)",
+                      boxShadow: active
+                        ? "0 3px 0 rgba(0,0,0,0.18), 0 5px 14px rgba(180,140,0,0.25)"
+                        : "0 2px 0 rgba(0,0,0,0.10), 0 3px 8px rgba(0,0,0,0.08)",
+                      color: active ? "#3A2000" : "#888888",
+                    }}
+                  >
+                    {c.code.slice(0, 2)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[#1A1A1A] font-bold text-sm">{c.code}</p>
+                    <p className="text-[#888888] text-[11px] mt-0.5">{c.name}</p>
+                  </div>
+                  {active && (
+                    <div className="w-5 h-5 rounded-full bg-[#D4AF37] flex items-center justify-center flex-shrink-0">
+                      <IconCheck size={11} color="#3A2000" stroke={3} />
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="h-4" />
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // MAIN PROFILE PAGE
 // ═══════════════════════════════════════════════════════════════════
-type View = "main" | "security" | "referral";
+type View = "main" | "security" | "referral" | "currency";
 
 export function ProfilePage() {
   const [view, setView] = useState<View>("main");
@@ -407,11 +525,18 @@ export function ProfilePage() {
       <ReferralPage onBack={() => setView("main")} userId={user.id} />
     </div>
   );
+  if (view === "currency") return (
+    <div key="currency" className="page-enter h-full">
+      <CurrencyPage onBack={() => setView("main")} />
+    </div>
+  );
 
   const displayName  = [user.first_name, user.last_name].filter(Boolean).join(" ");
   const handle       = user.username ? `@${user.username}` : `ID: ${user.id}`;
   const security     = loadSecurity();
   const referrals    = loadReferrals();
+
+  const currency = loadCurrency();
 
   const menuItems = [
     {
@@ -439,6 +564,19 @@ export function ProfilePage() {
       badge:   "",
       badgeOk: false,
       onClick: () => setView("referral"),
+    },
+    {
+      id:      "currency",
+      icon: IconCurrencyDollar,
+      iconColor: "#5C3A00",
+      iconBg:  "linear-gradient(to bottom, rgba(255,255,255,0.97) 0%, rgba(255,242,170,0.92) 100%)",
+      iconBorder: "transparent",
+      iconShadow: "0 3px 0 rgba(0,0,0,0.18), 0 5px 14px rgba(0,0,0,0.15), 0 1px 0 rgba(255,255,255,0.8) inset",
+      title:   "Display Currency",
+      sub:     CURRENCIES.find((c) => c.code === currency)?.name ?? "United States Dollar",
+      badge:   currency,
+      badgeOk: false,
+      onClick: () => setView("currency"),
     },
   ];
 
