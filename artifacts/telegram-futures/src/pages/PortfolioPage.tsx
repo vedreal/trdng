@@ -562,14 +562,18 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
         {/* Assets header + tab switcher — stays fixed */}
         <div className="flex items-center justify-between">
           <p className="text-xs font-semibold text-[#888888] uppercase tracking-wide">Assets</p>
-          <div className="flex rounded-lg border border-[#C8C0A0] bg-[#E8E4D0] p-0.5 gap-0.5">
+          <div className="flex rounded-lg bg-[#E8E4D0] p-0.5 gap-0.5">
             {(["spot", "futures"] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setAssetTab(tab)}
                 className={`px-3 py-0.5 rounded-md text-[11px] font-semibold transition-all ${
-                  assetTab === tab ? "btn-3d-gold" : "text-[#888888]"
-                }`}>
+                  assetTab === tab ? "text-[#8B6300]" : "text-[#888888]"
+                }`}
+                style={assetTab === tab ? {
+                  background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+                  boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+                } : {}}>
                 {tab === "spot" ? "Spot" : "Futures"}
               </button>
             ))}
@@ -707,7 +711,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
           {assetTab === "futures" && (
             <div className="space-y-2">
               {/* Futures balance card with collapsible PnL calendar */}
-              <div className="panel-silver border border-[#D4AF37] rounded-2xl overflow-hidden">
+              <div className="panel-silver rounded-2xl overflow-hidden">
                 {/* Balance rows */}
                 <div className="px-4 py-3.5 flex items-center gap-3">
                   <img src={COIN_ICONS.USDT} alt="USDT" className="w-10 h-10 rounded-full flex-shrink-0"
@@ -756,7 +760,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                   Recent Activity
                 </p>
                 {futuresActivity.length === 0 ? (
-                  <div className="panel-silver border border-[#D8D0A8] rounded-xl px-4 py-4 text-center">
+                  <div className="panel-silver rounded-xl px-4 py-4 text-center">
                     <p className="text-xs text-[#AAAAAA]">No recent activity</p>
                   </div>
                 ) : futuresActivity.map((item) => {
@@ -764,7 +768,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                       const profit = item.pnl >= 0;
                       return (
                         <div key={item.id}
-                          className="panel-silver border border-[#D8D0A8] rounded-xl px-4 py-3 flex items-center justify-between">
+                          className="panel-silver rounded-xl px-4 py-3 flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${
                               profit ? "bg-green-500" : "bg-red-500"
@@ -790,7 +794,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                     if (item.kind === "bonus") {
                       return (
                         <div key={item.id}
-                          className="panel-silver border border-[#D8D0A8] rounded-xl px-4 py-3 flex items-center justify-between">
+                          className="panel-silver rounded-xl px-4 py-3 flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-full flex items-center justify-center text-[#8B6300] text-xs font-bold flex-shrink-0"
                               style={{ background: "linear-gradient(135deg, #E8C84A, #D4AF37)" }}>
@@ -813,7 +817,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                     const transferItem = item as { kind: "transfer"; id: string; direction: "toFutures" | "fromFutures"; amount: number; time: number };
                     return (
                       <div key={transferItem.id}
-                        className="panel-silver border border-[#D8D0A8] rounded-xl px-4 py-3 flex items-center justify-between">
+                        className="panel-silver rounded-xl px-4 py-3 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 bg-blue-500">
                             ⇄
