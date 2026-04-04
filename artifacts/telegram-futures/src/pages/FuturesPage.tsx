@@ -874,6 +874,18 @@ export function FuturesPage() {
   const [showPairPicker, setShowPairPicker] = useState(false);
 
   const { price, priceChangePercent, candles, interval, setInterval } = useBinancePrice(selectedPair.symbol);
+  const { price: btcPrice } = useBinancePrice("BTCUSDT");
+  const { price: ethPrice } = useBinancePrice("ETHUSDT");
+  const { price: bnbPrice } = useBinancePrice("BNBUSDT");
+  const { price: solPrice } = useBinancePrice("SOLUSDT");
+
+  const allPrices: Record<string, number> = {
+    BTCUSDT: btcPrice,
+    ETHUSDT: ethPrice,
+    BNBUSDT: bnbPrice,
+    SOLUSDT: solPrice,
+  };
+
   const {
     balance, positions, pendingOrders, history,
     openPosition, placeLimitOrder, cancelPendingOrder, checkPendingOrders, checkLiquidations,
@@ -883,8 +895,7 @@ export function FuturesPage() {
   } = useTrading();
 
   const positionSymbol = positions.length > 0 ? positions[0].symbol : null;
-  const { price: positionPrice } = useBinancePrice(positionSymbol ?? selectedPair.symbol);
-  const activePositionPrice = positionSymbol && positionPrice > 0 ? positionPrice : 0;
+  const activePositionPrice = positionSymbol ? (allPrices[positionSymbol] ?? 0) : 0;
 
   const [orderType, setOrderType] = useState<OrderType>("limit");
   const [marginInput, setMarginInput] = useState("");
@@ -945,16 +956,16 @@ export function FuturesPage() {
     setTimeout(() => setToast(null), 2800);
   };
 
-  // Check pending orders + liquidations on every price tick
+  // Check pending orders + liquidations on every price tick (all symbols)
   useEffect(() => {
-    if (price > 0 && pendingOrders.length > 0) {
-      checkPendingOrders(price, balance);
+    if (pendingOrders.length > 0) {
+      checkPendingOrders(allPrices, balance);
     }
-  }, [price]);
+  }, [btcPrice, ethPrice, bnbPrice, solPrice]);
 
   useEffect(() => {
-  if (activePositionPrice > 0 && positions.length > 0) {  // ← ganti price → activePositionPrice
-    const triggered = checkLiquidations(activePositionPrice);
+    if (positions.length > 0) {
+      const triggered = checkLiquidations(allPrices);
       for (const { id, reason, closePrice } of triggered) {
         closePosition(id, closePrice);
         if (reason === "liquidation") showToast("Position liquidated!", false);
@@ -963,7 +974,7 @@ export function FuturesPage() {
         else showToast("Take Profit triggered ✓", true);
       }
     }
-  }, [price]);
+  }, [btcPrice, ethPrice, bnbPrice, solPrice]);
 
   const handleMarginChange = useCallback((v: string) => {
     const clean = v.replace(/[^0-9.]/g, "");
@@ -1031,7 +1042,7 @@ export function FuturesPage() {
       if (tradeSide === "short" && lp <= price) {
         return showToast("Limit sell price must be above current market price", false);
       }
-      const result = placeLimitOrder(tradeSide, rawMargin, lp, leverage, selectedPair.stepSize, sl, tp, balance);
+      const result = placeLimitOrder(tradeSide, selectedPair.symbol, rawMargin, lp, leverage, selectedPair.stepSize, sl, tp, balance);
       if (result.success) {
         setMarginInput(""); setSliderValue(0);
         setEntrySl(""); setEntryTp("");
@@ -1064,10 +1075,11 @@ export function FuturesPage() {
       {closingPos && (
         <CloseModal
           pos={closingPos}
-          currentPrice={price}
-          priceDec={selectedPair.priceDec}
+          currentPrice={allPrices[closingPos.symbol] ?? price}
+          priceDec={TRADING_PAIRS.find((p) => p.symbol === closingPos.symbol)?.priceDec ?? selectedPair.priceDec}
           onMarketClose={() => {
-            closePosition(closingPos.id, price);
+            const closeAtPrice = allPrices[closingPos.symbol] ?? price;
+            closePosition(closingPos.id, closeAtPrice);
             showToast("Position closed at market price", true);
             setClosingPos(null);
           }}

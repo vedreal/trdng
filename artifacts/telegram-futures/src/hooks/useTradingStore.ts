@@ -349,6 +349,7 @@ export function useTradingStore() {
 
           const pos: Position = {
             id: order.id + "_filled",
+            symbol: order.symbol,
             side: order.side,
             quantity,
             notional,
