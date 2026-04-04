@@ -36,9 +36,9 @@ const SEND_ASSETS: AssetConfig[] = [
       { id: "bep20", name: "BNB Smart Chain (BEP20)", shortName: "BEP20", minWithdraw: 15,  fee: 1.2  },
       { id: "erc20", name: "Ethereum (ERC20)",         shortName: "ERC20", minWithdraw: 20,  fee: 5    },
       { id: "ton",   name: "Toncoin (TON)",             shortName: "TON",   minWithdraw: 10,  fee: 1.5  },
-      { id: "arb",   name: "Arbitrum One (ARB)",        shortName: "ARB",   minWithdraw: 12,  fee: 1    },
-      { id: "matic", name: "Polygon (MATIC)",           shortName: "MATIC", minWithdraw: 10,  fee: 2    },
-      { id: "op",    name: "Optimism (OP)",             shortName: "OP",    minWithdraw: 10,  fee: 1    },
+      /*{ id: "arb",   name: "Arbitrum One (ARB)",        shortName: "ARB",   minWithdraw: 12,  fee: 1    },
+      /*{ id: "matic", name: "Polygon (MATIC)",           shortName: "MATIC", minWithdraw: 10,  fee: 2    },
+      { id: "op",    name: "Optimism (OP)",             shortName: "OP",    minWithdraw: 10,  fee: 1    },*/
     ],
   },
   {
