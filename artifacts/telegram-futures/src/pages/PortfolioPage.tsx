@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useTrading } from "../contexts/TradingContext";
+import { useCurrency } from "../contexts/CurrencyContext";
 import { useBinancePrice } from "../hooks/useBinancePrice";
 import { useSparkline } from "../hooks/useSparkline";
 import type { ClosedTrade } from "../hooks/useTradingStore";
@@ -80,6 +81,7 @@ function MiniSparkline({ prices, isUp }: { prices: number[]; isUp: boolean }) {
 
 // ── Futures PnL Calendar ───────────────────────────────────────────────────
 function FuturesPnlCalendar({ history }: { history: ClosedTrade[] }) {
+  const { fmtFiat } = useCurrency();
   const today = new Date();
   const [viewYear, setViewYear]   = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
@@ -136,7 +138,7 @@ function FuturesPnlCalendar({ history }: { history: ClosedTrade[] }) {
         <div className="text-center">
           <span className="text-xs font-bold text-[#1A1A1A]">{MONTH_NAMES[viewMonth]} {viewYear}</span>
           <div className={`text-[10px] font-semibold mt-0.5 ${monthlyTotal >= 0 ? "text-green-600" : "text-red-500"}`}>
-            Monthly: {monthlyTotal >= 0 ? "+" : ""}${fmtUsd(monthlyTotal)}
+            Monthly: {monthlyTotal >= 0 ? "+" : ""}{fmtFiat(monthlyTotal)}
           </div>
         </div>
         <button onClick={nextMonth} className="w-7 h-7 flex items-center justify-center rounded-full bg-[#E8E4D0] text-[#666] active:scale-90">
@@ -307,6 +309,7 @@ function TransferModal({
 
 // ── Main Component ─────────────────────────────────────────────────────────
 export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
+  const { fmtFiat } = useCurrency();
   const {
     balance, positions, history, getPnl,
     bnbBalance, xautBalance, spotUsdtBalance,
@@ -501,14 +504,14 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
           <div className="px-5 pt-5 pb-4">
             <p className="text-[11px] font-semibold text-[rgba(255,255,255,0.8)] uppercase tracking-wide mb-1">Total Balance</p>
             <p className="text-4xl font-bold text-white mb-0.5">
-              ${fmtUsd(totalBalance)}
+              {fmtFiat(totalBalance)}
             </p>
             <p className="text-xs text-[rgba(255,255,255,0.7)] mb-4">≈ {fmtUsd(totalBalance)} USDT</p>
 
             <div className="flex items-center gap-2 bg-[rgba(0,0,0,0.18)] rounded-xl px-3 py-2 w-fit mb-5">
               <span className="text-[11px] text-[rgba(255,255,255,0.85)]">Today PnL</span>
               <span className={`text-sm font-bold ${pnlPositive ? "text-green-300" : "text-red-300"}`}>
-                {pnlPositive ? "+" : ""}${fmtUsd(Math.abs(todayPnl))}
+                {pnlPositive ? "+" : ""}{fmtFiat(Math.abs(todayPnl))}
               </span>
               <span className={`text-xs font-medium ${pnlPositive ? "text-green-300" : "text-red-300"}`}>
                 ({pnlPositive ? "+" : ""}{todayPct.toFixed(2)}%)
@@ -550,7 +553,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
             <div className="flex items-center justify-between">
               <span className="text-sm text-[#888888]">Unrealized PnL</span>
               <span className={`text-sm font-bold ${unrealizedPnl >= 0 ? "text-green-600" : "text-red-500"}`}>
-                {unrealizedPnl >= 0 ? "+" : ""}${fmtUsd(unrealizedPnl)}
+                {unrealizedPnl >= 0 ? "+" : ""}{fmtFiat(unrealizedPnl)}
               </span>
             </div>
           </div>
@@ -592,7 +595,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                   <div className="flex flex-col justify-between flex-1 min-w-0">
                     <span className="text-sm font-bold text-[#1A1A1A] leading-none">USDT</span>
                     <span className="text-[11px] text-[#888888] leading-none mt-[3px]">Tether USD</span>
-                    <span className="text-[11px] font-semibold text-[#1A1A1A] mt-2">${fmtUsd(spotUsdtBalance)}</span>
+                    <span className="text-[11px] font-semibold text-[#1A1A1A] mt-2">{fmtFiat(spotUsdtBalance)}</span>
                   </div>
                   {/* Right col: price+% + chart + amount */}
                   <div className="flex flex-col items-end justify-between">
@@ -614,7 +617,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                   <div className="flex flex-col justify-between flex-1 min-w-0">
                     <span className="text-sm font-bold text-[#1A1A1A] leading-none">XAUT</span>
                     <span className="text-[11px] text-[#888888] leading-none mt-[3px]">Tether Gold</span>
-                    <span className="text-[11px] font-semibold text-[#1A1A1A] mt-2">${fmtUsd(xautValueUsdt)}</span>
+                    <span className="text-[11px] font-semibold text-[#1A1A1A] mt-2">{fmtFiat(xautValueUsdt)}</span>
                   </div>
                   <div className="flex flex-col items-end justify-between">
                     <div className="flex items-center gap-1.5">
@@ -637,7 +640,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                   <div className="flex flex-col justify-between flex-1 min-w-0">
                     <span className="text-sm font-bold text-[#1A1A1A] leading-none">ETH</span>
                     <span className="text-[11px] text-[#888888] leading-none mt-[3px]">Ethereum</span>
-                    <span className="text-[11px] font-semibold text-[#1A1A1A] mt-2">${fmtUsd(ethValueUsdt)}</span>
+                    <span className="text-[11px] font-semibold text-[#1A1A1A] mt-2">{fmtFiat(ethValueUsdt)}</span>
                   </div>
                   <div className="flex flex-col items-end justify-between">
                     <div className="flex items-center gap-1.5">
@@ -660,7 +663,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                   <div className="flex flex-col justify-between flex-1 min-w-0">
                     <span className="text-sm font-bold text-[#1A1A1A] leading-none">BNB</span>
                     <span className="text-[11px] text-[#888888] leading-none mt-[3px]">BNB</span>
-                    <span className="text-[11px] font-semibold text-[#1A1A1A] mt-2">${fmtUsd(bnbValueUsdt)}</span>
+                    <span className="text-[11px] font-semibold text-[#1A1A1A] mt-2">{fmtFiat(bnbValueUsdt)}</span>
                   </div>
                   <div className="flex flex-col items-end justify-between">
                     <div className="flex items-center gap-1.5">
@@ -683,7 +686,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                   <div className="flex flex-col justify-between flex-1 min-w-0">
                     <span className="text-sm font-bold text-[#1A1A1A] leading-none">TON</span>
                     <span className="text-[11px] text-[#888888] leading-none mt-[3px]">Toncoin</span>
-                    <span className="text-[11px] font-semibold text-[#1A1A1A] mt-2">${fmtUsd(tonValueUsdt)}</span>
+                    <span className="text-[11px] font-semibold text-[#1A1A1A] mt-2">{fmtFiat(tonValueUsdt)}</span>
                   </div>
                   <div className="flex flex-col items-end justify-between">
                     <div className="flex items-center gap-1.5">
@@ -712,7 +715,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-bold text-[#1A1A1A]">USDT</span>
-                      <span className="text-sm font-bold text-[#1A1A1A]">${fmtUsd(balance + futuresBonus)}</span>
+                      <span className="text-sm font-bold text-[#1A1A1A]">{fmtFiat(balance + futuresBonus)}</span>
                     </div>
                     <div className="flex items-center justify-between mt-0.5">
                       <span className="text-[11px] text-[#888888]">Futures Balance</span>

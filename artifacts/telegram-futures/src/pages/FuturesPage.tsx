@@ -14,6 +14,7 @@ import {
   MAKER_FEE,
 } from "../hooks/useTradingStore";
 import { useTrading } from "../contexts/TradingContext";
+import { useCurrency } from "../contexts/CurrencyContext";
 import { CandleChart } from "../components/CandleChart";
 
 type OrderType = "limit" | "market";
@@ -263,6 +264,7 @@ function PositionCard({
   futuresBalance: number;
   allPositions: Position[];
 }) {
+  const { fmtFiat } = useCurrency();
   const pnl     = getPnl(pos, currentPrice);
   const pnlPct  = pos.margin > 0 ? (pnl / pos.margin) * 100 : 0;
   const profit  = pnl >= 0;
@@ -299,7 +301,7 @@ function PositionCard({
       <div className="grid grid-cols-3 gap-y-3 mb-3">
         <div>
           <p className="text-[10px] text-[#888888] mb-0.5">Margin</p>
-          <p className="text-xs font-semibold text-[#333333]">${fmt(pos.margin, 2)}</p>
+          <p className="text-xs font-semibold text-[#333333]">{fmtFiat(pos.margin)}</p>
         </div>
         <div className="text-center">
           <p className="text-[10px] text-[#888888] mb-0.5">Entry Price</p>
@@ -318,7 +320,7 @@ function PositionCard({
         <div className="col-span-2 text-right">
           <p className="text-[10px] text-[#888888] mb-0.5">Unrealized PnL</p>
           <p className={`text-xs font-bold ${profit ? "text-green-600" : "text-red-500"}`}>
-            {profit ? "+" : ""}${fmt(pnl)} ({profit ? "+" : ""}{pnlPct.toFixed(2)}%)
+            {profit ? "+" : ""}{fmtFiat(pnl)} ({profit ? "+" : ""}{pnlPct.toFixed(2)}%)
           </p>
         </div>
       </div>
@@ -355,6 +357,7 @@ function PositionCard({
 
 // ── History Card ──────────────────────────────────────────────────
 function HistoryCard({ trade }: { trade: ClosedTrade }) {
+  const { fmtFiat } = useCurrency();
   const profit = trade.pnl >= 0;
   const roe = trade.margin > 0 ? (trade.pnl / trade.margin) * 100 : 0;
   const totalFees = trade.openingFee + trade.closingFee;
@@ -372,7 +375,7 @@ function HistoryCard({ trade }: { trade: ClosedTrade }) {
         </div>
         <div className="text-right">
           <span className={`text-sm font-bold ${profit ? "text-green-600" : "text-red-500"}`}>
-            {profit ? "+" : ""}${fmt(trade.pnl)}
+            {profit ? "+" : ""}{fmtFiat(trade.pnl)}
           </span>
           <span className={`ml-1.5 text-xs font-medium ${profit ? "text-green-500" : "text-red-400"}`}>
             ({profit ? "+" : ""}{roe.toFixed(2)}%)
@@ -399,7 +402,7 @@ function HistoryCard({ trade }: { trade: ClosedTrade }) {
         <div className="text-center">
           <p className="text-[10px] text-[#888888]">Raw PnL</p>
           <p className={`text-xs font-medium ${trade.rawPnl >= 0 ? "text-green-500" : "text-red-400"}`}>
-            {trade.rawPnl >= 0 ? "+" : ""}${fmt(trade.rawPnl, 2)}
+            {trade.rawPnl >= 0 ? "+" : ""}{fmtFiat(trade.rawPnl)}
           </p>
         </div>
         <div className="text-right">
@@ -748,6 +751,7 @@ function CryptoNewsWidget() {
 
 // ── Main Page ─────────────────────────────────────────────────────
 export function FuturesPage() {
+  const { fmtFiat } = useCurrency();
   const [selectedPair, setSelectedPair] = useState<TradingPair>(TRADING_PAIRS[0]);
   const [showPairPicker, setShowPairPicker] = useState(false);
 
@@ -1089,7 +1093,7 @@ export function FuturesPage() {
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm text-[#777777]">Available</span>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-[#333333]">{fmt(balance, 2)} USDT</span>
+              <span className="text-sm font-semibold text-[#333333]">{fmtFiat(balance)}</span>
               <button
                 onClick={() => setShowTransferModal(true)}
                 className="text-[10px] font-bold px-2 py-0.5 rounded-full btn-3d-gold leading-tight">

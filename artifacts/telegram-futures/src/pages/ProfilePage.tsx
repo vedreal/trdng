@@ -36,7 +36,10 @@ export const CURRENCIES = [
 export function loadCurrency(): string {
   return localStorage.getItem(LS_CURRENCY) ?? "USD";
 }
-function saveCurrency(code: string) { localStorage.setItem(LS_CURRENCY, code); }
+function saveCurrency(code: string) {
+  localStorage.setItem(LS_CURRENCY, code);
+  window.dispatchEvent(new CustomEvent("currency-changed", { detail: code }));
+}
 
 const SUPPORT_LINK     = "https://t.me/CatrixSupport"; // ganti link bot support sesuai kebutuhan
 

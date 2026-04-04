@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TradingProvider } from "@/contexts/TradingContext";
+import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { BottomNav } from "@/components/BottomNav";
 import { FuturesPage } from "@/pages/FuturesPage";
 import { PortfolioPage } from "@/pages/PortfolioPage";
@@ -80,7 +81,9 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TradingProvider>
-        <AppContent />
+        <CurrencyProvider>
+          <AppContent />
+        </CurrencyProvider>
       </TradingProvider>
     </QueryClientProvider>
   );
