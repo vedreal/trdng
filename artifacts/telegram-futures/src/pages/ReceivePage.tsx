@@ -17,7 +17,6 @@ interface NetworkOption {
   name: string;
   shortName: string;
   minDeposit: number;
-  fee: string;
   confirmations: number;
   maintenance?: boolean;
 }
@@ -33,33 +32,33 @@ const ASSETS: AssetOption[] = [
     symbol: "USDT",
     name: "Tether USD",
     networks: [
-      { id: "bep20", name: "BNB Smart Chain (BEP20)", shortName: "BEP20", minDeposit: 0.1,    fee: "~$0.29",  confirmations: 15  },
-      { id: "erc20", name: "Ethereum (ERC20)",         shortName: "ERC20", minDeposit: 5,      fee: "~$5.00",  confirmations: 64  },
-      { id: "ton",   name: "Toncoin (TON)",             shortName: "TON",   minDeposit: 1,      fee: "~$0.01",  confirmations: 6,  maintenance: true },
-      { id: "arb",   name: "Arbitrum One (ARB)",        shortName: "ARB",   minDeposit: 0.05,   fee: "~$0.10",  confirmations: 20  },
-      { id: "matic", name: "Polygon (MATIC)",           shortName: "MATIC", minDeposit: 1,      fee: "~$0.01",  confirmations: 128 },
-      { id: "op",    name: "Optimism (OP)",             shortName: "OP",    minDeposit: 0.01,   fee: "~$0.10",  confirmations: 20  },
+      { id: "bep20", name: "BNB Smart Chain (BEP20)", shortName: "BEP20", minDeposit: 0.1,    confirmations: 15  },
+      { id: "erc20", name: "Ethereum (ERC20)",         shortName: "ERC20", minDeposit: 5,      confirmations: 64  },
+      { id: "ton",   name: "Toncoin (TON)",             shortName: "TON",   minDeposit: 1,      confirmations: 6,  maintenance: true },
+      { id: "arb",   name: "Arbitrum One (ARB)",        shortName: "ARB",   minDeposit: 0.05,   confirmations: 20  },
+      { id: "matic", name: "Polygon (MATIC)",           shortName: "MATIC", minDeposit: 1,      confirmations: 128 },
+      { id: "op",    name: "Optimism (OP)",             shortName: "OP",    minDeposit: 0.01,   confirmations: 20  },
     ],
   },
   {
     symbol: "ETH",
     name: "Ethereum",
     networks: [
-      { id: "erc20", name: "Ethereum (ERC20)", shortName: "ERC20", minDeposit: 0.005, fee: "~$5.00", confirmations: 64 },
+      { id: "erc20", name: "Ethereum (ERC20)", shortName: "ERC20", minDeposit: 0.005, confirmations: 64 },
     ],
   },
   {
     symbol: "BNB",
     name: "BNB",
     networks: [
-      { id: "bep20", name: "BNB Smart Chain (BEP20)", shortName: "BEP20", minDeposit: 0.0005, fee: "~$0.29", confirmations: 15 },
+      { id: "bep20", name: "BNB Smart Chain (BEP20)", shortName: "BEP20", minDeposit: 0.0005, confirmations: 15 },
     ],
   },
   {
     symbol: "TON",
     name: "Toncoin",
     networks: [
-      { id: "ton", name: "Toncoin (TON)", shortName: "TON", minDeposit: 1, fee: "~$0.01", confirmations: 6 },
+      { id: "ton", name: "Toncoin (TON)", shortName: "TON", minDeposit: 1, confirmations: 6 },
     ],
   },
 ];
@@ -262,44 +261,34 @@ export function ReceivePage({ onBack }: ReceivePageProps) {
                   key={network.id}
                   onClick={() => handleSelectNetwork(network)}
                   disabled={network.maintenance}
-                  className={`w-full text-left px-3 py-3 rounded-xl mb-2 transition-all ${
+                  className={`w-full flex items-center gap-3 px-3 py-3.5 rounded-xl mb-1 transition-all ${
                     network.maintenance
-                      ? "opacity-60 cursor-not-allowed bg-[#F5F3EA]"
+                      ? "opacity-60 cursor-not-allowed"
                       : selectedNetwork.id === network.id
                       ? "bg-[#FFF8D6] border border-[#D4AF37] active:scale-[0.98]"
-                      : "hover:bg-[#F5F3EA] active:scale-[0.98] border border-[#E0DDD0]"
+                      : "hover:bg-[#F5F3EA] active:scale-[0.98]"
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-[#1A1A1A]">{network.shortName}</span>
+                  <div className="flex-1 text-left">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-sm font-semibold text-[#1A1A1A]">{network.shortName}</span>
                       {network.maintenance && (
                         <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 text-[10px] font-semibold">
                           <IconTool size={10} stroke={2} />
                           Maintenance
                         </span>
                       )}
+                      {!network.maintenance && selectedNetwork.id === network.id && (
+                        <div className="w-4 h-4 rounded-full bg-[#D4AF37] flex items-center justify-center">
+                          <span className="text-white text-[9px] font-bold">✓</span>
+                        </div>
+                      )}
                     </div>
-                    {!network.maintenance && selectedNetwork.id === network.id && (
-                      <div className="w-4 h-4 rounded-full bg-[#D4AF37] flex items-center justify-center flex-shrink-0">
-                        <span className="text-white text-[9px] font-bold">✓</span>
-                      </div>
-                    )}
-                  </div>
-                  <span className="text-[11px] text-[#888888] block mb-2">{network.name}</span>
-                  <div className="grid grid-cols-3 gap-1">
-                    <div className="bg-[#F0EDE0] rounded-lg px-2 py-1.5">
-                      <p className="text-[9px] text-[#AAAAAA] mb-0.5 uppercase tracking-wide">Min. Deposit</p>
-                      <p className="text-[10px] font-semibold text-[#333333]">{network.minDeposit} {selectedAsset.symbol}</p>
-                    </div>
-                    <div className="bg-[#F0EDE0] rounded-lg px-2 py-1.5">
-                      <p className="text-[9px] text-[#AAAAAA] mb-0.5 uppercase tracking-wide">Fee</p>
-                      <p className="text-[10px] font-semibold text-[#333333]">{network.fee}</p>
-                    </div>
-                    <div className="bg-[#F0EDE0] rounded-lg px-2 py-1.5">
-                      <p className="text-[9px] text-[#AAAAAA] mb-0.5 uppercase tracking-wide">Confirmations</p>
-                      <p className="text-[10px] font-semibold text-[#333333]">{network.confirmations} blocks</p>
-                    </div>
+                    <span className="text-[11px] text-[#888888] block">{network.name}</span>
+                    <span className="text-[11px] text-[#888888] mt-1 block">
+                      Min. deposit: <span className="font-medium text-[#555]">{network.minDeposit} {selectedAsset.symbol}</span>
+                      {" · "}{network.confirmations} deposit block confirmations
+                    </span>
                   </div>
                 </button>
               ))}
@@ -344,47 +333,35 @@ export function ReceivePage({ onBack }: ReceivePageProps) {
         {/* Network Selector */}
         <div>
           <p className="text-xs font-semibold text-[#888888] mb-2 uppercase tracking-wide">Network</p>
-          <div
+          <button
             onClick={() => selectedAsset.networks.length > 1 && setShowNetworkModal(true)}
-            className={`w-full bg-[#F5F3EA] border border-[#D4AF37] rounded-xl px-4 py-3 ${
-              selectedAsset.networks.length > 1 ? "active:scale-[0.99] cursor-pointer" : "cursor-default"
+            className={`w-full flex items-center gap-3 bg-[#F5F3EA] border border-[#D4AF37] rounded-xl px-4 py-3 ${
+              selectedAsset.networks.length > 1 ? "active:scale-[0.99]" : "cursor-default"
             }`}
           >
-            <div className="flex items-center gap-3 mb-2.5">
-              <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${selectedNetwork.maintenance ? "bg-orange-400" : "bg-green-500"}`} />
-              <div className="flex-1 text-left">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-semibold text-[#1A1A1A]">{selectedNetwork.shortName}</p>
-                  {selectedNetwork.maintenance && (
-                    <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-600 text-[10px] font-semibold">
-                      <IconTool size={9} stroke={2} />
-                      Maintenance
-                    </span>
-                  )}
-                </div>
-                <p className="text-[11px] text-[#888888]">{selectedNetwork.name}</p>
+            <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${selectedNetwork.maintenance ? "bg-orange-400" : "bg-green-500"}`} />
+            <div className="flex-1 text-left">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold text-[#1A1A1A]">{selectedNetwork.shortName}</p>
+                {selectedNetwork.maintenance && (
+                  <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-600 text-[10px] font-semibold">
+                    <IconTool size={9} stroke={2} />
+                    Maintenance
+                  </span>
+                )}
               </div>
-              {selectedAsset.networks.length > 1 && (
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-[#C9A227] flex-shrink-0">
-                  <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              )}
+              <p className="text-[11px] text-[#888888]">{selectedNetwork.name}</p>
+              <p className="text-[11px] text-[#888888] mt-0.5">
+                Min. deposit: <span className="font-medium text-[#555]">{selectedNetwork.minDeposit} {selectedAsset.symbol}</span>
+                {" · "}{selectedNetwork.confirmations} deposit block confirmations
+              </p>
             </div>
-            <div className="grid grid-cols-3 gap-1.5">
-              <div className="bg-[#EDE9D5] rounded-lg px-2 py-1.5">
-                <p className="text-[9px] text-[#AAAAAA] mb-0.5 uppercase tracking-wide">Min. Deposit</p>
-                <p className="text-[10px] font-semibold text-[#333333]">{selectedNetwork.minDeposit} {selectedAsset.symbol}</p>
-              </div>
-              <div className="bg-[#EDE9D5] rounded-lg px-2 py-1.5">
-                <p className="text-[9px] text-[#AAAAAA] mb-0.5 uppercase tracking-wide">Fee</p>
-                <p className="text-[10px] font-semibold text-[#333333]">{selectedNetwork.fee}</p>
-              </div>
-              <div className="bg-[#EDE9D5] rounded-lg px-2 py-1.5">
-                <p className="text-[9px] text-[#AAAAAA] mb-0.5 uppercase tracking-wide">Confirmations</p>
-                <p className="text-[10px] font-semibold text-[#333333]">{selectedNetwork.confirmations} blocks</p>
-              </div>
-            </div>
-          </div>
+            {selectedAsset.networks.length > 1 && (
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-[#C9A227] flex-shrink-0">
+                <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            )}
+          </button>
         </div>
 
         {/* QR Code */}
