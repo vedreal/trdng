@@ -622,7 +622,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                   <div className="flex flex-col items-end justify-between">
                     <div className="flex items-center gap-1.5">
                       <span className="text-sm font-semibold text-[#333] leading-none">
-                        {xautPrice > 0 ? `$${fmtUsd(xautPrice)}` : "—"}
+                        {xautPrice > 0 ? fmtFiat(xautPrice) : "—"}
                       </span>
                       {xautPrice > 0 && <PctBadge pct={xautChangePct} />}
                     </div>
@@ -645,7 +645,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                   <div className="flex flex-col items-end justify-between">
                     <div className="flex items-center gap-1.5">
                       <span className="text-sm font-semibold text-[#333] leading-none">
-                        {ethPrice > 0 ? `$${fmtUsd(ethPrice)}` : "—"}
+                        {ethPrice > 0 ? fmtFiat(ethPrice) : "—"}
                       </span>
                       {ethPrice > 0 && <PctBadge pct={ethChangePct} />}
                     </div>
@@ -668,7 +668,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                   <div className="flex flex-col items-end justify-between">
                     <div className="flex items-center gap-1.5">
                       <span className="text-sm font-semibold text-[#333] leading-none">
-                        {bnbPrice > 0 ? `$${fmtUsd(bnbPrice)}` : "—"}
+                        {bnbPrice > 0 ? fmtFiat(bnbPrice) : "—"}
                       </span>
                       {bnbPrice > 0 && <PctBadge pct={bnbChangePct} />}
                     </div>
@@ -691,7 +691,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                   <div className="flex flex-col items-end justify-between">
                     <div className="flex items-center gap-1.5">
                       <span className="text-sm font-semibold text-[#333] leading-none">
-                        {tonPrice > 0 ? `$${fmtUsd(tonPrice, 3)}` : "—"}
+                        {tonPrice > 0 ? fmtFiat(tonPrice, 3) : "—"}
                       </span>
                       {tonPrice > 0 && <PctBadge pct={tonChangePct} />}
                     </div>
@@ -781,7 +781,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                             </div>
                           </div>
                           <span className={`text-sm font-bold ${profit ? "text-green-600" : "text-red-500"}`}>
-                            {profit ? "+" : ""}${fmtUsd(item.pnl)}
+                            {profit ? "+" : ""}{fmtFiat(item.pnl)}
                           </span>
                         </div>
                       );
@@ -804,7 +804,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                             </div>
                           </div>
                           <span className="text-sm font-semibold text-[#C9A227]">
-                            +${fmtUsd(item.amount)}
+                            +{fmtFiat(item.amount)}
                           </span>
                         </div>
                       );
@@ -828,7 +828,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                           </div>
                         </div>
                         <span className="text-sm font-semibold text-[#333333]">
-                          ${fmtUsd(transferItem.amount)}
+                          {fmtFiat(transferItem.amount)}
                         </span>
                       </div>
                     );

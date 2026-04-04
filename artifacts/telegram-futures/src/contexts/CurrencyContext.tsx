@@ -1,10 +1,10 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 
 export const CURRENCY_SYMBOLS: Record<string, string> = {
-  AUD: "A$", CAD: "C$", CHF: "CHF ", EUR: "€", GBP: "£",
-  HKD: "HK$", IDR: "Rp", INR: "₹", JPY: "¥", KRW: "₩",
-  MYR: "RM ", NZD: "NZ$", QAR: "QR ", RUB: "₽", SAR: "SR ",
-  SGD: "S$", USD: "$", VND: "₫",
+  CHF: "CHF ", EUR: "€", GBP: "£",
+  HKD: "HKD ", IDR: "Rp", INR: "₹", JPY: "¥", KRW: "₩",
+  MYR: "RM ", QAR: "QR ", RUB: "₽", SAR: "SR ",
+  SGD: "SGD ", USD: "$", VND: "₫",
 };
 
 const ZERO_DEC = new Set(["IDR", "JPY", "KRW", "VND"]);

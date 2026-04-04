@@ -14,8 +14,6 @@ const LS_CURRENCY      = "profile_currency_v1";
 
 // ── Currency helpers ──────────────────────────────────────────────
 export const CURRENCIES = [
-  { code: "AUD", name: "Australian Dollar" },
-  { code: "CAD", name: "Canadian Dollar" },
   { code: "CHF", name: "Swiss Franc" },
   { code: "EUR", name: "Euro" },
   { code: "GBP", name: "British Pound" },
@@ -25,7 +23,6 @@ export const CURRENCIES = [
   { code: "JPY", name: "Japanese Yen" },
   { code: "KRW", name: "South Korean Won" },
   { code: "MYR", name: "Malaysian Ringgit" },
-  { code: "NZD", name: "New Zealand Dollar" },
   { code: "QAR", name: "Qatari Riyal" },
   { code: "RUB", name: "Russian Ruble" },
   { code: "SAR", name: "Saudi Riyal" },

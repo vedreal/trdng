@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useTrading } from "../contexts/TradingContext";
 import { useBinancePrice } from "../hooks/useBinancePrice";
+import { useCurrency } from "../contexts/CurrencyContext";
 import {
   IconChevronLeft, IconArrowsUpDown, IconCheck, IconX,
   IconSearch,
@@ -158,6 +159,7 @@ function CoinPickerModal({
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 export function SwapPage({ onBack }: SwapPageProps) {
+  const { fmtFiat } = useCurrency();
   const {
     spotUsdtBalance, setSpotUsdtBalance,
     bnbBalance,      setBnbBalance,
@@ -339,7 +341,7 @@ export function SwapPage({ onBack }: SwapPageProps) {
     setLastSwap({
       from: `${parsedFrom.toFixed(decFrom)} ${fromAsset}`,
       to:   `${toAmount.toFixed(decTo)} ${toAsset}`,
-      feeStr: `${feeInAsset.toFixed(6)} ${feeConfig.feeAsset} (~$${feeConfig.feeUsd.toFixed(2)})`,
+      feeStr: `${feeInAsset.toFixed(6)} ${feeConfig.feeAsset} (~${fmtFiat(feeConfig.feeUsd)})`,
     });
     setFromAmount("");
     setStep("done");
@@ -472,7 +474,7 @@ export function SwapPage({ onBack }: SwapPageProps) {
                     {parsedFrom.toFixed(COIN_DEC[fromAsset])} {fromAsset}
                   </p>
                   <p className="text-[11px] text-[#888888]">
-                    ≈ ${(parsedFrom * prices[fromAsset]).toFixed(2)} USD
+                    ≈ {fmtFiat(parsedFrom * prices[fromAsset])}
                   </p>
                 </div>
               </div>
@@ -498,7 +500,7 @@ export function SwapPage({ onBack }: SwapPageProps) {
                     {toAmount.toFixed(COIN_DEC[toAsset])} {toAsset}
                   </p>
                   <p className="text-[11px] text-[#888888]">
-                    ≈ ${(toAmount * prices[toAsset]).toFixed(2)} USD
+                    ≈ {fmtFiat(toAmount * prices[toAsset])}
                   </p>
                 </div>
               </div>
@@ -508,7 +510,7 @@ export function SwapPage({ onBack }: SwapPageProps) {
             <div className="mx-5 mb-5 flex items-center justify-between bg-[#F5F3EA] rounded-xl px-4 py-2.5">
               <span className="text-xs text-[#888888]">Gas Fee</span>
               <span className="text-xs font-semibold text-[#333333]">
-                {feeInAsset.toFixed(6)} {feeConfig.feeAsset} (~${feeConfig.feeUsd.toFixed(2)})
+                {feeInAsset.toFixed(6)} {feeConfig.feeAsset} (~{fmtFiat(feeConfig.feeUsd)})
               </span>
             </div>
 
@@ -584,7 +586,7 @@ export function SwapPage({ onBack }: SwapPageProps) {
               />
               {parsedFrom > 0 && (
                 <p className="text-[11px] text-[#888888]">
-                  ≈ ${(parsedFrom * prices[fromAsset]).toFixed(2)} USD
+                  ≈ {fmtFiat(parsedFrom * prices[fromAsset])}
                 </p>
               )}
             </div>
@@ -634,7 +636,7 @@ export function SwapPage({ onBack }: SwapPageProps) {
               </p>
               {toAmount > 0 && (
                 <p className="text-[11px] text-[#888888]">
-                  ≈ ${(toAmount * prices[toAsset]).toFixed(2)} USD
+                  ≈ {fmtFiat(toAmount * prices[toAsset])}
                 </p>
               )}
             </div>
@@ -656,7 +658,7 @@ export function SwapPage({ onBack }: SwapPageProps) {
           <div className="flex items-center justify-between">
             <span className="text-xs text-[#888888]">Gas Fee</span>
             <span className="text-xs font-semibold text-[#333333]">
-              {feeInAsset.toFixed(6)} {feeConfig.feeAsset} (~${feeConfig.feeUsd.toFixed(2)})
+              {feeInAsset.toFixed(6)} {feeConfig.feeAsset} (~{fmtFiat(feeConfig.feeUsd)})
             </span>
           </div>
           <div className="flex items-center justify-between">
