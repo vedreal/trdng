@@ -60,7 +60,7 @@ const TRADING_PAIRS: TradingPair[] = [
   },
   {
     symbol: "SOLUSDT", label: "SOL/USDT", base: "SOL",
-    icon: IPFS + "bafkreihfoippppifivpnf6cc5ixwn7lxcw2wz2rrtwazdb4qpa4dabqyvq",
+    icon: IPFS + "bafybeidzzeeg4wfk744pzux4vq7isrhta6gz2w4wfo2psxtggklp4ioupa",
     fallback: 180, priceDec: 2, stepSize: 0.1,
   },
 ];
