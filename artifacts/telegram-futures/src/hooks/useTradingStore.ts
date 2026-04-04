@@ -265,7 +265,7 @@ export function useTradingStore() {
       currentBalance?: number,
       currentPositions?: Position[]
     ): { success: boolean; message: string } => {
-      return _executeOpen(side, requestedMargin, price, leverage, stepSize, TAKER_FEE, sl, tp, currentBalance, currentPositions);
+      return _executeOpen(side, symbol, requestedMargin, price, leverage, stepSize, TAKER_FEE, sl, tp, currentBalance, currentPositions);
     },
     [_executeOpen]
   );
