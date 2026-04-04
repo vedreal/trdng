@@ -50,7 +50,7 @@ const TRADING_PAIRS: TradingPair[] = [
   },
   {
     symbol: "ETHUSDT", label: "ETH/USDT", base: "ETH",
-    icon: IPFS + "bafkreid26dhrj4oqunpcirvrvwg3j7ccjrttlrgkfxwriehy2owwsrljcm",
+    icon: IPFS + "bafkreiccdvf3jvs2kngcddhe6siaca44y3ztru254dor3vocue36gbplw4",
     fallback: 3500, priceDec: 2, stepSize: 0.01,
   },
   {
