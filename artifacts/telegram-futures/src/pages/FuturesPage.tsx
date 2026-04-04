@@ -1,12 +1,11 @@
 import { useState, useCallback, useEffect } from "react";
-import { IconX, IconChevronDown, IconChevronRight, IconPlus } from "@tabler/icons-react";
+import { IconX, IconChevronDown, IconChevronRight } from "@tabler/icons-react";
 import { useBinancePrice, type CandleData } from "../hooks/useBinancePrice";
 import {
   type Position,
   type ClosedTrade,
   calcLiqPrice,
   computeDynamicLiqPrice,
-  computeWalletBalance,
   calcEffectivePosition,
   calcMaxMarginForBalance,
   getMaxNotional,
@@ -20,7 +19,12 @@ import { CandleChart } from "../components/CandleChart";
 type OrderType = "limit" | "market";
 type TabType = "position" | "orders" | "history";
 
-const LEVERAGE_OPTIONS = [10, 25, 50, 75, 100];
+const PAIR_LEVERAGE_OPTIONS: Record<string, number[]> = {
+  BTCUSDT: [50, 100, 150],
+  ETHUSDT: [50, 75, 100],
+  BNBUSDT: [50, 75, 100],
+  SOLUSDT: [50, 75, 100],
+};
 const SLIDER_MARKS = [0, 25, 50, 75, 100];
 
 const INTERVALS = [
@@ -626,123 +630,237 @@ function TransferModal({
   );
 }
 
-// ── Crypto News Widget (RSS Real-time) ────────────────────────────
-interface NewsItem {
-  title: string;
-  link: string;
-  pubDate: string;
-  thumbnail: string;
-  source: string;
-  coin: string;
-}
+// ── Leverage Confirmation Modal ────────────────────────────────────
+const LEV_CONFIRM_KEY = "leverage_confirm_skip_v1";
 
-const COIN_COLORS: Record<string, string> = {
-  BTC: "#F7931A",
-  ETH: "#627EEA",
-  BNB: "#F3BA2F",
-  SOL: "#9945FF",
-};
+function LeverageConfirmModal({
+  targetLev,
+  onConfirm,
+  onCancel,
+}: {
+  targetLev: number;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const [skipForever, setSkipForever] = useState(false);
 
-function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
-}
-
-async function fetchRssNews(): Promise<NewsItem[]> {
-  const res = await fetch("/api/news", { cache: "no-store" });
-  if (!res.ok) throw new Error(`News API error ${res.status}`);
-  return res.json();
-}
-
-function CryptoNewsWidget() {
-  const [news, setNews] = useState<NewsItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState("");
-
-  async function load() {
-    setLoading(true);
-    setError(false);
-    try {
-      const items = await fetchRssNews();
-      setNews(items);
-      setLastUpdated(new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }));
-    } catch {
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    load();
-    const timer = setInterval(load, 5 * 60 * 1000);
-    return () => clearInterval(timer);
-  }, []);
+  const handleYes = () => {
+    if (skipForever) localStorage.setItem(LEV_CONFIRM_KEY, "1");
+    onConfirm();
+  };
 
   return (
-    <div className="mx-3 mt-1 mb-3 rounded-2xl overflow-hidden border border-[#D4AF37] panel-silver">
-      {/* Header bar */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#E0D8B0]">
-        <span className="text-xs font-semibold text-[#888888]">Crypto News · BTC ETH BNB SOL</span>
-        <div className="flex items-center gap-2">
-          {lastUpdated && (
-            <span className="text-[10px] text-[#AAAAAA]">Updated {lastUpdated}</span>
-          )}
-          <button
-            onClick={load}
-            className="text-[10px] font-bold px-2 py-0.5 rounded-full btn-3d-gold leading-tight">
-            ↻
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-6 modal-enter">
+      <div className="w-full max-w-xs rounded-2xl panel-card border border-[#D4AF37] p-5 shadow-2xl">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-8 h-8 rounded-full bg-[#FFF3CD] flex items-center justify-center flex-shrink-0">
+            <span className="text-base">⚠</span>
+          </div>
+          <span className="font-bold text-[#1A1A1A] text-sm">Adjust Leverage</span>
+        </div>
+        <p className="text-xs text-[#555555] leading-relaxed mb-4">
+          Are you sure you want to use <span className="font-bold text-[#C9A227]">{targetLev}x</span> leverage?
+          Higher leverage increases both potential profit and risk of liquidation.
+          Please make sure you fully understand the risks involved.
+        </p>
+        <label className="flex items-center gap-2 mb-4 cursor-pointer">
+          <div
+            onClick={() => setSkipForever(!skipForever)}
+            className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+              skipForever ? "bg-[#D4AF37] border-[#D4AF37]" : "border-[#CCCCCC] bg-white"
+            }`}
+          >
+            {skipForever && <span className="text-white text-[9px] font-bold">✓</span>}
+          </div>
+          <span className="text-[11px] text-[#888888]">Don't show this again</span>
+        </label>
+        <div className="flex gap-2">
+          <button onClick={onCancel}
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold btn-3d-silver">
+            No
+          </button>
+          <button onClick={handleYes}
+            className="flex-1 py-2.5 rounded-xl text-sm font-bold btn-3d-gold">
+            Yes, I understand
           </button>
         </div>
       </div>
+    </div>
+  );
+}
 
-      {loading && (
+// ── Trader Activity Widget ─────────────────────────────────────────
+const MOCK_NAMES = [
+  "Alex R.", "Maria S.", "James K.", "Sophie L.", "David W.",
+  "Emma T.", "Ryan M.", "Chloe B.", "Noah F.", "Olivia P.",
+  "Liam G.", "Ava C.", "Ethan H.", "Isabella J.", "Mason D.",
+  "Mia V.", "Logan N.", "Charlotte X.", "Aiden Z.", "Amelia Q.",
+  "Lucas A.", "Harper U.", "Jackson E.", "Evelyn Y.", "Sebastian I.",
+  "Abigail O.", "Mateo L.", "Emily R.", "Jack S.", "Elizabeth M.",
+  "Owen T.", "Mila K.", "Theodore B.", "Ella W.", "Henry F.",
+  "Sofia P.", "Elijah G.", "Aria C.", "William H.", "Scarlett J.",
+  "James D.", "Victoria V.", "Benjamin N.", "Grace X.", "Samuel Z.",
+  "Chloe Q.", "Daniel A.", "Penelope U.", "Michael E.", "Riley Y.",
+  "Alexander I.", "Zoey O.", "Elias L.", "Nora R.", "Oliver S.",
+  "Lily M.", "Lucas T.", "Eleanor K.", "Carter B.", "Hannah W.",
+  "Julian F.", "Lillian P.", "Dylan G.", "Addison C.", "Nathan H.",
+  "Aubrey J.", "Isaac D.", "Ellie V.", "Caleb N.", "Stella X.",
+  "Wyatt Z.", "Natalie Q.", "Hunter A.", "Camila U.", "Connor E.",
+  "Hazel Y.", "Levi I.", "Violet O.", "Christian L.", "Aurora R.",
+  "Jonathan S.", "Savannah M.", "Nolan T.", "Brooklyn K.", "Jeremiah B.",
+  "Bella W.", "Easton F.", "Claire P.", "Eli G.", "Skylar C.",
+  "Vincent H.", "Lucy J.", "Lincoln D.", "Paisley V.", "Anthony N.",
+  "Everly X.", "Colton Z.", "Anna Q.", "Cameron A.", "Caroline U.",
+  "Brayden E.", "Genesis Y.", "Jordan I.", "Aaliyah O.", "Adrian L.",
+];
+
+const ACTIVITY_PAIRS = [
+  { symbol: "BTCUSDT", label: "BTC/USDT" },
+  { symbol: "ETHUSDT", label: "ETH/USDT" },
+  { symbol: "BNBUSDT", label: "BNB/USDT" },
+  { symbol: "SOLUSDT", label: "SOL/USDT" },
+];
+
+interface TraderEvent {
+  id: number;
+  name: string;
+  pair: string;
+  side: "long" | "short";
+  leverage: number;
+  closePrice: number;
+  pnlPct: number;
+  pnlAmt: number;
+  margin: number;
+  ts: number;
+}
+
+function generateEvent(id: number, prices: Record<string, number>): TraderEvent {
+  const nameIdx = Math.floor(Math.random() * MOCK_NAMES.length);
+  const pairIdx = Math.floor(Math.random() * ACTIVITY_PAIRS.length);
+  const pair = ACTIVITY_PAIRS[pairIdx];
+  const side = Math.random() > 0.5 ? "long" : "short";
+  const leverageOptions = pair.symbol === "BTCUSDT" ? [50, 100, 150] : [50, 75, 100];
+  const leverage = leverageOptions[Math.floor(Math.random() * leverageOptions.length)];
+
+  const basePrice = prices[pair.symbol] ?? 0;
+  const closePrice = basePrice > 0
+    ? basePrice * (1 + (Math.random() - 0.5) * 0.002)
+    : 0;
+
+  const isProfit = Math.random() > 0.38;
+  const pnlPct = isProfit
+    ? (Math.random() * 80 + 5) * leverage / 100
+    : -(Math.random() * 60 + 5) * leverage / 100;
+
+  const margin = parseFloat((Math.random() * 500 + 20).toFixed(2));
+  const pnlAmt = parseFloat((margin * pnlPct / 100).toFixed(2));
+
+  return {
+    id,
+    name: MOCK_NAMES[nameIdx],
+    pair: pair.label,
+    side,
+    leverage,
+    closePrice: parseFloat(closePrice.toFixed(closePrice > 1000 ? 0 : closePrice > 10 ? 2 : 3)),
+    pnlPct: parseFloat(pnlPct.toFixed(2)),
+    pnlAmt,
+    margin,
+    ts: Date.now(),
+  };
+}
+
+function TraderActivityWidget() {
+  const { fmtFiat } = useCurrency();
+
+  const btc = useBinancePrice("BTCUSDT");
+  const eth = useBinancePrice("ETHUSDT");
+  const bnb = useBinancePrice("BNBUSDT");
+  const sol = useBinancePrice("SOLUSDT");
+
+  const prices: Record<string, number> = {
+    BTCUSDT: btc.price,
+    ETHUSDT: eth.price,
+    BNBUSDT: bnb.price,
+    SOLUSDT: sol.price,
+  };
+
+  const [events, setEvents] = useState<TraderEvent[]>([]);
+  const [eventCounter, setEventCounter] = useState(0);
+
+  useEffect(() => {
+    if (Object.values(prices).every((p) => p === 0)) return;
+
+    const initial: TraderEvent[] = [];
+    for (let i = 0; i < 5; i++) {
+      initial.push(generateEvent(i, prices));
+    }
+    setEvents(initial);
+    setEventCounter(5);
+  }, [btc.price > 0]);
+
+  useEffect(() => {
+    if (events.length === 0) return;
+
+    const delay = Math.floor(Math.random() * 25000) + 5000;
+    const timer = setTimeout(() => {
+      const newEvent = generateEvent(eventCounter, prices);
+      setEvents((prev) => [newEvent, ...prev].slice(0, 5));
+      setEventCounter((c) => c + 1);
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [events, eventCounter]);
+
+  return (
+    <div className="mx-3 mt-1 mb-3 rounded-2xl overflow-hidden border border-[#D4AF37] panel-silver">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#E0D8B0]">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+          <span className="text-xs font-semibold text-[#888888]">Trader Activity</span>
+        </div>
+        <span className="text-[10px] text-[#AAAAAA]">Live · Last 5 closes</span>
+      </div>
+
+      {events.length === 0 && (
         <div className="py-10 flex flex-col items-center gap-2">
           <div className="w-6 h-6 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
-          <span className="text-xs text-[#AAAAAA]">Loading latest news…</span>
+          <span className="text-xs text-[#AAAAAA]">Loading activity...</span>
         </div>
       )}
 
-      {error && !loading && (
-        <div className="py-10 flex flex-col items-center gap-3">
-          <span className="text-sm text-[#AAAAAA]">Failed to load news</span>
-          <button onClick={load} className="text-xs px-4 py-1.5 rounded-lg btn-3d-gold">Retry</button>
-        </div>
-      )}
-
-      {!loading && !error && news.length === 0 && (
-        <div className="py-10 text-center text-sm text-[#AAAAAA]">No recent news found</div>
-      )}
-
-      {!loading && !error && news.length > 0 && (
+      {events.length > 0 && (
         <div className="divide-y divide-[#E8E4D0]">
-          {news.map((item, i) => (
-            <a
-              key={i}
-              href={item.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-start gap-3 px-4 py-3 hover:bg-[#F5F0DC] transition-colors active:bg-[#EDE8D0]">
-              {/* Coin badge */}
-              <div
-                className="mt-0.5 flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-white text-[9px] font-bold"
-                style={{ background: COIN_COLORS[item.coin] ?? "#B8860B" }}>
-                {item.coin === "CRYPTO" ? "🔥" : item.coin.slice(0, 3)}
+          {events.map((ev) => {
+            const profit = ev.pnlAmt >= 0;
+            return (
+              <div key={ev.id} className="px-4 py-3 flex items-start gap-3">
+                <div className={`mt-0.5 flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-white text-[9px] font-bold ${
+                  profit ? "bg-green-500" : "bg-red-500"
+                }`}>
+                  {profit ? "↑" : "↓"}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className="text-xs font-bold text-[#1A1A1A]">{ev.name}</span>
+                    <span className={`text-xs font-bold ${profit ? "text-green-600" : "text-red-500"}`}>
+                      {profit ? "+" : ""}{fmtFiat(ev.pnlAmt)} ({profit ? "+" : ""}{ev.pnlPct.toFixed(1)}%)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                      ev.side === "long" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-500"
+                    }`}>
+                      {ev.side === "long" ? "Long" : "Short"}
+                    </span>
+                    <span className="text-[10px] text-[#888888]">{ev.pair} · {ev.leverage}x</span>
+                    <span className="text-[10px] text-[#AAAAAA] ml-auto">
+                      Closed @ ${ev.closePrice > 0 ? ev.closePrice.toLocaleString("en-US") : "..."}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-[#1A1A1A] leading-snug line-clamp-2">{item.title}</p>
-                <p className="mt-0.5 text-[10px] text-[#AAAAAA]">
-                  {timeAgo(item.pubDate)} · {item.source}
-                </p>
-              </div>
-            </a>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
@@ -776,11 +894,13 @@ export function FuturesPage() {
 
   const [activeTab, setActiveTab]       = useState<TabType>("position");
   const [contractTab, setContractTab]   = useState<"trade" | "news">("trade");
-  const [showLevModal, setShowLevModal] = useState(false);
+  const [pendingLev, setPendingLev]     = useState<number | null>(null);
   const [editingPos, setEditingPos]     = useState<Position | null>(null);
   const [closingPos, setClosingPos]     = useState<Position | null>(null);
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [toast, setToast]               = useState<{ msg: string; ok: boolean } | null>(null);
+
+  const leverageOptions = PAIR_LEVERAGE_OPTIONS[selectedPair.symbol] ?? [50, 100];
 
   const priceDisplay = fmtPrice(price, selectedPair.priceDec);
 
@@ -956,6 +1076,20 @@ export function FuturesPage() {
         />
       )}
 
+      {/* Leverage confirm modal */}
+      {pendingLev !== null && (
+        <LeverageConfirmModal
+          targetLev={pendingLev}
+          onConfirm={() => {
+            setLeverage(pendingLev);
+            setMarginInput("");
+            setSliderValue(0);
+            setPendingLev(null);
+          }}
+          onCancel={() => setPendingLev(null)}
+        />
+      )}
+
       {/* Transfer modal */}
       {showTransferModal && (
         <TransferModal
@@ -981,6 +1115,8 @@ export function FuturesPage() {
             setMarginInput("");
             setSliderValue(0);
             setLimitPriceInput("");
+            const opts = PAIR_LEVERAGE_OPTIONS[pair.symbol] ?? [50, 100];
+            setLeverage(opts[0]);
           }}
           onClose={() => setShowPairPicker(false)}
         />
@@ -1055,12 +1191,12 @@ export function FuturesPage() {
               className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 contractTab === "news" ? "btn-3d-gold" : "text-[#888888]"
               }`}>
-              News
+              Activity
             </button>
           </div>
         </div>
 
-        {contractTab === "news" && <CryptoNewsWidget />}
+        {contractTab === "news" && <TraderActivityWidget />}
 
         {contractTab === "trade" && <>
 
@@ -1070,11 +1206,28 @@ export function FuturesPage() {
           {/* Leverage selector */}
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs text-[#888888] font-medium">Cross Margin</span>
-            <button onClick={() => setShowLevModal(true)}
-              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs btn-3d-gold active:scale-[0.98] transition-all">
-              <IconPlus size={10} stroke={2.5} />
-              Leverage {leverage}x
-            </button>
+            <div className="flex gap-1.5">
+              {leverageOptions.map((lev) => (
+                <button
+                  key={lev}
+                  onClick={() => {
+                    if (lev === leverage) return;
+                    if (localStorage.getItem(LEV_CONFIRM_KEY)) {
+                      setLeverage(lev);
+                      setMarginInput("");
+                      setSliderValue(0);
+                    } else {
+                      setPendingLev(lev);
+                    }
+                  }}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-[0.97] ${
+                    leverage === lev ? "btn-3d-gold" : "btn-3d-silver"
+                  }`}
+                >
+                  {lev}x
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Limit / Market tabs */}
@@ -1367,44 +1520,6 @@ export function FuturesPage() {
 
       </div>
 
-      {/* Leverage modal */}
-      {showLevModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end modal-enter" onClick={() => setShowLevModal(false)}>
-          <div className="w-full rounded-t-2xl p-5 pb-28 max-w-md mx-auto panel-silver border-t border-[#D4AF37]"
-            onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <span className="font-semibold text-[#1A1A1A]">Select Leverage</span>
-              <button onClick={() => setShowLevModal(false)} className="text-[#888888]">
-                <IconX size={20} stroke={2.5} />
-              </button>
-            </div>
-            <div className="flex gap-2 mb-4 flex-wrap">
-              {LEVERAGE_OPTIONS.map((lev) => (
-                <button key={lev} onClick={() => { setLeverage(lev); setShowLevModal(false); setMarginInput(""); setSliderValue(0); }}
-                  className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all min-w-[52px] ${
-                    leverage === lev ? "btn-3d-gold" : "btn-3d-silver"
-                  }`}>
-                  {lev}x
-                </button>
-              ))}
-            </div>
-            <div className="rounded-xl p-3 space-y-1.5 bg-[#ECECEC] border border-[#D0CCA8]">
-              <p className="text-xs text-[#888888] font-medium mb-2">Max Position by Leverage</p>
-              {LEVERAGE_OPTIONS.map((lev) => (
-                <div key={lev} className="flex justify-between">
-                  <span className={`text-xs font-medium ${lev === leverage ? "text-[#C9A227]" : "text-[#666666]"}`}>{lev}x</span>
-                  <span className={`text-xs ${lev === leverage ? "text-[#C9A227] font-semibold" : "text-[#888888]"}`}>
-                    Max ${fmtCompact(getMaxNotional(lev))}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <p className="text-[10px] text-[#AAAAAA] mt-3 text-center">
-              Higher leverage = higher risk. Use responsibly.
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -52,7 +52,9 @@ export interface ClosedTrade {
 export const INITIAL_BALANCE = 10_000;
 
 export const LEVERAGE_MAX_NOTIONAL: Record<number, number> = {
+  150:   200_000,
   100:   500_000,
+   75:   750_000,
    50: 2_000_000,
    25: 5_000_000,
    10:10_000_000,
