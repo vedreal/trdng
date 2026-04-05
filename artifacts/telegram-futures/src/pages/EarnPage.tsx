@@ -206,9 +206,8 @@ export function EarnPage() {
       {/* ── Floating Toast ── */}
       {toast && (
         <div
-          className="fixed top-4 left-1/2 z-[70] flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl"
+          className="toast-pop fixed top-4 left-1/2 z-[70] flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl"
           style={{
-            transform: "translateX(-50%)",
             background: "linear-gradient(135deg, #22c55e, #15803d)",
             boxShadow: "0 8px 32px rgba(22,163,74,0.45)",
             minWidth: 280,
@@ -231,7 +230,7 @@ export function EarnPage() {
       )}
 
       {/* ── Header — stays fixed ── */}
-      <div className="relative flex items-center justify-center px-4 py-3 flex-shrink-0">
+      <div className="elem-pop pop-d1 relative flex items-center justify-center px-4 py-3 flex-shrink-0">
         <span className="font-bold text-[#1A1A1A] text-base">Earn</span>
       </div>
 
@@ -240,7 +239,7 @@ export function EarnPage() {
 
         {/* ── Single Check-In Card ── */}
         <div
-          className="rounded-2xl overflow-hidden shadow-lg relative"
+          className="elem-pop pop-d2 rounded-2xl overflow-hidden shadow-lg relative"
           style={{
             background: "linear-gradient(135deg, #E8C84A 0%, #D4AF37 40%, #B8960C 80%, #9B7A1A 100%)",
             boxShadow: "0 6px 28px rgba(180,140,0,0.4), 0 1px 0 rgba(255,255,255,0.3) inset",
@@ -396,7 +395,7 @@ export function EarnPage() {
         </div>
 
         {/* ── Events Section ── */}
-        <div className="mt-5">
+        <div className="elem-pop pop-d3 mt-5">
           <p className="text-xs font-bold text-[#888888] uppercase tracking-wider mb-3 px-1">Events</p>
 
           {/* Futures Giveaway Event Card */}

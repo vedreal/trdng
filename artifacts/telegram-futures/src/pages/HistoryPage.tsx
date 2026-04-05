@@ -147,7 +147,7 @@ export function HistoryPage({ onBack }: HistoryPageProps) {
     <div className="flex flex-col h-full page-bg overflow-y-auto">
 
       {/* Header */}
-      <div className="flex items-center px-4 py-3 flex-shrink-0">
+      <div className="elem-pop pop-d1 flex items-center px-4 py-3 flex-shrink-0">
         <button onClick={onBack} className="mr-3 w-8 h-8 flex items-center justify-center rounded-full bg-[#E8E4D0] text-[#666]">
           <IconChevronLeft size={18} stroke={2.5} />
         </button>
@@ -160,7 +160,7 @@ export function HistoryPage({ onBack }: HistoryPageProps) {
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-2 px-4 pb-3 flex-shrink-0">
+      <div className="elem-pop pop-d2 flex gap-2 px-4 pb-3 flex-shrink-0">
         {FILTER_TABS.map((tab) => (
           <button
             key={tab.id}
@@ -175,7 +175,7 @@ export function HistoryPage({ onBack }: HistoryPageProps) {
         ))}
       </div>
 
-      <div className="px-4 pb-4 flex-1">
+      <div className="elem-pop pop-d3 px-4 pb-4 flex-1">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center py-20">
             <div className="w-16 h-16 rounded-full bg-[#E8E4D0] flex items-center justify-center mb-4">

@@ -589,14 +589,14 @@ export function ProfilePage() {
     <div key="profile-main" className="page-enter flex flex-col h-full page-bg overflow-y-auto pb-28">
 
       {/* Header */}
-      <div className="relative flex items-center justify-center px-4 py-3 flex-shrink-0">
+      <div className="elem-pop pop-d1 relative flex items-center justify-center px-4 py-3 flex-shrink-0">
         <span className="font-bold text-[#1A1A1A] text-base">Profile</span>
       </div>
 
       <div className="px-4 py-5 space-y-4">
 
         {/* ── Profile Card ── */}
-        <div className="rounded-2xl overflow-hidden relative"
+        <div className="elem-pop pop-d2 rounded-2xl overflow-hidden relative"
           style={{ background: "linear-gradient(135deg,#1A1F3A 0%,#0F1628 60%,#1A2818 100%)", boxShadow: "0 6px 24px rgba(0,0,0,0.35)" }}>
           <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full opacity-10 pointer-events-none"
             style={{ background: "radial-gradient(circle,#D4AF37,transparent)" }} />
@@ -641,7 +641,7 @@ export function ProfilePage() {
         </div>
 
         {/* ── Menu Items ── */}
-        <div className="space-y-3">
+        <div className="elem-pop pop-d3 space-y-3">
           {menuItems.map((item) => (
             <button key={item.id} onClick={item.onClick}
               className="w-full text-left panel-silver rounded-2xl border border-[#DDD5B0] overflow-hidden active:scale-[0.985] transition-transform">
@@ -676,7 +676,7 @@ export function ProfilePage() {
           href={SUPPORT_LINK}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-3 w-full panel-silver rounded-2xl border border-[#DDD5B0] px-4 py-3.5 active:scale-[0.985] transition-transform"
+          className="elem-pop pop-d4 flex items-center gap-3 w-full panel-silver rounded-2xl border border-[#DDD5B0] px-4 py-3.5 active:scale-[0.985] transition-transform"
         >
           <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
             style={{

@@ -151,7 +151,7 @@ export function ReceivePage({ onBack }: ReceivePageProps) {
   return (
     <div className="flex flex-col h-full page-bg overflow-y-auto">
       {toast && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[60] px-4 py-2.5 rounded-xl shadow-lg text-sm font-medium text-white bg-green-500">
+        <div className="toast-pop fixed top-4 left-1/2 z-[60] px-4 py-2.5 rounded-xl shadow-lg text-sm font-medium text-white bg-green-500">
           {toast}
         </div>
       )}
@@ -160,7 +160,7 @@ export function ReceivePage({ onBack }: ReceivePageProps) {
       {showAssetModal && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" onClick={() => { setShowAssetModal(false); setSearchQuery(""); }}>
           <div
-            className="w-full max-w-md rounded-t-3xl bg-white shadow-2xl flex flex-col"
+            className="modal-sheet-pop w-full max-w-md rounded-t-3xl bg-white shadow-2xl flex flex-col"
             style={{ maxHeight: "80vh" }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -231,7 +231,7 @@ export function ReceivePage({ onBack }: ReceivePageProps) {
       {showNetworkModal && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" onClick={() => setShowNetworkModal(false)}>
           <div
-            className="w-full max-w-md rounded-t-3xl bg-white shadow-2xl flex flex-col"
+            className="modal-sheet-pop w-full max-w-md rounded-t-3xl bg-white shadow-2xl flex flex-col"
             style={{ maxHeight: "70vh" }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -297,14 +297,14 @@ export function ReceivePage({ onBack }: ReceivePageProps) {
       )}
 
       {/* Header */}
-      <div className="flex items-center px-4 py-3 flex-shrink-0">
+      <div className="elem-pop pop-d1 flex items-center px-4 py-3 flex-shrink-0">
         <button onClick={onBack} className="mr-3 w-8 h-8 flex items-center justify-center rounded-full bg-[#E8E4D0] text-[#666]">
           <IconChevronLeft size={18} stroke={2.5} />
         </button>
         <span className="font-bold text-[#1A1A1A] text-base">Receive / Deposit</span>
       </div>
 
-      <div className="px-4 py-3 space-y-4">
+      <div className="elem-pop pop-d2 px-4 py-3 space-y-4">
 
         {/* Asset Selector */}
         <div>

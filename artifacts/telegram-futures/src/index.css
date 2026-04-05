@@ -252,6 +252,29 @@ input[type="range"]::-moz-range-thumb {
   animation: modalSheetPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
+/* ── Auto-stagger pop for container children ───────────────────── */
+.pop-section > *:nth-child(1)  { animation: elemPop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both; animation-delay: 0.06s; }
+.pop-section > *:nth-child(2)  { animation: elemPop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both; animation-delay: 0.13s; }
+.pop-section > *:nth-child(3)  { animation: elemPop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both; animation-delay: 0.20s; }
+.pop-section > *:nth-child(4)  { animation: elemPop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both; animation-delay: 0.27s; }
+.pop-section > *:nth-child(5)  { animation: elemPop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both; animation-delay: 0.33s; }
+.pop-section > *:nth-child(6)  { animation: elemPop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both; animation-delay: 0.39s; }
+.pop-section > *:nth-child(7)  { animation: elemPop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both; animation-delay: 0.45s; }
+.pop-section > *:nth-child(8)  { animation: elemPop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both; animation-delay: 0.51s; }
+.pop-section > *:nth-child(9)  { animation: elemPop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both; animation-delay: 0.55s; }
+.pop-section > *:nth-child(10) { animation: elemPop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both; animation-delay: 0.59s; }
+
+/* ── Toast / Notification pop-in ──────────────────────────────── */
+@keyframes toastPop {
+  0%   { transform: translateX(-50%) scale(0.80) translateY(-16px); opacity: 0; }
+  60%  { transform: translateX(-50%) scale(1.06) translateY(3px);   opacity: 1; }
+  80%  { transform: translateX(-50%) scale(0.97) translateY(-1px); }
+  100% { transform: translateX(-50%) scale(1)    translateY(0); }
+}
+.toast-pop {
+  animation: toastPop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
 /* ── Global slow transition override ─────────────────────────────── */
 @layer utilities {
   .transition-all {
