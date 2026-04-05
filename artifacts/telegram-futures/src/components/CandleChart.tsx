@@ -113,9 +113,9 @@ export function CandleChart({ candles, currentPrice }: CandleChartProps) {
 
     // ── Gradient fill ─────────────────────────────────────────────────────
     const gradient = ctx.createLinearGradient(0, TOP_PAD, 0, TOP_PAD + chartH);
-    gradient.addColorStop(0,    "rgba(249,115,22,0.20)");
-    gradient.addColorStop(0.65, "rgba(249,115,22,0.05)");
-    gradient.addColorStop(1,    "rgba(249,115,22,0)");
+    gradient.addColorStop(0,    "rgba(59,130,246,0.20)");
+    gradient.addColorStop(0.65, "rgba(59,130,246,0.05)");
+    gradient.addColorStop(1,    "rgba(59,130,246,0)");
 
     buildPath();
     ctx.lineTo(screenPts[screenPts.length - 1].x, TOP_PAD + chartH);
@@ -126,7 +126,7 @@ export function CandleChart({ candles, currentPrice }: CandleChartProps) {
 
     // ── Main line ─────────────────────────────────────────────────────────
     buildPath();
-    ctx.strokeStyle = "#f97316";
+    ctx.strokeStyle = "#3b82f6";
     ctx.lineWidth   = 1.8;
     ctx.setLineDash([]);
     ctx.lineJoin    = "round";
@@ -136,7 +136,7 @@ export function CandleChart({ candles, currentPrice }: CandleChartProps) {
     // ── Live price dashed horizontal line ─────────────────────────────────
     const py = toY(liveClose);
     if (py >= TOP_PAD - 2 && py <= TOP_PAD + chartH + 2) {
-      ctx.strokeStyle = "rgba(239,83,80,0.7)";
+      ctx.strokeStyle = "rgba(59,130,246,0.7)";
       ctx.lineWidth   = 0.8;
       ctx.setLineDash([3, 3]);
       ctx.beginPath();
@@ -149,7 +149,7 @@ export function CandleChart({ candles, currentPrice }: CandleChartProps) {
       const tagW = 54, tagH = 14;
       const tagX = chartW + 2;
       const tagY = py - tagH / 2;
-      ctx.fillStyle = "#ef5350";
+      ctx.fillStyle = "#3b82f6";
       ctx.beginPath();
       if (ctx.roundRect) ctx.roundRect(tagX, tagY, tagW, tagH, 2);
       else ctx.rect(tagX, tagY, tagW, tagH);
@@ -170,8 +170,8 @@ export function CandleChart({ candles, currentPrice }: CandleChartProps) {
     // ── Glowing dot at the live endpoint ──────────────────────────────────
     const last = screenPts[screenPts.length - 1];
     const glow = ctx.createRadialGradient(last.x, last.y, 0, last.x, last.y, 8);
-    glow.addColorStop(0, "rgba(249,115,22,0.40)");
-    glow.addColorStop(1, "rgba(249,115,22,0)");
+    glow.addColorStop(0, "rgba(59,130,246,0.40)");
+    glow.addColorStop(1, "rgba(59,130,246,0)");
     ctx.beginPath();
     ctx.arc(last.x, last.y, 8, 0, Math.PI * 2);
     ctx.fillStyle = glow;
@@ -179,7 +179,7 @@ export function CandleChart({ candles, currentPrice }: CandleChartProps) {
 
     ctx.beginPath();
     ctx.arc(last.x, last.y, 3.5, 0, Math.PI * 2);
-    ctx.fillStyle   = "#f97316";
+    ctx.fillStyle   = "#3b82f6";
     ctx.fill();
     ctx.strokeStyle = "white";
     ctx.lineWidth   = 1.5;

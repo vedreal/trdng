@@ -1339,91 +1339,58 @@ export function FuturesPage() {
             </div>
           </div>
 
-          {/* Margin input */}
-          <div className="rounded-xl border border-[#C8C0A0] flex items-center px-4 py-3 mb-1 bg-[#F5F3EA]">
-            <span className="text-sm text-[#888888] mr-3 flex-shrink-0">Margin</span>
-            <input
-              type="number"
-              value={marginInput}
-              onChange={(e) => handleMarginChange(e.target.value)}
-              className="flex-1 text-right text-sm font-medium text-[#333333] bg-transparent outline-none"
-              placeholder="0.00" min="0" step="0.01"
-            />
-            <span className="text-sm text-[#888888] ml-2 flex-shrink-0">USDT</span>
-          </div>
-
-          {/* Fee info row */}
-          {effectiveNotional > 0 && (
-            <div className="flex items-center justify-between mb-1 px-1">
-              <span className="text-[10px] text-[#AAAAAA]">
-                Fee ({orderType === "market" ? "0.04%" : "0.02%"})
-              </span>
-              <span className="text-[10px] text-[#C9A227] font-medium">
-                -{fmt(effectiveFee, 4)} USDT
-              </span>
-            </div>
-          )}
-
-          {/* Cost row */}
-          {effectiveNotional > 0 && (
-            <div className="flex items-center justify-between mb-2 px-1">
-              <span className="text-[10px] text-[#888888] font-medium">Total Cost</span>
-              <span className="text-[10px] text-[#333333] font-semibold">
-                {fmt(effectiveCost, 4)} USDT
-              </span>
-            </div>
-          )}
-
-          {/* Tier cap notice */}
-          {isCapped && (
-            <div className="flex justify-end mb-2 pr-1">
-              <span className="text-[10px] text-[#C9A227] font-medium">
-                ⚠ Max position capped at ${fmtCompact(tierMax)} for {leverage}x
-              </span>
-            </div>
-          )}
-          {!isCapped && effectiveNotional <= 0 && <div className="mb-2" />}
-
-          {/* Limit price input */}
-          {orderType === "limit" && (
-            <div className="rounded-xl border border-[#C8C0A0] flex items-center px-4 py-3 mb-3 bg-[#F5F3EA]">
-              <span className="text-sm text-[#888888] mr-3 flex-shrink-0">Price</span>
-              <input
-                type="number"
-                value={limitPriceInput}
-                onChange={(e) => setLimitPriceInput(e.target.value)}
-                onFocus={(e) => { if (!limitPriceInput && price > 0) setLimitPriceInput(price.toFixed(selectedPair.priceDec)); e.target.select(); }}
-                placeholder={price > 0 ? price.toFixed(selectedPair.priceDec) : "0"}
-                className="flex-1 text-right text-sm font-medium text-[#333333] bg-transparent outline-none"
-                min="0" step="1"
-              />
-              <span className="text-sm text-[#888888] ml-2 flex-shrink-0">USDT</span>
-            </div>
-          )}
-
-          {/* Slider */}
-          <div className="mb-3 px-1">
-            <div className="relative h-6 flex items-center">
-              <div className="absolute inset-x-0 h-[3px] rounded-full bg-[#D0CCA8]">
-                <div className="h-full rounded-full"
-                  style={{ width: `${sliderValue}%`, background: 'linear-gradient(to right, #D4AF37, #FFE566)' }} />
+          {/* Inputs (left) + LONG/SHORT buttons (right) */}
+          <div className="flex gap-2 mb-2">
+            {/* Left column: Margin + Price inputs */}
+            <div className="flex flex-col gap-2 flex-1 min-w-0">
+              <div className="rounded-xl border border-[#C8C0A0] flex items-center px-3 py-2 bg-[#F5F3EA]">
+                <span className="text-xs text-[#888888] mr-2 flex-shrink-0">Margin</span>
+                <input
+                  type="number"
+                  value={marginInput}
+                  onChange={(e) => handleMarginChange(e.target.value)}
+                  className="flex-1 text-right text-xs font-medium text-[#333333] bg-transparent outline-none min-w-0"
+                  placeholder="0.00" min="0" step="0.01"
+                />
+                <span className="text-xs text-[#888888] ml-1 flex-shrink-0">USDT</span>
               </div>
-              <div className="absolute w-5 h-5 rounded-full border-[2.5px] border-white shadow-md -translate-x-1/2 pointer-events-none"
-                style={{ left: `${sliderValue}%`, background: 'linear-gradient(to bottom, #FFE566, #D4AF37)', boxShadow: '0 2px 6px rgba(180,140,0,0.4), 0 1px 0 #9B7A1A' }} />
-              <input type="range" min={0} max={100} value={sliderValue}
-                onChange={(e) => handleSliderChange(Number(e.target.value))}
-                className="absolute inset-0 w-full opacity-0 cursor-pointer" />
-            </div>
-            <div className="flex justify-between mt-1 px-0.5">
-              {SLIDER_MARKS.map((v) => (
-                <div key={v} className="flex flex-col items-center gap-0.5">
-                  <button onClick={() => handleSliderChange(v)}
-                    className={`w-1.5 h-1.5 rounded-full transition-all ${sliderValue >= v ? "bg-[#D4AF37]" : "bg-[#C8C8C8]"}`} />
-                  <span className={`text-[9px] font-medium ${sliderValue >= v ? "text-[#C9A227]" : "text-[#AAAAAA]"}`}>
-                    {v}%
-                  </span>
+              {orderType === "limit" && (
+                <div className="rounded-xl border border-[#C8C0A0] flex items-center px-3 py-2 bg-[#F5F3EA]">
+                  <span className="text-xs text-[#888888] mr-2 flex-shrink-0">Price</span>
+                  <input
+                    type="number"
+                    value={limitPriceInput}
+                    onChange={(e) => setLimitPriceInput(e.target.value)}
+                    onFocus={(e) => { if (!limitPriceInput && price > 0) setLimitPriceInput(price.toFixed(selectedPair.priceDec)); e.target.select(); }}
+                    placeholder={price > 0 ? price.toFixed(selectedPair.priceDec) : "0"}
+                    className="flex-1 text-right text-xs font-medium text-[#333333] bg-transparent outline-none min-w-0"
+                    min="0" step="1"
+                  />
+                  <span className="text-xs text-[#888888] ml-1 flex-shrink-0">USDT</span>
                 </div>
-              ))}
+              )}
+            </div>
+
+            {/* Right column: LONG / SHORT buttons */}
+            <div className="flex flex-col gap-2 flex-shrink-0">
+              <button
+                onClick={() => handleSubmit("long")}
+                className="flex-1 px-5 py-2 rounded-xl font-bold text-sm active:scale-[0.98] transition-all text-green-600"
+                style={{
+                  background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+                  boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+                }}>
+                LONG
+              </button>
+              <button
+                onClick={() => handleSubmit("short")}
+                className="flex-1 px-5 py-2 rounded-xl font-bold text-sm active:scale-[0.98] transition-all text-red-500"
+                style={{
+                  background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+                  boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+                }}>
+                SHORT
+              </button>
             </div>
           </div>
 
@@ -1457,41 +1424,76 @@ export function FuturesPage() {
             </div>
           )}
 
-          {/* Open Long / Open Short */}
-          <div className="flex gap-3 items-start">
-            <div className="flex flex-col gap-1.5">
-              <button
-                onClick={() => handleSubmit("long")}
-                className="px-5 py-2 rounded-xl font-bold text-sm active:scale-[0.98] transition-all text-green-600"
-                style={{
-                  background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
-                  boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
-                }}>
-                LONG
-              </button>
-              <button
-                onClick={() => handleSubmit("short")}
-                className="px-5 py-2 rounded-xl font-bold text-sm active:scale-[0.98] transition-all text-red-500"
-                style={{
-                  background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
-                  boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
-                }}>
-                SHORT
-              </button>
-            </div>
-            {effectiveNotional > 0 && (
-              <div className="flex-1 flex flex-col justify-between gap-3 pt-1">
-                <div className="text-[10px] text-[#888888] leading-snug">
-                  <span className="text-green-600 font-semibold">Long: </span>
-                  {fmtQty(effectiveQty, selectedPair.stepSize)} {selectedPair.base} · ${fmtCompact(effectiveNotional)} · Cost ${fmt(effectiveCost, 2)} · Liq {longLiqPreview}
-                </div>
-                <div className="text-[10px] text-[#888888] leading-snug">
-                  <span className="text-red-500 font-semibold">Short: </span>
-                  {fmtQty(effectiveQty, selectedPair.stepSize)} {selectedPair.base} · ${fmtCompact(effectiveNotional)} · Cost ${fmt(effectiveCost, 2)} · Liq {shortLiqPreview}
-                </div>
+          {/* Slider */}
+          <div className="mb-3 px-1">
+            <div className="relative h-6 flex items-center">
+              <div className="absolute inset-x-0 h-[3px] rounded-full bg-[#D0CCA8]">
+                <div className="h-full rounded-full"
+                  style={{ width: `${sliderValue}%`, background: 'linear-gradient(to right, #D4AF37, #FFE566)' }} />
               </div>
-            )}
+              <div className="absolute w-5 h-5 rounded-full border-[2.5px] border-white shadow-md -translate-x-1/2 pointer-events-none"
+                style={{ left: `${sliderValue}%`, background: 'linear-gradient(to bottom, #FFE566, #D4AF37)', boxShadow: '0 2px 6px rgba(180,140,0,0.4), 0 1px 0 #9B7A1A' }} />
+              <input type="range" min={0} max={100} value={sliderValue}
+                onChange={(e) => handleSliderChange(Number(e.target.value))}
+                className="absolute inset-0 w-full opacity-0 cursor-pointer" />
+            </div>
+            <div className="flex justify-between mt-1 px-0.5">
+              {SLIDER_MARKS.map((v) => (
+                <div key={v} className="flex flex-col items-center gap-0.5">
+                  <button onClick={() => handleSliderChange(v)}
+                    className={`w-1.5 h-1.5 rounded-full transition-all ${sliderValue >= v ? "bg-[#D4AF37]" : "bg-[#C8C8C8]"}`} />
+                  <span className={`text-[9px] font-medium ${sliderValue >= v ? "text-[#C9A227]" : "text-[#AAAAAA]"}`}>
+                    {v}%
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
+
+          {/* Estimates */}
+          {effectiveNotional > 0 && (
+            <div className="space-y-1 mb-2">
+              <div className="text-[10px] text-[#888888] leading-snug">
+                <span className="text-green-600 font-semibold">Long: </span>
+                {fmtQty(effectiveQty, selectedPair.stepSize)} {selectedPair.base} · ${fmtCompact(effectiveNotional)} · Cost ${fmt(effectiveCost, 2)} · Liq {longLiqPreview}
+              </div>
+              <div className="text-[10px] text-[#888888] leading-snug">
+                <span className="text-red-500 font-semibold">Short: </span>
+                {fmtQty(effectiveQty, selectedPair.stepSize)} {selectedPair.base} · ${fmtCompact(effectiveNotional)} · Cost ${fmt(effectiveCost, 2)} · Liq {shortLiqPreview}
+              </div>
+            </div>
+          )}
+
+          {/* Fee info row */}
+          {effectiveNotional > 0 && (
+            <div className="flex items-center justify-between mb-1 px-1">
+              <span className="text-[10px] text-[#AAAAAA]">
+                Fee ({orderType === "market" ? "0.04%" : "0.02%"})
+              </span>
+              <span className="text-[10px] text-[#C9A227] font-medium">
+                -{fmt(effectiveFee, 4)} USDT
+              </span>
+            </div>
+          )}
+
+          {/* Cost row */}
+          {effectiveNotional > 0 && (
+            <div className="flex items-center justify-between mb-1 px-1">
+              <span className="text-[10px] text-[#888888] font-medium">Total Cost</span>
+              <span className="text-[10px] text-[#333333] font-semibold">
+                {fmt(effectiveCost, 4)} USDT
+              </span>
+            </div>
+          )}
+
+          {/* Tier cap notice */}
+          {isCapped && (
+            <div className="flex justify-end mb-1 pr-1">
+              <span className="text-[10px] text-[#C9A227] font-medium">
+                ⚠ Max position capped at ${fmtCompact(tierMax)} for {leverage}x
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Position / Orders / History */}
