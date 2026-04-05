@@ -309,13 +309,13 @@ export function SwapPage({ onBack }: SwapPageProps) {
   if (step === "done" && lastSwap) {
     return (
       <div className="flex flex-col h-full page-bg">
-        <div className="flex items-center px-4 py-3 flex-shrink-0">
+        <div className="elem-pop pop-d1 flex items-center px-4 py-3 flex-shrink-0">
           <button onClick={onBack} className="mr-3 w-8 h-8 flex items-center justify-center rounded-full bg-[#E8E4D0] text-[#666]">
             <IconChevronLeft size={18} stroke={2.5} />
           </button>
           <span className="font-bold text-[#1A1A1A] text-base">Swap</span>
         </div>
-        <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
+        <div className="elem-pop pop-d2 flex-1 flex flex-col items-center justify-center px-6 text-center">
           <div
             className="w-20 h-20 rounded-full flex items-center justify-center mb-5"
             style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)", boxShadow: "0 4px 16px rgba(0,0,0,0.15)" }}

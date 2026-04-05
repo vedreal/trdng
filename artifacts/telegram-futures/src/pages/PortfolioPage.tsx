@@ -775,7 +775,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                   <div className="panel-silver rounded-xl px-4 py-4 text-center">
                     <p className="text-xs text-[#AAAAAA]">No recent activity</p>
                   </div>
-                ) : futuresActivity.map((item) => {
+                ) : <div className="pop-section space-y-2">{futuresActivity.map((item) => {
                     if (item.kind === "trade") {
                       const profit = item.pnl >= 0;
                       return (
@@ -848,7 +848,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
                         </span>
                       </div>
                     );
-                  })}
+                  })}</div>}
               </>
             </div>
           )}

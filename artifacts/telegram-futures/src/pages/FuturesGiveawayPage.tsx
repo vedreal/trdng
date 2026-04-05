@@ -127,8 +127,8 @@ export function FuturesGiveawayPage({ onBack }: Props) {
 
       {/* ── Toast ── */}
       {showToast && (
-        <div className="fixed top-4 left-1/2 z-[70] flex items-start gap-3 px-4 py-3.5 rounded-2xl shadow-2xl"
-          style={{ transform: "translateX(-50%)", background: "linear-gradient(135deg,#22c55e,#15803d)", boxShadow: "0 8px 32px rgba(22,163,74,0.45)", minWidth: 290, maxWidth: 340 }}>
+        <div className="toast-pop fixed top-4 left-1/2 z-[70] flex items-start gap-3 px-4 py-3.5 rounded-2xl shadow-2xl"
+          style={{ background: "linear-gradient(135deg,#22c55e,#15803d)", boxShadow: "0 8px 32px rgba(22,163,74,0.45)", minWidth: 290, maxWidth: 340 }}>
           <div className="w-9 h-9 rounded-full bg-[rgba(255,255,255,0.2)] flex items-center justify-center flex-shrink-0 mt-0.5">
             <IconCheck size={18} color="white" stroke={2.5} />
           </div>
@@ -142,7 +142,7 @@ export function FuturesGiveawayPage({ onBack }: Props) {
       )}
 
       {/* ── Header ── */}
-      <div className="relative flex items-center px-4 py-3 flex-shrink-0">
+      <div className="elem-pop pop-d1 relative flex items-center px-4 py-3 flex-shrink-0">
         <button onClick={onBack}
           className="absolute left-4 w-8 h-8 flex items-center justify-center rounded-xl bg-[rgba(0,0,0,0.06)] active:bg-[rgba(0,0,0,0.12)]">
           <IconArrowLeft size={17} color="#1A1A1A" stroke={2} />
@@ -151,7 +151,7 @@ export function FuturesGiveawayPage({ onBack }: Props) {
       </div>
 
       {/* ── Scrollable content ── */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 pb-28">
+      <div className="pop-section flex-1 overflow-y-auto px-4 py-4 space-y-4 pb-28">
 
         {/* ── Event Banner ── */}
         <div className="rounded-2xl overflow-hidden relative"

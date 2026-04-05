@@ -859,7 +859,7 @@ function TraderActivityWidget() {
   }, [events, eventCounter]);
 
   return (
-    <div className="mx-3 mt-1 mb-3 rounded-2xl overflow-hidden panel-silver">
+    <div className="elem-pop pop-d1 mx-3 mt-1 mb-3 rounded-2xl overflow-hidden panel-silver">
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#E0D8B0]">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
