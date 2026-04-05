@@ -145,7 +145,7 @@ function SecurityPage({ onBack }: { onBack: () => void }) {
         </div>
       )}
 
-      <div className="relative flex items-center px-4 py-3 panel-header border-b border-[#C8B040] flex-shrink-0">
+      <div className="relative flex items-center px-4 py-3 flex-shrink-0">
         <button onClick={onBack} className="absolute left-4 w-8 h-8 flex items-center justify-center rounded-xl bg-[rgba(0,0,0,0.06)] active:bg-[rgba(0,0,0,0.12)]">
           <IconArrowLeft size={17} color="#1A1A1A" stroke={2} />
         </button>
@@ -184,8 +184,8 @@ function SecurityPage({ onBack }: { onBack: () => void }) {
         </div>
 
         {/* Form or saved view */}
-        <div className="panel-silver rounded-2xl border border-[#DDD5B0] overflow-hidden">
-          <div className="px-4 pt-4 pb-3 border-b border-[#EEE8CC]">
+        <div className="panel-silver rounded-2xl overflow-hidden">
+          <div className="px-4 pt-4 pb-3">
             <p className="font-bold text-[#1A1A1A] text-sm">Contact Information</p>
             <p className="text-[#888888] text-xs mt-0.5">
               {saved ? `Saved on ${fmtDate(saved.savedAt)}` : "Enter your details below"}
@@ -305,7 +305,7 @@ function ReferralPage({ onBack, userId }: { onBack: () => void; userId: number }
 
   return (
     <div className="flex flex-col h-full page-bg overflow-hidden">
-      <div className="relative flex items-center px-4 py-3 panel-header border-b border-[#C8B040] flex-shrink-0">
+      <div className="relative flex items-center px-4 py-3 flex-shrink-0">
         <button onClick={onBack} className="absolute left-4 w-8 h-8 flex items-center justify-center rounded-xl bg-[rgba(0,0,0,0.06)] active:bg-[rgba(0,0,0,0.12)]">
           <IconArrowLeft size={17} color="#1A1A1A" stroke={2} />
         </button>
@@ -334,8 +334,8 @@ function ReferralPage({ onBack, userId }: { onBack: () => void; userId: number }
         </div>
 
         {/* Referral link */}
-        <div className="panel-silver rounded-2xl border border-[#DDD5B0] overflow-hidden">
-          <div className="px-4 pt-4 pb-3 border-b border-[#EEE8CC]">
+        <div className="panel-silver rounded-2xl overflow-hidden">
+          <div className="px-4 pt-4 pb-3">
             <div className="flex items-center gap-2">
               <IconLink size={13} color="#8B6300" stroke={2} />
               <p className="font-bold text-[#1A1A1A] text-sm">Your Referral Link</p>
@@ -366,8 +366,8 @@ function ReferralPage({ onBack, userId }: { onBack: () => void; userId: number }
         </div>
 
         {/* Referral list */}
-        <div className="panel-silver rounded-2xl border border-[#DDD5B0] overflow-hidden">
-          <div className="px-4 pt-4 pb-3 border-b border-[#EEE8CC] flex items-center justify-between">
+        <div className="panel-silver rounded-2xl overflow-hidden">
+          <div className="px-4 pt-4 pb-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <IconUsers size={13} color="#8B6300" stroke={2} />
               <p className="font-bold text-[#1A1A1A] text-sm">Referred Users</p>
@@ -424,7 +424,7 @@ function CurrencyPage({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="flex flex-col h-full page-bg overflow-hidden">
-      <div className="relative flex items-center px-4 py-3 panel-header border-b border-[#C8B040] flex-shrink-0">
+      <div className="relative flex items-center px-4 py-3 flex-shrink-0">
         <button onClick={onBack} className="absolute left-4 w-8 h-8 flex items-center justify-center rounded-xl bg-[rgba(0,0,0,0.06)] active:bg-[rgba(0,0,0,0.12)]">
           <IconArrowLeft size={17} color="#1A1A1A" stroke={2} />
         </button>
@@ -453,8 +453,8 @@ function CurrencyPage({ onBack }: { onBack: () => void }) {
         </div>
 
         {/* Currency list */}
-        <div className="panel-silver rounded-2xl border border-[#DDD5B0] overflow-hidden">
-          <div className="px-4 pt-4 pb-3 border-b border-[#EEE8CC]">
+        <div className="panel-silver rounded-2xl overflow-hidden">
+          <div className="px-4 pt-4 pb-3">
             <p className="font-bold text-[#1A1A1A] text-sm">Select Currency</p>
             <p className="text-[#888888] text-xs mt-0.5">Currently: {selected}</p>
           </div>

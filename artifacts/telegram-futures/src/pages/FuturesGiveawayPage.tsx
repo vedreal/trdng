@@ -142,7 +142,7 @@ export function FuturesGiveawayPage({ onBack }: Props) {
       )}
 
       {/* ── Header ── */}
-      <div className="relative flex items-center px-4 py-3 panel-header border-b border-[#C8B040] flex-shrink-0">
+      <div className="relative flex items-center px-4 py-3 flex-shrink-0">
         <button onClick={onBack}
           className="absolute left-4 w-8 h-8 flex items-center justify-center rounded-xl bg-[rgba(0,0,0,0.06)] active:bg-[rgba(0,0,0,0.12)]">
           <IconArrowLeft size={17} color="#1A1A1A" stroke={2} />
@@ -200,8 +200,8 @@ export function FuturesGiveawayPage({ onBack }: Props) {
         </div>
 
         {/* ── Tasks Card ── */}
-        <div className="panel-silver rounded-2xl border border-[#DDD5B0] overflow-hidden">
-          <div className="px-4 pt-4 pb-3 border-b border-[#EEE8CC]">
+        <div className="panel-silver rounded-2xl overflow-hidden">
+          <div className="px-4 pt-4 pb-3">
             <p className="font-bold text-[#1A1A1A] text-sm">Complete All Tasks</p>
             <p className="text-[#888888] text-xs mt-0.5">All tasks must be completed to qualify</p>
           </div>
@@ -411,7 +411,7 @@ export function FuturesGiveawayPage({ onBack }: Props) {
         </div>
 
         {/* ── Terms & Conditions ── */}
-        <div className="panel-silver rounded-2xl border border-[#DDD5B0] px-4 py-4">
+        <div className="panel-silver rounded-2xl px-4 py-4">
           <div className="flex items-center gap-2 mb-3">
             <IconShieldCheck size={14} color="#8B6300" stroke={2} />
             <p className="text-[#1A1A1A] text-xs font-bold">Bonus Terms & Conditions</p>

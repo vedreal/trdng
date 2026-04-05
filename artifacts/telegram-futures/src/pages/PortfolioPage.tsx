@@ -243,15 +243,23 @@ function TransferModal({
           </button>
         </div>
 
-        <div className="flex rounded-xl border border-[#C8C0A0] p-1 mb-5 bg-[#E8E4D0]">
+        <div className="flex rounded-xl p-1 mb-5 bg-[#E8E4D0]">
           <button
             onClick={() => { setDirection("toFutures"); setAmountInput(""); setFeedback(null); }}
-            className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${direction === "toFutures" ? "btn-3d-gold" : "text-[#888888]"}`}>
+            className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${direction === "toFutures" ? "text-[#8B6300]" : "text-[#888888]"}`}
+            style={direction === "toFutures" ? {
+              background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+              boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+            } : {}}>
             Spot → Futures
           </button>
           <button
             onClick={() => { setDirection("fromFutures"); setAmountInput(""); setFeedback(null); }}
-            className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${direction === "fromFutures" ? "btn-3d-gold" : "text-[#888888]"}`}>
+            className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${direction === "fromFutures" ? "text-[#8B6300]" : "text-[#888888]"}`}
+            style={direction === "fromFutures" ? {
+              background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+              boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+            } : {}}>
             Futures → Spot
           </button>
         </div>

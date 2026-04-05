@@ -166,16 +166,15 @@ function PairPickerModal({ selectedSymbol, onSelect, onClose }: {
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end modal-enter" onClick={onClose}>
       <div className="w-full rounded-t-2xl max-w-md mx-auto panel-silver border-t border-[#D4AF37] overflow-hidden"
         onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[#D8D0A8]">
+        <div className="flex items-center justify-between px-4 py-3">
           <span className="font-bold text-[#1A1A1A]">Select Trading Pair</span>
           <button onClick={onClose} className="text-[#888888]">
             <IconX size={20} stroke={2.5} />
           </button>
         </div>
         <div className="overflow-y-auto" style={{ maxHeight: "55vh", paddingBottom: "96px" }}>
-          {TRADING_PAIRS.map((pair, idx) => (
+          {TRADING_PAIRS.map((pair) => (
             <div key={pair.symbol}>
-              {idx > 0 && <div className="border-t border-[#EEEAD8] mx-4" />}
               <PairPickerRow
                 pair={pair}
                 isSelected={pair.symbol === selectedSymbol}
@@ -1200,7 +1199,7 @@ export function FuturesPage() {
           onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
         />
         <button
-          className="flex items-center gap-1 rounded-lg px-2 py-1 border border-[#D4AF37] bg-[#F5EDD0]"
+          className="flex items-center gap-1 rounded-lg px-2 py-1 bg-[#F5EDD0]"
           onClick={() => setShowPairPicker(true)}
         >
           <span className="text-sm font-semibold text-[#333333]">{selectedPair.label}</span>
