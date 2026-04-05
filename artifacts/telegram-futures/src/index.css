@@ -235,6 +235,18 @@ input[type="range"]::-moz-range-thumb {
   animation: slowFadeIn 0.8s ease both;
 }
 
+@keyframes modalSheetPop {
+  0%   { transform: translateY(110%) scale(0.96); opacity: 0; }
+  55%  { transform: translateY(-10px) scale(1.015); opacity: 1; }
+  75%  { transform: translateY(5px) scale(0.997); }
+  90%  { transform: translateY(-3px) scale(1.003); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+.modal-sheet-pop {
+  animation: modalSheetPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
 /* ── Global slow transition override ─────────────────────────────── */
 @layer utilities {
   .transition-all {
