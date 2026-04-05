@@ -484,7 +484,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
       {/* ── FIXED TOP SECTION (does not scroll) ── */}
       <div className="flex-shrink-0">
 
-        <div className="relative flex items-center justify-center px-4 py-3">
+        <div className="relative flex items-center justify-center px-4 py-3 elem-pop pop-d1">
           <span className="font-bold text-[#1A1A1A] text-base">Portfolio</span>
           <div className="absolute right-4 flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full bg-green-500" />
@@ -495,7 +495,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
         <div className="px-4 pt-4 space-y-4">
 
         {/* Balance card */}
-        <div className="rounded-2xl shadow-md relative overflow-hidden"
+        <div className="rounded-2xl shadow-md relative overflow-hidden elem-pop pop-d2"
           style={{
             background: 'linear-gradient(135deg, #E8C84A 0%, #D4AF37 40%, #B8960C 80%, #9B7A1A 100%)',
             boxShadow: '0 4px 20px rgba(180,140,0,0.35), 0 1px 0 rgba(255,255,255,0.3) inset',
@@ -555,7 +555,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
 
         {/* Open Positions PnL summary */}
         {positions.length > 0 && (
-          <div className="panel-card rounded-2xl p-4 border border-[#D4AF37]">
+          <div className="panel-card rounded-2xl p-4 border border-[#D4AF37] elem-pop pop-d3">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold text-[#666666]">Open Positions</span>
               <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#F5E280] text-[#8B6914]">
@@ -572,7 +572,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
         )}
 
         {/* Assets header + tab switcher — stays fixed */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between elem-pop pop-d3">
           <p className="text-xs font-semibold text-[#888888] uppercase tracking-wide">Assets</p>
           <div className="flex rounded-lg bg-[#E8E4D0] p-0.5 gap-0.5">
             {(["spot", "futures"] as const).map((tab) => (
@@ -603,7 +603,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
             <div className="space-y-2">
 
               {/* USDT */}
-              <div className="panel-silver rounded-2xl px-4 py-3 flex items-center gap-3">
+              <div className="panel-silver rounded-2xl px-4 py-3 flex items-center gap-3 elem-pop pop-d4">
                 <img src={COIN_ICONS.USDT} alt="USDT" className="w-10 h-10 rounded-full flex-shrink-0"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 <div className="flex-1 min-w-0 flex gap-2">
@@ -626,7 +626,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
               </div>
 
               {/* XAUT */}
-              <div className="panel-silver rounded-2xl px-4 py-3 flex items-center gap-3">
+              <div className="panel-silver rounded-2xl px-4 py-3 flex items-center gap-3 elem-pop pop-d5">
                 <img src={COIN_ICONS.XAUT} alt="XAUT" className="w-10 h-10 rounded-full flex-shrink-0"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 <div className="flex-1 min-w-0 flex gap-2">
@@ -649,7 +649,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
               </div>
 
               {/* ETH */}
-              <div className="panel-silver rounded-2xl px-4 py-3 flex items-center gap-3">
+              <div className="panel-silver rounded-2xl px-4 py-3 flex items-center gap-3 elem-pop pop-d6">
                 <img src={COIN_ICONS.ETH} alt="ETH" className="w-10 h-10 rounded-full flex-shrink-0"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 <div className="flex-1 min-w-0 flex gap-2">
@@ -672,7 +672,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
               </div>
 
               {/* BNB */}
-              <div className="panel-silver rounded-2xl px-4 py-3 flex items-center gap-3">
+              <div className="panel-silver rounded-2xl px-4 py-3 flex items-center gap-3 elem-pop pop-d7">
                 <img src={COIN_ICONS.BNB} alt="BNB" className="w-10 h-10 rounded-full flex-shrink-0"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 <div className="flex-1 min-w-0 flex gap-2">
@@ -695,7 +695,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
               </div>
 
               {/* TON */}
-              <div className="panel-silver rounded-2xl px-4 py-3 flex items-center gap-3">
+              <div className="panel-silver rounded-2xl px-4 py-3 flex items-center gap-3 elem-pop pop-d8">
                 <img src={COIN_ICONS.TON} alt="TON" className="w-10 h-10 rounded-full flex-shrink-0"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 <div className="flex-1 min-w-0 flex gap-2">
@@ -723,7 +723,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
           {assetTab === "futures" && (
             <div className="space-y-2">
               {/* Futures balance card with collapsible PnL calendar */}
-              <div className="panel-silver rounded-2xl overflow-hidden">
+              <div className="panel-silver rounded-2xl overflow-hidden elem-pop pop-d4">
                 {/* Balance rows */}
                 <div className="px-4 py-3.5 flex items-center gap-3">
                   <img src={COIN_ICONS.USDT} alt="USDT" className="w-10 h-10 rounded-full flex-shrink-0"
@@ -768,7 +768,7 @@ export function PortfolioPage({ onNavigate }: PortfolioPageProps) {
               </div>
 
               <>
-                <p className="text-[11px] font-semibold text-[#888888] uppercase tracking-wide pt-1 pb-0.5 px-1">
+                <p className="text-[11px] font-semibold text-[#888888] uppercase tracking-wide pt-1 pb-0.5 px-1 elem-pop pop-d5">
                   Recent Activity
                 </p>
                 {futuresActivity.length === 0 ? (

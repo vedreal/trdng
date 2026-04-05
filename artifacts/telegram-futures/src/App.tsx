@@ -72,7 +72,7 @@ function AppContent() {
           )}
         </div>
       </div>
-      {showBottomNav && <BottomNav current={page} onChange={handleNavChange} />}
+      {showBottomNav && <BottomNav key={animKey} current={page} onChange={handleNavChange} />}
     </div>
   );
 }

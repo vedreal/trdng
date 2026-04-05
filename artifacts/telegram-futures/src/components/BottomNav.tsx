@@ -45,7 +45,7 @@ export function BottomNav({ current, onChange }: BottomNavProps) {
     >
       <div className="max-w-md mx-auto pb-6 flex justify-center pointer-events-auto">
         <div
-          className="rounded-3xl overflow-hidden relative"
+          className="rounded-3xl overflow-hidden relative elem-pop pop-d4"
           style={{
             background: "rgba(14, 14, 14, 0.80)",
             backdropFilter: "blur(20px)",

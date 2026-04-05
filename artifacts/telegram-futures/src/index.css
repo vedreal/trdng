@@ -209,32 +209,37 @@ input[type="range"]::-moz-range-thumb {
   box-shadow: 0 2px 6px rgba(180, 140, 0, 0.4);
 }
 
-/* ── Page & element fade transitions ─────────────────────────────── */
-@keyframes slowFadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+/* ── Page transitions (no fade) ────────────────────────────────── */
+.page-enter        { }
+.subroute-enter    { }
+.subroute-back-enter { }
+.tab-enter         { }
+.modal-enter       { }
+
+/* ── Element pop animation ─────────────────────────────────────── */
+@keyframes elemPop {
+  0%   { transform: scale(0.82) translateY(14px); opacity: 0; }
+  58%  { transform: scale(1.04) translateY(-3px); opacity: 1; }
+  78%  { transform: scale(0.98) translateY(1px); }
+  92%  { transform: scale(1.01) translateY(-1px); }
+  100% { transform: scale(1) translateY(0); }
 }
 
-.page-enter {
-  animation: slowFadeIn 1s ease both;
+.elem-pop {
+  animation: elemPop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
-.subroute-enter {
-  animation: slowFadeIn 1s ease both;
-}
+.pop-d1 { animation-delay: 0.02s; }
+.pop-d2 { animation-delay: 0.07s; }
+.pop-d3 { animation-delay: 0.13s; }
+.pop-d4 { animation-delay: 0.19s; }
+.pop-d5 { animation-delay: 0.25s; }
+.pop-d6 { animation-delay: 0.31s; }
+.pop-d7 { animation-delay: 0.37s; }
+.pop-d8 { animation-delay: 0.43s; }
+.pop-d9 { animation-delay: 0.49s; }
 
-.subroute-back-enter {
-  animation: slowFadeIn 1s ease both;
-}
-
-.tab-enter {
-  animation: slowFadeIn 0.8s ease both;
-}
-
-.modal-enter {
-  animation: slowFadeIn 0.8s ease both;
-}
-
+/* ── Transfer modal sheet pop ──────────────────────────────────── */
 @keyframes modalSheetPop {
   0%   { transform: translateY(110%) scale(0.96); opacity: 0; }
   55%  { transform: translateY(-10px) scale(1.015); opacity: 1; }
