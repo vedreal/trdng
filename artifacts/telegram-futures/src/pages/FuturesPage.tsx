@@ -289,7 +289,11 @@ function PositionCard({
           <span className="text-xs text-[#888888]">{pos.marginMode}</span>
         </div>
         <button onClick={onClose}
-          className="text-xs font-medium px-3 py-1 rounded-full transition-all btn-3d-silver">
+          className="text-xs font-medium px-3 py-1 rounded-full transition-all text-[#8B6300]"
+          style={{
+            background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+            boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+          }}>
           Close
         </button>
       </div>
@@ -351,7 +355,11 @@ function PositionCard({
           )}
         </div>
         <button onClick={onEditSlTp}
-          className="text-[10px] font-semibold px-2.5 py-1 rounded-full btn-3d-gold" style={{ fontSize: '10px', padding: '4px 10px' }}>
+          className="text-[10px] font-semibold px-2.5 py-1 rounded-full text-[#8B6300]"
+          style={{
+            background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+            boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+          }}>
           Edit SL/TP
         </button>
       </div>
@@ -1411,27 +1419,39 @@ export function FuturesPage() {
           )}
 
           {/* Open Long / Open Short */}
-          <div className="space-y-2">
-            <button
-              onClick={() => handleSubmit("long")}
-              className="w-full py-3.5 rounded-xl text-white font-semibold text-sm active:scale-[0.98] transition-all text-left px-4 btn-3d-long">
-              <div className="font-bold">Open Long</div>
-              {effectiveNotional > 0 && (
-                <div className="text-xs text-green-100 font-normal mt-0.5">
+          <div className="flex gap-3 items-start">
+            <div className="flex flex-col gap-1.5">
+              <button
+                onClick={() => handleSubmit("long")}
+                className="px-5 py-2 rounded-xl font-bold text-sm active:scale-[0.98] transition-all text-green-600"
+                style={{
+                  background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+                  boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+                }}>
+                LONG
+              </button>
+              <button
+                onClick={() => handleSubmit("short")}
+                className="px-5 py-2 rounded-xl font-bold text-sm active:scale-[0.98] transition-all text-red-500"
+                style={{
+                  background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+                  boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+                }}>
+                SHORT
+              </button>
+            </div>
+            {effectiveNotional > 0 && (
+              <div className="flex-1 flex flex-col justify-between gap-3 pt-1">
+                <div className="text-[10px] text-[#888888] leading-snug">
+                  <span className="text-green-600 font-semibold">Long: </span>
                   {fmtQty(effectiveQty, selectedPair.stepSize)} {selectedPair.base} · ${fmtCompact(effectiveNotional)} · Cost ${fmt(effectiveCost, 2)} · Liq {longLiqPreview}
                 </div>
-              )}
-            </button>
-            <button
-              onClick={() => handleSubmit("short")}
-              className="w-full py-3.5 rounded-xl text-white font-semibold text-sm active:scale-[0.98] transition-all text-left px-4 btn-3d-short">
-              <div className="font-bold">Open Short</div>
-              {effectiveNotional > 0 && (
-                <div className="text-xs text-red-100 font-normal mt-0.5">
+                <div className="text-[10px] text-[#888888] leading-snug">
+                  <span className="text-red-500 font-semibold">Short: </span>
                   {fmtQty(effectiveQty, selectedPair.stepSize)} {selectedPair.base} · ${fmtCompact(effectiveNotional)} · Cost ${fmt(effectiveCost, 2)} · Liq {shortLiqPreview}
                 </div>
-              )}
-            </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -1498,7 +1518,11 @@ export function FuturesPage() {
                           <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#F5E280] text-[#8B6914]">Pending</span>
                         </div>
                         <button onClick={() => cancelPendingOrder(order.id)}
-                          className="text-xs font-medium px-3 py-1 rounded-full transition-all btn-3d-silver">
+                          className="text-xs font-medium px-3 py-1 rounded-full transition-all text-[#8B6300]"
+                          style={{
+                            background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+                            boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+                          }}>
                           Cancel
                         </button>
                       </div>
