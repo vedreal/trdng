@@ -458,7 +458,7 @@ function CloseModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 modal-enter">
-      <div className="w-full max-w-md rounded-t-3xl panel-card border-t border-[#D4AF37] p-5 pb-28 shadow-2xl">
+      <div className="w-full max-w-md rounded-t-3xl panel-card p-5 pb-28 shadow-2xl">
         <div className="flex items-center justify-between mb-4">
           <span className="text-base font-bold text-[#1A1A1A]">Close Position</span>
           <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-full bg-[#E0DDD0] text-[#666]">
@@ -476,24 +476,32 @@ function CloseModal({
         </div>
 
         {/* Market / Limit tabs */}
-        <div className="flex rounded-xl border border-[#C8C0A0] p-1 mb-4 bg-[#E8E4D0]">
+        <div className="flex rounded-xl p-1 mb-4 bg-[#E8E4D0]">
           <button onClick={() => setTab("market")}
-            className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "market" ? "btn-3d-gold" : "text-[#888888]"}`}>
+            className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "market" ? "text-[#8B6300]" : "text-[#888888]"}`}
+            style={tab === "market" ? {
+              background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+              boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+            } : {}}>
             Market
           </button>
           <button onClick={() => setTab("limit")}
-            className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "limit" ? "btn-3d-gold" : "text-[#888888]"}`}>
+            className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "limit" ? "text-[#8B6300]" : "text-[#888888]"}`}
+            style={tab === "limit" ? {
+              background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+              boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+            } : {}}>
             Limit
           </button>
         </div>
 
         {tab === "market" ? (
-          <div className="rounded-xl bg-[#F5F3EA] border border-[#E0DDD0] px-4 py-3 mb-4 text-sm text-[#555]">
+          <div className="rounded-xl bg-[#F5F3EA] px-4 py-3 mb-4 text-sm text-[#555]">
             Close immediately at market price ≈ <span className="font-bold text-[#1A1A1A]">${fmt(currentPrice, 1)}</span>
           </div>
         ) : (
           <div className="mb-4">
-            <div className="rounded-xl border border-[#C8C0A0] flex items-center px-4 py-3 bg-[#F5F3EA]">
+            <div className="rounded-xl flex items-center px-4 py-3 bg-[#F5F3EA]">
               <span className="text-sm text-[#888888] mr-3 flex-shrink-0">Limit Price</span>
               <input
                 type="number"
@@ -515,7 +523,11 @@ function CloseModal({
         {err && <p className="text-xs text-red-500 text-center mb-3">{err}</p>}
 
         <button onClick={handleConfirm}
-          className="w-full py-3 rounded-xl text-sm font-bold btn-3d-gold">
+          className="w-full py-3 rounded-xl text-sm font-bold text-[#8B6300] transition-all active:scale-[0.98]"
+          style={{
+            background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+            boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+          }}>
           {tab === "market" ? "Confirm Market Close" : "Set Limit Close"}
         </button>
       </div>
@@ -561,7 +573,7 @@ function TransferModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 modal-enter">
-      <div className="w-full max-w-md rounded-t-3xl panel-card border-t border-[#D4AF37] p-5 pb-28 shadow-2xl">
+      <div className="w-full max-w-md rounded-t-3xl panel-card p-5 pb-28 shadow-2xl">
         <div className="flex items-center justify-between mb-5">
           <span className="text-base font-bold text-[#1A1A1A]">Transfer</span>
           <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-full bg-[#E0DDD0] text-[#666]">
@@ -570,26 +582,34 @@ function TransferModal({
         </div>
 
         {/* Direction selector */}
-        <div className="flex rounded-xl border border-[#C8C0A0] p-1 mb-5 bg-[#E8E4D0]">
+        <div className="flex rounded-xl p-1 mb-5 bg-[#E8E4D0]">
           <button
             onClick={() => { setDirection("toFutures"); setAmountInput(""); setFeedback(null); }}
-            className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${direction === "toFutures" ? "btn-3d-gold" : "text-[#888888]"}`}>
+            className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${direction === "toFutures" ? "text-[#8B6300]" : "text-[#888888]"}`}
+            style={direction === "toFutures" ? {
+              background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+              boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+            } : {}}>
             Spot → Futures
           </button>
           <button
             onClick={() => { setDirection("fromFutures"); setAmountInput(""); setFeedback(null); }}
-            className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${direction === "fromFutures" ? "btn-3d-gold" : "text-[#888888]"}`}>
+            className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${direction === "fromFutures" ? "text-[#8B6300]" : "text-[#888888]"}`}
+            style={direction === "fromFutures" ? {
+              background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+              boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+            } : {}}>
             Futures → Spot
           </button>
         </div>
 
         {/* Balance rows */}
         <div className="space-y-2 mb-4">
-          <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-[#F5F3EA] border border-[#E0DDD0]">
+          <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-[#F5F3EA]">
             <span className="text-xs text-[#888888]">Spot</span>
             <span className="text-sm font-semibold text-[#333333]">{fmt(spotBalance, 2)} USDT</span>
           </div>
-          <div className="px-3 py-2 rounded-xl bg-[#F5F3EA] border border-[#E0DDD0]">
+          <div className="px-3 py-2 rounded-xl bg-[#F5F3EA]">
             <div className="flex items-center justify-between">
               <span className="text-xs text-[#888888]">Futures</span>
               <span className="text-sm font-semibold text-[#333333]">{fmt(futuresBalance, 2)} USDT</span>
@@ -602,7 +622,7 @@ function TransferModal({
         </div>
 
         {/* Amount input */}
-        <div className="rounded-xl border border-[#C8C0A0] flex items-center px-4 py-3 mb-2 bg-[#F5F3EA]">
+        <div className="rounded-xl flex items-center px-4 py-3 mb-2 bg-[#F5F3EA]">
           <span className="text-sm text-[#888888] mr-3 flex-shrink-0">Amount</span>
           <input
             type="number"
@@ -630,7 +650,11 @@ function TransferModal({
 
         <button
           onClick={handleTransfer}
-          className="w-full py-3 rounded-xl text-sm font-bold btn-3d-gold transition-all active:scale-[0.98]">
+          className="w-full py-3 rounded-xl text-sm font-bold text-[#8B6300] transition-all active:scale-[0.98]"
+          style={{
+            background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+            boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+          }}>
           Confirm Transfer
         </button>
       </div>
@@ -659,7 +683,7 @@ function LeverageConfirmModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-6 modal-enter">
-      <div className="w-full max-w-xs rounded-2xl panel-card border border-[#D4AF37] p-5 shadow-2xl">
+      <div className="w-full max-w-xs rounded-2xl panel-card p-5 shadow-2xl">
         <div className="flex items-center gap-2 mb-3">
           <div className="w-8 h-8 rounded-full bg-[#FFF3CD] flex items-center justify-center flex-shrink-0">
             <span className="text-base">⚠</span>
@@ -684,11 +708,19 @@ function LeverageConfirmModal({
         </label>
         <div className="flex gap-2">
           <button onClick={onCancel}
-            className="flex-1 py-2.5 rounded-xl text-sm font-semibold btn-3d-silver">
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-[#888888] transition-all active:scale-[0.98]"
+            style={{
+              background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+              boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+            }}>
             No
           </button>
           <button onClick={handleYes}
-            className="flex-1 py-2.5 rounded-xl text-sm font-bold btn-3d-gold">
+            className="flex-1 py-2.5 rounded-xl text-sm font-bold text-[#8B6300] transition-all active:scale-[0.98]"
+            style={{
+              background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+              boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+            }}>
             Yes, I understand
           </button>
         </div>
