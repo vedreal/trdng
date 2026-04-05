@@ -265,11 +265,11 @@ function TransferModal({
         </div>
 
         <div className="space-y-2 mb-4">
-          <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-[#F5F3EA] border border-[#E0DDD0]">
+          <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-[#F5F3EA]">
             <span className="text-xs text-[#888888]">Spot</span>
             <span className="text-sm font-semibold text-[#333333]">{fmtUsd(spotBalance)} USDT</span>
           </div>
-          <div className="px-3 py-2 rounded-xl bg-[#F5F3EA] border border-[#E0DDD0]">
+          <div className="px-3 py-2 rounded-xl bg-[#F5F3EA]">
             <div className="flex items-center justify-between">
               <span className="text-xs text-[#888888]">Futures</span>
               <span className="text-sm font-semibold text-[#333333]">{fmtUsd(futuresBalance)} USDT</span>
@@ -281,7 +281,7 @@ function TransferModal({
           </div>
         </div>
 
-        <div className="rounded-xl border border-[#C8C0A0] flex items-center px-4 py-3 mb-2 bg-[#F5F3EA]">
+        <div className="rounded-xl flex items-center px-4 py-3 mb-2 bg-[#F5F3EA]">
           <span className="text-sm text-[#888888] mr-3 flex-shrink-0">Amount</span>
           <input
             type="number"
@@ -307,7 +307,11 @@ function TransferModal({
         )}
 
         <button onClick={handleTransfer}
-          className="w-full py-3 rounded-xl text-sm font-bold btn-3d-gold transition-all active:scale-[0.98]">
+          className="w-full py-3 rounded-xl text-sm font-bold text-[#8B6300] transition-all active:scale-[0.98]"
+          style={{
+            background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+            boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+          }}>
           Confirm Transfer
         </button>
       </div>
