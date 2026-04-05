@@ -231,7 +231,7 @@ export function EarnPage() {
       )}
 
       {/* ── Header — stays fixed ── */}
-      <div className="relative flex items-center justify-center px-4 py-3 panel-header border-b border-[#C8B040] flex-shrink-0">
+      <div className="relative flex items-center justify-center px-4 py-3 flex-shrink-0">
         <span className="font-bold text-[#1A1A1A] text-base">Earn</span>
       </div>
 

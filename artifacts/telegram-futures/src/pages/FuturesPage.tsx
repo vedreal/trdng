@@ -202,7 +202,7 @@ function SlTpModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end modal-enter" onClick={onClose}>
-      <div className="w-full rounded-t-2xl p-5 pb-28 max-w-md mx-auto panel-silver border-t border-[#D4AF37]"
+      <div className="w-full rounded-t-2xl p-5 pb-28 max-w-md mx-auto panel-silver"
         onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <span className="font-semibold text-[#1A1A1A]">Edit SL / TP</span>
@@ -221,7 +221,7 @@ function SlTpModal({
           <label className="text-xs font-medium text-[#666666] mb-1 block">
             Stop Loss — <span className="text-[#888888] font-normal">{pos.side === "long" ? "below" : "above"} entry</span>
           </label>
-          <div className="rounded-xl border border-red-200 flex items-center px-4 py-3 bg-[#F8F0F0]">
+          <div className="rounded-xl flex items-center px-4 py-3 bg-[#F8F0F0]">
             <input type="number" value={sl} onChange={(e) => setSl(e.target.value)}
               placeholder="0.00" className="flex-1 text-sm font-medium text-[#333333] bg-transparent outline-none" />
             <span className="text-sm text-[#888888] ml-2">USDT</span>
@@ -231,7 +231,7 @@ function SlTpModal({
           <label className="text-xs font-medium text-[#666666] mb-1 block">
             Take Profit — <span className="text-[#888888] font-normal">{pos.side === "long" ? "above" : "below"} entry</span>
           </label>
-          <div className="rounded-xl border border-green-200 flex items-center px-4 py-3 bg-[#F0F8F0]">
+          <div className="rounded-xl flex items-center px-4 py-3 bg-[#F0F8F0]">
             <input type="number" value={tp} onChange={(e) => setTp(e.target.value)}
               placeholder="0.00" className="flex-1 text-sm font-medium text-[#333333] bg-transparent outline-none" />
             <span className="text-sm text-[#888888] ml-2">USDT</span>
@@ -239,7 +239,11 @@ function SlTpModal({
         </div>
         <div className="flex gap-3">
           <button onClick={() => { onSave(undefined, undefined); onClose(); }}
-            className="flex-1 py-3 rounded-xl text-sm btn-3d-silver">Clear</button>
+            className="flex-1 py-3 rounded-xl text-sm font-semibold text-[#888888] transition-all active:scale-[0.98]"
+            style={{
+              background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+              boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+            }}>Clear</button>
           <button
             onClick={() => {
               onSave(
@@ -248,7 +252,11 @@ function SlTpModal({
               );
               onClose();
             }}
-            className="flex-1 py-3 rounded-xl text-sm btn-3d-gold">Save</button>
+            className="flex-1 py-3 rounded-xl text-sm font-bold text-[#8B6300] transition-all active:scale-[0.98]"
+            style={{
+              background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+              boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+            }}>Save</button>
         </div>
       </div>
     </div>
