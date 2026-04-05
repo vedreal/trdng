@@ -65,11 +65,10 @@ function TxCard({ tx }: { tx: WalletTransaction }) {
   const isBonus = tx.type === "bonus";
 
   return (
-    <div className="panel-silver border border-[#D8D0A8] rounded-2xl px-4 py-3.5 flex items-start gap-3">
+    <div className="panel-silver rounded-2xl px-4 py-3.5 flex items-start gap-3">
       <TxIcon type={tx.type} />
 
       <div className="flex-1 min-w-0">
-        {/* Row 1: label + amount */}
         <div className="flex items-center justify-between mb-0.5">
           <span className="text-sm font-bold text-[#1A1A1A]">{label}</span>
           {tx.type === "swap" ? (
@@ -92,7 +91,6 @@ function TxCard({ tx }: { tx: WalletTransaction }) {
           )}
         </div>
 
-        {/* Row 2: address / swap route / bonus label */}
         {tx.type === "swap" ? (
           <p className="text-[11px] text-[#888888]">
             {tx.asset} → {tx.toAsset} · BEP-20
@@ -107,7 +105,6 @@ function TxCard({ tx }: { tx: WalletTransaction }) {
           <p className="text-[11px] text-[#888888]">BEP-20 Network</p>
         )}
 
-        {/* Row 3: time + status */}
         <div className="flex items-center justify-between mt-1.5">
           <span className="text-[10px] text-[#AAAAAA]">{fmtTime(tx.timestamp)}</span>
           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
@@ -130,6 +127,11 @@ const FILTER_TABS: { id: FilterType; label: string }[] = [
   { id: "swap", label: "Swap" },
 ];
 
+const btnGrad = {
+  background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+  boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+};
+
 export function HistoryPage({ onBack }: HistoryPageProps) {
   const { walletHistory } = useTrading();
   const [filter, setFilter] = useState<FilterType>("all");
@@ -145,9 +147,9 @@ export function HistoryPage({ onBack }: HistoryPageProps) {
     <div className="flex flex-col h-full page-bg overflow-y-auto">
 
       {/* Header */}
-      <div className="flex items-center px-4 py-3 panel-header border-b border-[#C8B040] flex-shrink-0">
-        <button onClick={onBack} className="mr-3 text-[#888888]">
-          <IconChevronLeft size={22} stroke={2.5} />
+      <div className="flex items-center px-4 py-3 flex-shrink-0">
+        <button onClick={onBack} className="mr-3 w-8 h-8 flex items-center justify-center rounded-full bg-[#E8E4D0] text-[#666]">
+          <IconChevronLeft size={18} stroke={2.5} />
         </button>
         <span className="font-bold text-[#1A1A1A] text-base">Transaction History</span>
         {walletHistory.length > 0 && (
@@ -158,24 +160,25 @@ export function HistoryPage({ onBack }: HistoryPageProps) {
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-2 px-4 py-3 border-b border-[#D8D0A8] flex-shrink-0">
+      <div className="flex gap-2 px-4 pb-3 flex-shrink-0">
         {FILTER_TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setFilter(tab.id)}
             className={`flex-1 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-              filter === tab.id ? "btn-3d-gold" : "btn-3d-silver"
+              filter === tab.id ? "text-[#8B6300]" : "text-[#888888]"
             }`}
+            style={filter === tab.id ? btnGrad : {}}
           >
             {tab.label}
           </button>
         ))}
       </div>
 
-      <div className="px-4 py-4 flex-1">
+      <div className="px-4 pb-4 flex-1">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center py-20">
-            <div className="w-16 h-16 rounded-full btn-3d-silver flex items-center justify-center mb-4">
+            <div className="w-16 h-16 rounded-full bg-[#E8E4D0] flex items-center justify-center mb-4">
               <IconFileText size={28} stroke={1.5} color="#AAAAAA" />
             </div>
             <p className="text-sm font-semibold text-[#888888]">No transactions yet</p>

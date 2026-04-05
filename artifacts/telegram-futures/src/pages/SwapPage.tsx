@@ -26,21 +26,17 @@ const COIN_NAMES: Record<CoinSymbol, string> = {
   TON:  "Toncoin",
 };
 
-// Decimals used for display
 const COIN_DEC: Record<CoinSymbol, number> = {
   USDT: 2, XAUT: 6, ETH: 6, BNB: 6, TON: 4,
 };
 
-// Truncate (floor) a number to N decimal places — avoids rounding up past balance
 function truncateDec(value: number, decimals: number): number {
   const factor = Math.pow(10, decimals);
   return Math.floor(value * factor) / factor;
 }
 
-// Non-USDT coins that can be swapped
 const ALT_COINS: CoinSymbol[] = ["XAUT", "ETH", "BNB", "TON"];
 
-// Fee config per pair: fixed USD value fee, deducted from feeAsset balance
 interface FeeConfig {
   feeAsset: CoinSymbol;
   feeUsd: number;
@@ -52,12 +48,16 @@ const PAIR_FEE: Record<string, FeeConfig> = {
   "TON":  { feeAsset: "TON", feeUsd: 0.7 },
 };
 
+const btnGrad = {
+  background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+  boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+};
+
 interface SwapPageProps {
   onBack: () => void;
   bnbPrice: number;
 }
 
-// ─── Coin Icon Component ─────────────────────────────────────────────────────
 function CoinIcon({ symbol, size = 36 }: { symbol: CoinSymbol; size?: number }) {
   return (
     <img
@@ -70,14 +70,8 @@ function CoinIcon({ symbol, size = 36 }: { symbol: CoinSymbol; size?: number }) 
   );
 }
 
-// ─── Coin Picker Modal ───────────────────────────────────────────────────────
 function CoinPickerModal({
-  title,
-  coins,
-  selected,
-  balances,
-  onSelect,
-  onClose,
+  title, coins, selected, balances, onSelect, onClose,
 }: {
   title: string;
   coins: CoinSymbol[];
@@ -102,15 +96,12 @@ function CoinPickerModal({
       >
         <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0">
           <span className="text-base font-bold text-[#1A1A1A]">{title}</span>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-[#F0EDE0] text-[#666]"
-          >
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-[#F0EDE0] text-[#666]">
             <IconX size={16} stroke={2.5} />
           </button>
         </div>
         <div className="px-5 pb-3 flex-shrink-0">
-          <div className="flex items-center gap-2 bg-[#F5F3EA] border border-[#D4C060] rounded-xl px-3 py-2.5">
+          <div className="flex items-center gap-2 bg-[#F5F3EA] rounded-xl px-3 py-2.5">
             <IconSearch size={16} stroke={2} className="text-[#888888] flex-shrink-0" />
             <input
               type="text"
@@ -130,7 +121,7 @@ function CoinPickerModal({
               key={coin}
               onClick={() => onSelect(coin)}
               className={`w-full flex items-center gap-3 px-3 py-3.5 rounded-xl mb-1 transition-all active:scale-[0.98] ${
-                selected === coin ? "bg-[#FFF8D6] border border-[#D4AF37]" : "hover:bg-[#F5F3EA]"
+                selected === coin ? "bg-[#FFF8D6]" : "hover:bg-[#F5F3EA]"
               }`}
             >
               <CoinIcon symbol={coin} size={40} />
@@ -157,7 +148,6 @@ function CoinPickerModal({
   );
 }
 
-// ─── Main Component ──────────────────────────────────────────────────────────
 export function SwapPage({ onBack }: SwapPageProps) {
   const { fmtFiat } = useCurrency();
   const {
@@ -174,12 +164,9 @@ export function SwapPage({ onBack }: SwapPageProps) {
   const { price: xautPrice } = useBinancePrice("XAUTUSDT");
   const { price: tonPrice  } = useBinancePrice("TONUSDT");
 
-  // fromAsset must be USDT or an alt; toAsset is always the pair counterpart
-  // invariant: exactly one of (from, to) is USDT
   const [fromAsset, setFromAsset] = useState<CoinSymbol>("USDT");
-  const [altCoin,   setAltCoin  ] = useState<CoinSymbol>("BNB");   // the non-USDT side
+  const [altCoin,   setAltCoin  ] = useState<CoinSymbol>("BNB");
 
-  // derived
   const toAsset: CoinSymbol = fromAsset === "USDT" ? altCoin : "USDT";
 
   const [fromAmount, setFromAmount] = useState("");
@@ -195,7 +182,6 @@ export function SwapPage({ onBack }: SwapPageProps) {
     setTimeout(() => setToast(null), 3000);
   };
 
-  // Balances map
   const balances: Record<CoinSymbol, number> = {
     USDT: spotUsdtBalance,
     XAUT: xautBalance,
@@ -204,7 +190,6 @@ export function SwapPage({ onBack }: SwapPageProps) {
     TON:  tonBalance,
   };
 
-  // Price map (USDT value per 1 unit)
   const prices: Record<CoinSymbol, number> = {
     USDT: 1,
     XAUT: xautPrice > 0 ? xautPrice : 2620,
@@ -213,7 +198,6 @@ export function SwapPage({ onBack }: SwapPageProps) {
     TON:  tonPrice  > 0 ? tonPrice  : 5,
   };
 
-  // The non-USDT coin of the pair
   const pairCoin: CoinSymbol = fromAsset === "USDT" ? altCoin : fromAsset;
   const feeConfig = PAIR_FEE[pairCoin];
   const feeAssetPrice = prices[feeConfig.feeAsset];
@@ -221,16 +205,11 @@ export function SwapPage({ onBack }: SwapPageProps) {
   const feeAssetBalance = balances[feeConfig.feeAsset];
   const parsedFrom = parseFloat(fromAmount) || 0;
 
-  // When fromAsset === feeAsset (e.g. BNB→USDT with BNB fee),
-  // the fee comes out of the same balance as the swap amount.
-  // So we need: parsedFrom + feeInAsset ≤ feeAssetBalance.
-  // Otherwise fee balance is independent.
   const fromIsFeeAsset = fromAsset === feeConfig.feeAsset;
   const hasFee = fromIsFeeAsset
     ? feeAssetBalance >= parsedFrom + feeInAsset
     : feeAssetBalance >= feeInAsset;
 
-  // Estimated output (no fee deduction from output, fee is separate)
   const toAmount = useMemo(() => {
     if (parsedFrom <= 0) return 0;
     const fromPrice = prices[fromAsset];
@@ -239,12 +218,8 @@ export function SwapPage({ onBack }: SwapPageProps) {
     return (parsedFrom * fromPrice) / toPrice;
   }, [parsedFrom, fromAsset, toAsset, prices]);
 
-  // Fee pct relative to fee asset balance
-  const feePct = feeAssetBalance > 0
-    ? (feeInAsset / feeAssetBalance) * 100
-    : 0;
+  const feePct = feeAssetBalance > 0 ? (feeInAsset / feeAssetBalance) * 100 : 0;
 
-  // Max swappable: if fromAsset is also the fee asset, reserve the fee amount
   const maxFrom = fromIsFeeAsset
     ? Math.max(0, balances[fromAsset] - feeInAsset)
     : balances[fromAsset];
@@ -252,7 +227,6 @@ export function SwapPage({ onBack }: SwapPageProps) {
   const handleFromPick = (coin: CoinSymbol) => {
     if (coin === "USDT") {
       setFromAsset("USDT");
-      // altCoin stays the same
     } else {
       setFromAsset(coin);
       setAltCoin(coin);
@@ -262,14 +236,12 @@ export function SwapPage({ onBack }: SwapPageProps) {
   };
 
   const handleToPick = (coin: CoinSymbol) => {
-    // "To" picker is only shown when From=USDT, so coin is always an alt
     setAltCoin(coin);
     setFromAmount("");
     setShowToPicker(false);
   };
 
   const handleSwitch = () => {
-    // Flip: if from=USDT, new from=altCoin; if from=altCoin, new from=USDT
     if (fromAsset === "USDT") {
       setFromAsset(altCoin);
     } else {
@@ -284,7 +256,6 @@ export function SwapPage({ onBack }: SwapPageProps) {
     setFromAmount(truncated.toFixed(dec));
   };
 
-  // Open confirm modal after validation
   const handleSwap = () => {
     if (parsedFrom <= 0) return showToast("Enter a valid amount");
     if (fromIsFeeAsset) {
@@ -293,20 +264,16 @@ export function SwapPage({ onBack }: SwapPageProps) {
       }
     } else {
       if (parsedFrom > balances[fromAsset] + 1e-9) return showToast(`Insufficient ${fromAsset} balance`);
-      if (!hasFee) {
-        return showToast(`Insufficient ${feeConfig.feeAsset} for gas fee`);
-      }
+      if (!hasFee) return showToast(`Insufficient ${feeConfig.feeAsset} for gas fee`);
     }
     setShowConfirm(true);
   };
 
-  // Actually execute after user confirms
   const executeSwap = () => {
     setShowConfirm(false);
     const decFrom = COIN_DEC[fromAsset];
     const decTo   = COIN_DEC[toAsset];
 
-    // Deduct from balance
     const setFrom = fromAsset === "USDT" ? setSpotUsdtBalance
       : fromAsset === "XAUT" ? setXautBalance
       : fromAsset === "ETH"  ? setEthBalance
@@ -325,18 +292,9 @@ export function SwapPage({ onBack }: SwapPageProps) {
 
     setFrom((b: number) => parseFloat((b - parsedFrom).toFixed(8)));
     setTo((b: number)   => parseFloat((b + toAmount).toFixed(8)));
-
-    // If feeAsset === fromAsset, the fee balance was already partially reduced above.
-    // We still deduct the fee separately.
     setFeeAsset((b: number) => parseFloat((b - feeInAsset).toFixed(8)));
 
-    addWalletTx({
-      type: "swap",
-      asset: fromAsset,
-      amount: parsedFrom,
-      toAsset,
-      toAmount,
-    });
+    addWalletTx({ type: "swap", asset: fromAsset, amount: parsedFrom, toAsset, toAmount });
 
     setLastSwap({
       from: `${parsedFrom.toFixed(decFrom)} ${fromAsset}`,
@@ -351,19 +309,22 @@ export function SwapPage({ onBack }: SwapPageProps) {
   if (step === "done" && lastSwap) {
     return (
       <div className="flex flex-col h-full page-bg">
-        <div className="flex items-center px-4 py-3 panel-header border-b border-[#C8B040] flex-shrink-0">
-          <button onClick={onBack} className="mr-3 text-[#888888]">
-            <IconChevronLeft size={22} stroke={2.5} />
+        <div className="flex items-center px-4 py-3 flex-shrink-0">
+          <button onClick={onBack} className="mr-3 w-8 h-8 flex items-center justify-center rounded-full bg-[#E8E4D0] text-[#666]">
+            <IconChevronLeft size={18} stroke={2.5} />
           </button>
           <span className="font-bold text-[#1A1A1A] text-base">Swap</span>
         </div>
         <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
-          <div className="w-20 h-20 rounded-full btn-3d-gold flex items-center justify-center mb-5">
-            <IconCheck size={32} stroke={2.5} />
+          <div
+            className="w-20 h-20 rounded-full flex items-center justify-center mb-5"
+            style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)", boxShadow: "0 4px 16px rgba(0,0,0,0.15)" }}
+          >
+            <IconCheck size={32} stroke={2.5} color="#8B6300" />
           </div>
           <h2 className="text-xl font-bold text-[#1A1A1A] mb-2">Swap Successful!</h2>
           <p className="text-sm text-[#666666] mb-6">Your swap has been executed</p>
-          <div className="w-full panel-card border border-[#D4AF37] rounded-2xl p-4 text-left space-y-3">
+          <div className="w-full panel-card rounded-2xl p-4 text-left space-y-3">
             <div className="flex justify-between">
               <span className="text-sm text-[#888888]">You Swapped</span>
               <span className="text-sm font-bold text-[#C9A227]">{lastSwap.from}</span>
@@ -380,10 +341,18 @@ export function SwapPage({ onBack }: SwapPageProps) {
             </div>
           </div>
           <div className="flex gap-3 mt-6 w-full">
-            <button onClick={() => setStep("form")} className="flex-1 py-3.5 rounded-xl text-sm btn-3d-silver">
+            <button
+              onClick={() => setStep("form")}
+              className="flex-1 py-3.5 rounded-xl text-sm font-semibold text-[#8B6300] transition-all active:scale-[0.98]"
+              style={btnGrad}
+            >
               Swap Again
             </button>
-            <button onClick={() => setStep("form")} className="flex-1 py-3.5 rounded-xl text-sm btn-3d-gold">
+            <button
+              onClick={() => setStep("form")}
+              className="flex-1 py-3.5 rounded-xl text-sm font-bold text-[#8B6300] transition-all active:scale-[0.98]"
+              style={btnGrad}
+            >
               Done
             </button>
           </div>
@@ -392,7 +361,6 @@ export function SwapPage({ onBack }: SwapPageProps) {
     );
   }
 
-  // Rate display
   const rateText = (() => {
     const ap = prices[pairCoin];
     if (ap <= 0) return null;
@@ -408,7 +376,6 @@ export function SwapPage({ onBack }: SwapPageProps) {
         </div>
       )}
 
-      {/* From Picker Modal */}
       {showFromPicker && (
         <CoinPickerModal
           title="Select From Coin"
@@ -420,7 +387,6 @@ export function SwapPage({ onBack }: SwapPageProps) {
         />
       )}
 
-      {/* To Picker Modal — only if From=USDT */}
       {showToPicker && fromAsset === "USDT" && (
         <CoinPickerModal
           title="Select To Coin"
@@ -432,7 +398,7 @@ export function SwapPage({ onBack }: SwapPageProps) {
         />
       )}
 
-      {/* ── Swap Confirmation Modal ── */}
+      {/* Confirm Modal */}
       {showConfirm && (
         <div
           className="fixed inset-0 z-[70] flex items-end justify-center bg-black/60"
@@ -442,12 +408,9 @@ export function SwapPage({ onBack }: SwapPageProps) {
             className="w-full max-w-md rounded-t-3xl bg-white shadow-2xl pb-8"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Handle bar */}
             <div className="flex justify-center pt-3 pb-1">
               <div className="w-10 h-1 rounded-full bg-[#DDD]" />
             </div>
-
-            {/* Header */}
             <div className="flex items-center justify-between px-5 pt-3 pb-4">
               <span className="text-base font-bold text-[#1A1A1A]">Confirm Swap</span>
               <button
@@ -458,55 +421,30 @@ export function SwapPage({ onBack }: SwapPageProps) {
               </button>
             </div>
 
-            {/* Coin flow */}
-            <div className="mx-5 mb-4 rounded-2xl border border-[#E8E0C0] bg-[#F9F6EC] p-4 space-y-3">
-              {/* From */}
+            <div className="mx-5 mb-4 rounded-2xl bg-[#F9F6EC] p-4 space-y-3">
               <div className="flex items-center gap-3">
-                <img
-                  src={COIN_ICONS[fromAsset]}
-                  alt={fromAsset}
-                  className="w-10 h-10 rounded-full flex-shrink-0"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                />
+                <img src={COIN_ICONS[fromAsset]} alt={fromAsset} className="w-10 h-10 rounded-full flex-shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 <div className="flex-1">
                   <p className="text-[11px] text-[#888888] font-medium uppercase tracking-wide">You Pay</p>
-                  <p className="text-lg font-bold text-[#1A1A1A]">
-                    {parsedFrom.toFixed(COIN_DEC[fromAsset])} {fromAsset}
-                  </p>
-                  <p className="text-[11px] text-[#888888]">
-                    ≈ {fmtFiat(parsedFrom * prices[fromAsset])}
-                  </p>
+                  <p className="text-lg font-bold text-[#1A1A1A]">{parsedFrom.toFixed(COIN_DEC[fromAsset])} {fromAsset}</p>
+                  <p className="text-[11px] text-[#888888]">≈ {fmtFiat(parsedFrom * prices[fromAsset])}</p>
                 </div>
               </div>
-
-              {/* Arrow */}
               <div className="flex justify-center">
                 <div className="w-7 h-7 rounded-full bg-[#E8C84A] flex items-center justify-center">
                   <IconArrowsUpDown size={14} stroke={2.5} color="#5C3A00" />
                 </div>
               </div>
-
-              {/* To */}
               <div className="flex items-center gap-3">
-                <img
-                  src={COIN_ICONS[toAsset]}
-                  alt={toAsset}
-                  className="w-10 h-10 rounded-full flex-shrink-0"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                />
+                <img src={COIN_ICONS[toAsset]} alt={toAsset} className="w-10 h-10 rounded-full flex-shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 <div className="flex-1">
                   <p className="text-[11px] text-[#888888] font-medium uppercase tracking-wide">You Receive (est.)</p>
-                  <p className="text-lg font-bold text-green-600">
-                    {toAmount.toFixed(COIN_DEC[toAsset])} {toAsset}
-                  </p>
-                  <p className="text-[11px] text-[#888888]">
-                    ≈ {fmtFiat(toAmount * prices[toAsset])}
-                  </p>
+                  <p className="text-lg font-bold text-green-600">{toAmount.toFixed(COIN_DEC[toAsset])} {toAsset}</p>
+                  <p className="text-[11px] text-[#888888]">≈ {fmtFiat(toAmount * prices[toAsset])}</p>
                 </div>
               </div>
             </div>
 
-            {/* Fee row */}
             <div className="mx-5 mb-5 flex items-center justify-between bg-[#F5F3EA] rounded-xl px-4 py-2.5">
               <span className="text-xs text-[#888888]">Gas Fee</span>
               <span className="text-xs font-semibold text-[#333333]">
@@ -514,17 +452,18 @@ export function SwapPage({ onBack }: SwapPageProps) {
               </span>
             </div>
 
-            {/* Buttons */}
             <div className="flex gap-3 mx-5">
               <button
                 onClick={() => setShowConfirm(false)}
-                className="flex-1 py-3.5 rounded-xl text-sm font-semibold btn-3d-silver"
+                className="flex-1 py-3.5 rounded-xl text-sm font-semibold text-[#8B6300] transition-all active:scale-[0.98]"
+                style={btnGrad}
               >
                 Cancel
               </button>
               <button
                 onClick={executeSwap}
-                className="flex-1 py-3.5 rounded-xl text-sm font-bold btn-3d-gold"
+                className="flex-1 py-3.5 rounded-xl text-sm font-bold text-[#8B6300] transition-all active:scale-[0.98]"
+                style={btnGrad}
               >
                 Confirm Swap
               </button>
@@ -534,9 +473,9 @@ export function SwapPage({ onBack }: SwapPageProps) {
       )}
 
       {/* Header */}
-      <div className="flex items-center px-4 py-3 panel-header border-b border-[#C8B040] flex-shrink-0">
-        <button onClick={onBack} className="mr-3 text-[#888888]">
-          <IconChevronLeft size={22} stroke={2.5} />
+      <div className="flex items-center px-4 py-3 flex-shrink-0">
+        <button onClick={onBack} className="mr-3 w-8 h-8 flex items-center justify-center rounded-full bg-[#E8E4D0] text-[#666]">
+          <IconChevronLeft size={18} stroke={2.5} />
         </button>
         <span className="font-bold text-[#1A1A1A] text-base">Swap</span>
         <span className="ml-auto text-xs font-medium px-2 py-0.5 rounded-full bg-[#F5E280] text-[#8B6914]">
@@ -555,7 +494,7 @@ export function SwapPage({ onBack }: SwapPageProps) {
         )}
 
         {/* From panel */}
-        <div className="panel-card rounded-2xl p-4 border border-[#D4AF37] space-y-3">
+        <div className="panel-card rounded-2xl p-4 space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-[#888888] uppercase tracking-wide">From</span>
             <span className="text-xs text-[#888888]">
@@ -565,10 +504,9 @@ export function SwapPage({ onBack }: SwapPageProps) {
             </span>
           </div>
           <div className="flex items-center gap-3">
-            {/* Coin selector */}
             <button
               onClick={() => setShowFromPicker(true)}
-              className="flex items-center gap-1.5 bg-[#F5F0DC] border border-[#D4AF37] rounded-xl px-2.5 py-2 transition-all active:scale-95 flex-shrink-0"
+              className="flex items-center gap-1.5 bg-[#F5F0DC] rounded-xl px-2.5 py-2 transition-all active:scale-95 flex-shrink-0"
             >
               <CoinIcon symbol={fromAsset} size={28} />
               <span className="text-sm font-bold text-[#1A1A1A]">{fromAsset}</span>
@@ -590,7 +528,13 @@ export function SwapPage({ onBack }: SwapPageProps) {
                 </p>
               )}
             </div>
-            <button onClick={handleMax} className="btn-3d-gold px-2 py-1 rounded-lg text-[10px] flex-shrink-0">Max</button>
+            <button
+              onClick={handleMax}
+              className="px-2 py-1 rounded-lg text-[10px] font-bold text-[#8B6300] flex-shrink-0"
+              style={btnGrad}
+            >
+              Max
+            </button>
           </div>
         </div>
 
@@ -598,14 +542,15 @@ export function SwapPage({ onBack }: SwapPageProps) {
         <div className="flex justify-center">
           <button
             onClick={handleSwitch}
-            className="w-10 h-10 rounded-full btn-3d-gold flex items-center justify-center"
+            className="w-10 h-10 rounded-full flex items-center justify-center text-[#8B6300] transition-all active:scale-95"
+            style={btnGrad}
           >
             <IconArrowsUpDown size={18} stroke={2.5} />
           </button>
         </div>
 
         {/* To panel */}
-        <div className="panel-silver rounded-2xl p-4 border border-[#D4AF37] space-y-3">
+        <div className="panel-silver rounded-2xl p-4 space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-[#888888] uppercase tracking-wide">To (estimated)</span>
             <span className="text-xs text-[#888888]">
@@ -615,10 +560,9 @@ export function SwapPage({ onBack }: SwapPageProps) {
             </span>
           </div>
           <div className="flex items-center gap-3">
-            {/* To coin selector — clickable only when From=USDT */}
             <button
               onClick={() => fromAsset === "USDT" && setShowToPicker(true)}
-              className={`flex items-center gap-1.5 border border-[#D4AF37] rounded-xl px-2.5 py-2 flex-shrink-0 transition-all ${
+              className={`flex items-center gap-1.5 rounded-xl px-2.5 py-2 flex-shrink-0 transition-all ${
                 fromAsset === "USDT" ? "bg-[#F5F0DC] active:scale-95" : "bg-[#EEECDC] cursor-default"
               }`}
             >
@@ -644,9 +588,7 @@ export function SwapPage({ onBack }: SwapPageProps) {
         </div>
 
         {/* Gas fee info */}
-        <div className={`rounded-xl px-4 py-3 space-y-1.5 border ${
-          !hasFee ? "bg-red-50 border-red-300" : "bg-[#EEECDC] border-[#D8D0A8]"
-        }`}>
+        <div className={`rounded-xl px-4 py-3 space-y-1.5 ${!hasFee ? "bg-red-50" : "bg-[#EEECDC]"}`}>
           <div className="flex items-center justify-between">
             <span className="text-xs text-[#888888]">Network</span>
             <span className="text-xs font-semibold text-[#333333]">
@@ -682,9 +624,8 @@ export function SwapPage({ onBack }: SwapPageProps) {
         <button
           onClick={handleSwap}
           disabled={!hasFee || parsedFrom <= 0}
-          className={`w-full py-3.5 rounded-xl text-sm transition-opacity ${
-            !hasFee || parsedFrom <= 0 ? "opacity-50 btn-3d-silver cursor-not-allowed" : "btn-3d-gold"
-          }`}
+          className="w-full py-3.5 rounded-xl text-sm font-bold text-[#8B6300] transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+          style={btnGrad}
         >
           Swap {fromAsset} → {toAsset}
         </button>

@@ -36,9 +36,6 @@ const SEND_ASSETS: AssetConfig[] = [
       { id: "bep20", name: "BNB Smart Chain (BEP20)", shortName: "BEP20", minWithdraw: 15,  fee: 1.2  },
       { id: "erc20", name: "Ethereum (ERC20)",         shortName: "ERC20", minWithdraw: 20,  fee: 5    },
       { id: "ton",   name: "Toncoin (TON)",             shortName: "TON",   minWithdraw: 10,  fee: 1.5  },
-      /*{ id: "arb",   name: "Arbitrum One (ARB)",        shortName: "ARB",   minWithdraw: 12,  fee: 1    },
-      /*{ id: "matic", name: "Polygon (MATIC)",           shortName: "MATIC", minWithdraw: 10,  fee: 2    },
-      { id: "op",    name: "Optimism (OP)",             shortName: "OP",    minWithdraw: 10,  fee: 1    },*/
     ],
   },
   {
@@ -71,6 +68,11 @@ const SEND_ASSETS: AssetConfig[] = [
     ],
   },
 ];
+
+const btnGrad = {
+  background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+  boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+};
 
 interface SendPageProps {
   onBack: () => void;
@@ -192,18 +194,20 @@ export function SendPage({ onBack, bnbPrice }: SendPageProps) {
     return val.toFixed(6);
   };
 
+  // ── Done screen ──────────────────────────────────────────────────
   if (step === "done") {
     return (
       <div className="flex flex-col h-full page-bg">
-        <div className="flex items-center px-4 py-3 panel-header border-b border-[#C8B040] flex-shrink-0">
-          <button onClick={onBack} className="mr-3 text-[#888888]">
-            <IconChevronLeft size={22} stroke={2.5} />
+        <div className="flex items-center px-4 py-3 flex-shrink-0">
+          <button onClick={onBack} className="mr-3 w-8 h-8 flex items-center justify-center rounded-full bg-[#E8E4D0] text-[#666]">
+            <IconChevronLeft size={18} stroke={2.5} />
           </button>
           <span className="font-bold text-[#1A1A1A] text-base">Send</span>
         </div>
         <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
-          <div className="w-20 h-20 rounded-full btn-3d-long flex items-center justify-center mb-5">
-            <IconCheck size={36} stroke={2.5} color="white" />
+          <div className="w-20 h-20 rounded-full flex items-center justify-center mb-5"
+            style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)", boxShadow: "0 4px 16px rgba(0,0,0,0.15)" }}>
+            <IconCheck size={36} stroke={2.5} color="#8B6300" />
           </div>
           <h2 className="text-xl font-bold text-[#1A1A1A] mb-2">Withdrawal Submitted</h2>
           <p className="text-sm text-[#666666] mb-1">
@@ -212,7 +216,7 @@ export function SendPage({ onBack, bnbPrice }: SendPageProps) {
           <p className="text-xs text-[#888888] mb-6">
             Usually confirmed within 1–3 minutes on {selectedNetwork.shortName}
           </p>
-          <div className="w-full bg-[#F5F0DC] border border-[#D4AF37] rounded-xl p-4 text-left space-y-2">
+          <div className="w-full bg-[#F5F0DC] rounded-xl p-4 text-left space-y-2">
             <div className="flex justify-between">
               <span className="text-xs text-[#888888]">To</span>
               <span className="text-xs font-mono text-[#333333]">{address.slice(0, 10)}...{address.slice(-6)}</span>
@@ -230,7 +234,11 @@ export function SendPage({ onBack, bnbPrice }: SendPageProps) {
               <span className="text-xs font-bold text-[#C9A227]">{formatAmt(receiveAmount)} {selectedAsset.symbol}</span>
             </div>
           </div>
-          <button onClick={onBack} className="mt-6 w-full py-3.5 rounded-xl btn-3d-gold text-sm">
+          <button
+            onClick={onBack}
+            className="mt-6 w-full py-3.5 rounded-xl text-sm font-bold text-[#8B6300] transition-all active:scale-[0.98]"
+            style={btnGrad}
+          >
             Back to Portfolio
           </button>
         </div>
@@ -238,6 +246,7 @@ export function SendPage({ onBack, bnbPrice }: SendPageProps) {
     );
   }
 
+  // ── Confirm screen ───────────────────────────────────────────────
   if (step === "confirm") {
     return (
       <div className="flex flex-col h-full page-bg">
@@ -246,14 +255,14 @@ export function SendPage({ onBack, bnbPrice }: SendPageProps) {
             {toast}
           </div>
         )}
-        <div className="flex items-center px-4 py-3 panel-header border-b border-[#C8B040] flex-shrink-0">
-          <button onClick={() => setStep("form")} className="mr-3 text-[#888888]">
-            <IconChevronLeft size={22} stroke={2.5} />
+        <div className="flex items-center px-4 py-3 flex-shrink-0">
+          <button onClick={() => setStep("form")} className="mr-3 w-8 h-8 flex items-center justify-center rounded-full bg-[#E8E4D0] text-[#666]">
+            <IconChevronLeft size={18} stroke={2.5} />
           </button>
           <span className="font-bold text-[#1A1A1A] text-base">Confirm Send</span>
         </div>
         <div className="flex-1 px-4 py-5 space-y-4 overflow-y-auto">
-          <div className="panel-card rounded-2xl p-5 border border-[#D4AF37] flex flex-col items-center">
+          <div className="panel-card rounded-2xl p-5 flex flex-col items-center">
             <img
               src={COIN_ICONS[selectedAsset.symbol]}
               alt={selectedAsset.symbol}
@@ -264,7 +273,7 @@ export function SendPage({ onBack, bnbPrice }: SendPageProps) {
             <p className="text-3xl font-bold text-[#B8860B]">{formatAmt(parsedAmount)}</p>
             <p className="text-lg font-semibold text-[#666666]">{selectedAsset.symbol}</p>
           </div>
-          <div className="panel-silver border border-[#D4AF37] rounded-2xl p-4 space-y-3">
+          <div className="panel-silver rounded-2xl p-4 space-y-3">
             <div className="flex justify-between">
               <span className="text-sm text-[#888888]">To Address</span>
               <span className="text-sm font-mono text-[#333333] max-w-[180px] truncate">{address}</span>
@@ -288,20 +297,28 @@ export function SendPage({ onBack, bnbPrice }: SendPageProps) {
             </div>
           </div>
           {selectedAsset.xautEthGasFee && (
-            <div className="bg-[#FFF8E0] border border-[#F0D060] rounded-xl px-4 py-3">
+            <div className="bg-[#FFF8E0] rounded-xl px-4 py-3">
               <p className="text-[11px] text-[#8B6914] leading-relaxed">
                 ⚠ Gas fee of <strong>{fee} ETH</strong> will be deducted from your ETH balance. Make sure you have sufficient ETH.
               </p>
             </div>
           )}
-          <div className="bg-[#FFF8E0] border border-[#F0D060] rounded-xl px-4 py-3">
+          <div className="bg-[#FFF8E0] rounded-xl px-4 py-3">
             <p className="text-[11px] text-[#8B6914]">⚠ Transactions are irreversible. Double-check the address before confirming.</p>
           </div>
           <div className="flex gap-3">
-            <button onClick={() => setStep("form")} className="flex-1 py-3.5 rounded-xl text-sm btn-3d-silver">
+            <button
+              onClick={() => setStep("form")}
+              className="flex-1 py-3.5 rounded-xl text-sm font-semibold text-[#888888] transition-all active:scale-[0.98]"
+              style={btnGrad}
+            >
               Cancel
             </button>
-            <button onClick={handleConfirm} className="flex-1 py-3.5 rounded-xl text-sm btn-3d-gold">
+            <button
+              onClick={handleConfirm}
+              className="flex-1 py-3.5 rounded-xl text-sm font-bold text-[#8B6300] transition-all active:scale-[0.98]"
+              style={btnGrad}
+            >
               Confirm Send
             </button>
           </div>
@@ -310,6 +327,7 @@ export function SendPage({ onBack, bnbPrice }: SendPageProps) {
     );
   }
 
+  // ── Form screen ──────────────────────────────────────────────────
   return (
     <div className="flex flex-col h-full page-bg overflow-y-auto">
       {toast && (
@@ -337,7 +355,7 @@ export function SendPage({ onBack, bnbPrice }: SendPageProps) {
             </div>
 
             <div className="px-5 pb-3 flex-shrink-0">
-              <div className="flex items-center gap-2 bg-[#F5F3EA] border border-[#D4C060] rounded-xl px-3 py-2.5">
+              <div className="flex items-center gap-2 bg-[#F5F3EA] rounded-xl px-3 py-2.5">
                 <IconSearch size={16} stroke={2} className="text-[#888888] flex-shrink-0" />
                 <input
                   type="text"
@@ -367,7 +385,7 @@ export function SendPage({ onBack, bnbPrice }: SendPageProps) {
                       onClick={() => handleSelectAsset(asset)}
                       className={`w-full flex items-center gap-3 px-3 py-3.5 rounded-xl mb-1 transition-all active:scale-[0.98] ${
                         selectedAsset.symbol === asset.symbol
-                          ? "bg-[#FFF8D6] border border-[#D4AF37]"
+                          ? "bg-[#FFF8D6]"
                           : "hover:bg-[#F5F3EA]"
                       }`}
                     >
@@ -419,7 +437,7 @@ export function SendPage({ onBack, bnbPrice }: SendPageProps) {
             </div>
 
             <div className="px-4 pb-3 flex-shrink-0">
-              <div className="bg-[#FFF8E0] border border-[#F0D060] rounded-xl px-3 py-2.5 flex items-start gap-2">
+              <div className="bg-[#FFF8E0] rounded-xl px-3 py-2.5 flex items-start gap-2">
                 <IconAlertTriangle size={14} className="text-[#B8860B] mt-0.5 flex-shrink-0" />
                 <p className="text-[11px] text-[#8B6914] leading-relaxed">
                   Ensure the withdrawal network matches the recipient's address network. Wrong network may result in permanent loss.
@@ -434,7 +452,7 @@ export function SendPage({ onBack, bnbPrice }: SendPageProps) {
                   onClick={() => handleSelectNetwork(network)}
                   className={`w-full flex items-center gap-3 px-3 py-3.5 rounded-xl mb-1 transition-all active:scale-[0.98] ${
                     selectedNetwork.id === network.id
-                      ? "bg-[#FFF8D6] border border-[#D4AF37]"
+                      ? "bg-[#FFF8D6]"
                       : "hover:bg-[#F5F3EA]"
                   }`}
                 >
@@ -466,21 +484,21 @@ export function SendPage({ onBack, bnbPrice }: SendPageProps) {
       )}
 
       {/* Header */}
-      <div className="flex items-center px-4 py-3 panel-header border-b border-[#C8B040] flex-shrink-0">
-        <button onClick={onBack} className="mr-3 text-[#888888]">
-          <IconChevronLeft size={22} stroke={2.5} />
+      <div className="flex items-center px-4 py-3 flex-shrink-0">
+        <button onClick={onBack} className="mr-3 w-8 h-8 flex items-center justify-center rounded-full bg-[#E8E4D0] text-[#666]">
+          <IconChevronLeft size={18} stroke={2.5} />
         </button>
         <span className="font-bold text-[#1A1A1A] text-base">Send / Withdraw</span>
       </div>
 
-      <div className="px-4 py-5 space-y-4">
+      <div className="px-4 py-3 space-y-4">
 
         {/* Asset Selector */}
         <div>
           <p className="text-xs font-semibold text-[#888888] mb-2 uppercase tracking-wide">Coin</p>
           <button
             onClick={() => setShowAssetModal(true)}
-            className="w-full flex items-center gap-3 bg-[#F5F3EA] border border-[#D4AF37] rounded-xl px-4 py-3 transition-all active:scale-[0.99]"
+            className="w-full flex items-center gap-3 bg-[#F5F3EA] rounded-xl px-4 py-3 transition-all active:scale-[0.99]"
           >
             <img
               src={COIN_ICONS[selectedAsset.symbol]}
@@ -503,7 +521,7 @@ export function SendPage({ onBack, bnbPrice }: SendPageProps) {
           <p className="text-xs font-semibold text-[#888888] mb-2 uppercase tracking-wide">Network</p>
           <button
             onClick={() => selectedAsset.networks.length > 1 && setShowNetworkModal(true)}
-            className={`w-full flex items-center gap-3 bg-[#F5F3EA] border border-[#D4AF37] rounded-xl px-4 py-3 ${
+            className={`w-full flex items-center gap-3 bg-[#F5F3EA] rounded-xl px-4 py-3 ${
               selectedAsset.networks.length > 1 ? "active:scale-[0.99]" : "cursor-default"
             }`}
           >
@@ -520,27 +538,10 @@ export function SendPage({ onBack, bnbPrice }: SendPageProps) {
           </button>
         </div>
 
-        {/* XAUT ETH gas warning */}
-        {/*selectedAsset.xautEthGasFee && (
-          <div className={`rounded-xl px-4 py-3 flex items-start gap-2 border ${
-            ethBalance < fee
-              ? "bg-red-50 border-red-300"
-              : "bg-[#FFF8E0] border-[#F0D060]"
-          }`}>
-            <IconAlertTriangle size={14} className={`mt-0.5 flex-shrink-0 ${ethBalance < fee ? "text-red-500" : "text-[#B8860B]"}`} />
-            <p className={`text-[11px] leading-relaxed ${ethBalance < fee ? "text-red-600" : "text-[#8B6914]"}`}>
-              {ethBalance < fee
-                ? `⚠ Insufficient ETH for gas fee. You need at least ${fee} ETH but only have ${ethBalance.toFixed(6)} ETH.`
-                : `Gas fee of ${fee} ETH will be deducted from your ETH balance (Current: ${ethBalance.toFixed(6)} ETH).`
-              }
-            </p>
-          </div>
-        )*/}
-
         {/* Address input */}
         <div>
           <p className="text-xs font-semibold text-[#888888] mb-2">Destination Address</p>
-          <div className="bg-[#F5F3EA] rounded-xl border border-[#C8C0A0] flex items-center px-4 py-3">
+          <div className="bg-[#F5F3EA] rounded-xl flex items-center px-4 py-3">
             <input
               type="text"
               value={address}
@@ -561,7 +562,7 @@ export function SendPage({ onBack, bnbPrice }: SendPageProps) {
               </span>
             </span>
           </div>
-          <div className="bg-[#F5F3EA] rounded-xl border border-[#C8C0A0] flex items-center px-4 py-3">
+          <div className="bg-[#F5F3EA] rounded-xl flex items-center px-4 py-3">
             <input
               type="number"
               value={amount}
@@ -570,12 +571,18 @@ export function SendPage({ onBack, bnbPrice }: SendPageProps) {
               className="flex-1 text-lg font-semibold text-[#333333] bg-transparent outline-none"
             />
             <span className="text-sm text-[#888888] mr-3">{selectedAsset.symbol}</span>
-            <button onClick={handleMax} className="btn-3d-gold px-2 py-1 rounded-lg text-[10px]">Max</button>
+            <button
+              onClick={handleMax}
+              className="px-2 py-1 rounded-lg text-[10px] font-bold text-[#8B6300]"
+              style={btnGrad}
+            >
+              Max
+            </button>
           </div>
         </div>
 
         {/* Fee & receive breakdown */}
-        <div className="bg-[#EEECDC] rounded-xl px-4 py-3 space-y-1.5 border border-[#D8D0A8]">
+        <div className="bg-[#EEECDC] rounded-xl px-4 py-3 space-y-1.5">
           <div className="flex justify-between">
             <span className="text-xs text-[#888888]">Min. Withdrawal</span>
             <span className="text-xs font-semibold text-[#333333]">{selectedNetwork.minWithdraw} {selectedAsset.symbol}</span>
@@ -594,7 +601,11 @@ export function SendPage({ onBack, bnbPrice }: SendPageProps) {
           )}
         </div>
 
-        <button onClick={handleContinue} className="w-full py-3.5 rounded-xl text-sm btn-3d-gold">
+        <button
+          onClick={handleContinue}
+          className="w-full py-3.5 rounded-xl text-sm font-bold text-[#8B6300] transition-all active:scale-[0.98]"
+          style={btnGrad}
+        >
           Continue
         </button>
       </div>

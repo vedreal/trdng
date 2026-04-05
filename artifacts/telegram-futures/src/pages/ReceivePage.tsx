@@ -63,6 +63,11 @@ const ASSETS: AssetOption[] = [
   },
 ];
 
+const btnGrad = {
+  background: "linear-gradient(to bottom, rgba(255,255,255,0.9) 0%, rgba(255,240,180,0.85) 100%)",
+  boxShadow: "0 2px 0 rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.2), 0 1px 0 rgba(255,255,255,0.6) inset",
+};
+
 interface ReceivePageProps {
   onBack: () => void;
 }
@@ -159,7 +164,6 @@ export function ReceivePage({ onBack }: ReceivePageProps) {
             style={{ maxHeight: "80vh" }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
             <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0">
               <span className="text-base font-bold text-[#1A1A1A]">Select Asset</span>
               <button
@@ -170,9 +174,8 @@ export function ReceivePage({ onBack }: ReceivePageProps) {
               </button>
             </div>
 
-            {/* Search */}
             <div className="px-5 pb-3 flex-shrink-0">
-              <div className="flex items-center gap-2 bg-[#F5F3EA] border border-[#D4C060] rounded-xl px-3 py-2.5">
+              <div className="flex items-center gap-2 bg-[#F5F3EA] rounded-xl px-3 py-2.5">
                 <IconSearch size={16} stroke={2} className="text-[#888888] flex-shrink-0" />
                 <input
                   type="text"
@@ -185,7 +188,6 @@ export function ReceivePage({ onBack }: ReceivePageProps) {
               </div>
             </div>
 
-            {/* Asset List */}
             <div className="overflow-y-auto flex-1 px-5 pb-6">
               {filteredAssets.length === 0 ? (
                 <div className="py-8 text-center text-sm text-[#AAAAAA]">No assets found</div>
@@ -196,7 +198,7 @@ export function ReceivePage({ onBack }: ReceivePageProps) {
                     onClick={() => handleSelectAsset(asset)}
                     className={`w-full flex items-center gap-3 px-3 py-3.5 rounded-xl mb-1 transition-all active:scale-[0.98] ${
                       selectedAsset.symbol === asset.symbol
-                        ? "bg-[#FFF8D6] border border-[#D4AF37]"
+                        ? "bg-[#FFF8D6]"
                         : "hover:bg-[#F5F3EA]"
                     }`}
                   >
@@ -204,10 +206,7 @@ export function ReceivePage({ onBack }: ReceivePageProps) {
                       src={COIN_ICONS[asset.symbol]}
                       alt={asset.symbol}
                       className="w-10 h-10 rounded-full flex-shrink-0"
-                      onError={(e) => {
-                        const el = e.target as HTMLImageElement;
-                        el.style.display = "none";
-                      }}
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                     />
                     <div className="flex-1 text-left">
                       <div className="flex items-center gap-2">
@@ -247,7 +246,7 @@ export function ReceivePage({ onBack }: ReceivePageProps) {
             </div>
 
             <div className="px-4 pb-3 flex-shrink-0">
-              <div className="bg-[#FFF8E0] border border-[#F0D060] rounded-xl px-3 py-2.5 flex items-start gap-2">
+              <div className="bg-[#FFF8E0] rounded-xl px-3 py-2.5 flex items-start gap-2">
                 <IconAlertTriangle size={14} className="text-[#B8860B] mt-0.5 flex-shrink-0" />
                 <p className="text-[11px] text-[#8B6914] leading-relaxed">
                   Make sure the selected network matches the sending platform's network. Using the wrong network may cause permanent asset loss.
@@ -265,7 +264,7 @@ export function ReceivePage({ onBack }: ReceivePageProps) {
                     network.maintenance
                       ? "opacity-60 cursor-not-allowed"
                       : selectedNetwork.id === network.id
-                      ? "bg-[#FFF8D6] border border-[#D4AF37] active:scale-[0.98]"
+                      ? "bg-[#FFF8D6] active:scale-[0.98]"
                       : "hover:bg-[#F5F3EA] active:scale-[0.98]"
                   }`}
                 >
@@ -298,21 +297,21 @@ export function ReceivePage({ onBack }: ReceivePageProps) {
       )}
 
       {/* Header */}
-      <div className="flex items-center px-4 py-3 panel-header border-b border-[#C8B040] flex-shrink-0">
-        <button onClick={onBack} className="mr-3 text-[#888888]">
-          <IconChevronLeft size={22} stroke={2.5} />
+      <div className="flex items-center px-4 py-3 flex-shrink-0">
+        <button onClick={onBack} className="mr-3 w-8 h-8 flex items-center justify-center rounded-full bg-[#E8E4D0] text-[#666]">
+          <IconChevronLeft size={18} stroke={2.5} />
         </button>
         <span className="font-bold text-[#1A1A1A] text-base">Receive / Deposit</span>
       </div>
 
-      <div className="px-4 py-5 space-y-4">
+      <div className="px-4 py-3 space-y-4">
 
-        {/* Asset Selector — Exchange style */}
+        {/* Asset Selector */}
         <div>
           <p className="text-xs font-semibold text-[#888888] mb-2 uppercase tracking-wide">Coin</p>
           <button
             onClick={() => setShowAssetModal(true)}
-            className="w-full flex items-center gap-3 bg-[#F5F3EA] border border-[#D4AF37] rounded-xl px-4 py-3 transition-all active:scale-[0.99]"
+            className="w-full flex items-center gap-3 bg-[#F5F3EA] rounded-xl px-4 py-3 transition-all active:scale-[0.99]"
           >
             <img
               src={COIN_ICONS[selectedAsset.symbol]}
@@ -335,7 +334,7 @@ export function ReceivePage({ onBack }: ReceivePageProps) {
           <p className="text-xs font-semibold text-[#888888] mb-2 uppercase tracking-wide">Network</p>
           <button
             onClick={() => selectedAsset.networks.length > 1 && setShowNetworkModal(true)}
-            className={`w-full flex items-center gap-3 bg-[#F5F3EA] border border-[#D4AF37] rounded-xl px-4 py-3 ${
+            className={`w-full flex items-center gap-3 bg-[#F5F3EA] rounded-xl px-4 py-3 ${
               selectedAsset.networks.length > 1 ? "active:scale-[0.99]" : "cursor-default"
             }`}
           >
@@ -366,8 +365,8 @@ export function ReceivePage({ onBack }: ReceivePageProps) {
 
         {/* QR Code */}
         {!selectedNetwork.maintenance ? (
-          <div className="panel-silver border border-[#D4AF37] rounded-2xl p-5 flex flex-col items-center">
-            <div className="w-36 h-36 rounded-xl border-4 border-[#D4AF37] bg-white flex items-center justify-center mb-3 overflow-hidden">
+          <div className="panel-silver rounded-2xl p-5 flex flex-col items-center">
+            <div className="w-36 h-36 rounded-xl bg-white flex items-center justify-center mb-3 overflow-hidden">
               <svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
                 <rect width="120" height="120" fill="white" />
                 <rect x="8" y="8" width="30" height="30" rx="3" fill="#1A1A1A" />
@@ -412,15 +411,19 @@ export function ReceivePage({ onBack }: ReceivePageProps) {
             <p className="text-[10px] text-[#888888] mb-1.5">
               {selectedAsset.symbol} · {selectedNetwork.shortName} Deposit Address
             </p>
-            <div className="w-full bg-[#EEECDC] rounded-xl px-3 py-2.5 flex items-center gap-2 border border-[#D8D0A8]">
+            <div className="w-full bg-[#EEECDC] rounded-xl px-3 py-2.5 flex items-center gap-2">
               <p className="text-[11px] font-mono text-[#333333] flex-1 break-all">{depositAddress}</p>
-              <button onClick={handleCopy} className="flex-shrink-0 btn-3d-gold px-2.5 py-1 rounded-lg text-[10px]">
+              <button
+                onClick={handleCopy}
+                className="flex-shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-semibold text-[#8B6300]"
+                style={btnGrad}
+              >
                 {copied ? "✓ Copied" : "Copy"}
               </button>
             </div>
           </div>
         ) : (
-          <div className="panel-silver border border-orange-300 rounded-2xl p-6 flex flex-col items-center">
+          <div className="panel-silver rounded-2xl p-6 flex flex-col items-center">
             <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center mb-3">
               <IconTool size={28} stroke={1.5} className="text-orange-500" />
             </div>
@@ -432,7 +435,7 @@ export function ReceivePage({ onBack }: ReceivePageProps) {
         )}
 
         {/* Warning */}
-        <div className="bg-[#FFF8E0] border border-[#F0D060] rounded-xl px-4 py-3">
+        <div className="bg-[#FFF8E0] rounded-xl px-4 py-3">
           <p className="text-[11px] text-[#8B6914] leading-relaxed">
             ⚠ Only send <strong>{selectedAsset.symbol}</strong> via the <strong>{selectedNetwork.name}</strong> network to this address. Sending other assets or using a different network may result in permanent loss.
           </p>
@@ -440,10 +443,10 @@ export function ReceivePage({ onBack }: ReceivePageProps) {
 
         {/* Simulate deposit */}
         {!selectedNetwork.maintenance && (
-          <div className="panel-card rounded-2xl p-4 border border-[#D4AF37]">
+          <div className="panel-card rounded-2xl p-4">
             <p className="text-xs font-semibold text-[#888888] mb-2">Simulate Deposit (Demo)</p>
             <div className="flex gap-2">
-              <div className="flex-1 bg-[#F5F3EA] rounded-xl border border-[#C8C0A0] flex items-center px-3 py-2.5">
+              <div className="flex-1 bg-[#F5F3EA] rounded-xl flex items-center px-3 py-2.5">
                 <input
                   type="number"
                   value={simAmount}
@@ -453,7 +456,11 @@ export function ReceivePage({ onBack }: ReceivePageProps) {
                 />
                 <span className="text-xs text-[#888888] ml-1 flex-shrink-0">{selectedAsset.symbol}</span>
               </div>
-              <button onClick={handleSimDeposit} className="btn-3d-gold px-4 py-2.5 rounded-xl text-sm">
+              <button
+                onClick={handleSimDeposit}
+                className="px-4 py-2.5 rounded-xl text-sm font-bold text-[#8B6300]"
+                style={btnGrad}
+              >
                 Add
               </button>
             </div>
